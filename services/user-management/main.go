@@ -1,31 +1,30 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log"
 	"os"
+	"user-management/internal/api"
 	"user-management/internal/config"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v4"
 )
 
 func main() {
-	fmt.Println("hello")
-	config.LoadConfig()
-	startServer(config.AppConfig.Port)
-	dbUrl := os.Getenv("DATABASE_URL")
-	config.ConnectToDB(dbUrl)
-}
 
-func startServer(port string) {
+	config.LoadConfig()
+	dbUrl := os.Getenv("DATABASE_URL")
+	conn, err := pgx.Connect(context.Background(), dbUrl)
+	if err != nil {
+		log.Fatalf("Unable to connect to database: %v", err)
+	}
+	defer conn.Close(context.Background())
+
 	router := gin.Default()
 
-	router.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "welcome to the User Management Service",
-		})
-	})
-	if err := router.Run(":" + port); err != nil {
+	router.POST("/user", api.Signup(conn))
+	if err := router.Run(":" + config.AppConfig.Port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
