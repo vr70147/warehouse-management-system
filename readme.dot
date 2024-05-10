@@ -1,0 +1,67 @@
+@startuml
+!define Rectangle class
+
+skinparam rectangle {
+    BackgroundColor PaleGreen
+    BorderColor DarkSlateGray
+}
+
+package "Warehouse Management System" {
+    Rectangle "User Management Service" {
+        database "User DB" {
+            folder "Tables" {
+                card "Users" as U
+                card "Roles" as R
+            }
+        }
+    }
+    
+    Rectangle "Order Processing Service" {
+        database "Order DB" {
+            folder "Tables" {
+                card "Orders" as O
+                card "Order_Items" as OI
+            }
+        }
+    }
+    
+    Rectangle "Inventory Management Service" {
+        database "Inventory DB" {
+            folder "Tables" {
+                card "Products" as P
+                card "Stock" as S
+            }
+        }
+    }
+    
+    Rectangle "Shipping & Receiving Service" {
+        database "Shipping DB" {
+            folder "Tables" {
+                card "Shipments" as SH
+                card "Receiving Logs" as RL
+                card "Shipping Logs" as SL
+            }
+        }
+    }
+    
+    Rectangle "Reporting & Analytics Service" {
+        database "Reports DB" {
+            folder "Tables" {
+                card "Reports" as Rep
+                card "Analytics" as A
+            }
+        }
+    }
+    
+    Rectangle "Integration Services" {
+    }
+}
+
+U -down-> O : Retrieves user details
+OI -down-> P : Checks product availability
+SH -down-> O : Updates order status
+RL -down-> S : Updates stock
+SL -down-> S : Updates stock
+Rep -left-> [All Databases] : Aggregates data
+
+@enduml
