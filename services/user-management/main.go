@@ -1,31 +1,30 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"os"
-	"user-management/internal/config"
+	"user-management/internal/api"
+	"user-management/internal/initializers"
 
 	"github.com/gin-gonic/gin"
 )
 
-func main() {
-	fmt.Println("hello")
-	config.LoadConfig()
-	startServer(config.AppConfig.Port)
-	dbUrl := os.Getenv("DATABASE_URL")
-	config.ConnectToDB(dbUrl)
+func init() {
+	initializers.LoadEnvVariables()
+	initializers.ConnectToDB()
+	initializers.SyncDatabse()
 }
 
-func startServer(port string) {
+func main() {
+
 	router := gin.Default()
 
-	router.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "welcome to the User Management Service",
-		})
-	})
-	if err := router.Run(":" + port); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
-	}
+	//initial Postgres
+	router.POST("/signup", api.Signup)
+	router.POST("/login", api.Login)
+	router.Run()
+
+	// router.POST("/user", api.Signup(conn))
+	// if err := router.Run(":" + os.Getenv("PORT")); err != nil {
+	// 	log.Fatalf("Failed to start server: %v", err)
+	// }
+
 }
