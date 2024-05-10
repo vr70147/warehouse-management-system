@@ -13,16 +13,18 @@ type Config struct {
 	Port        string
 }
 
-var AppConfig Config
+var appConfig Config
 
-func LoadConfig(configPath ...string) {
+func LoadConfig(configPaths ...string) {
+
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found")
 	}
 
-	AppConfig = Config{
+	appConfig = Config{
 		DatabaseUrl: os.Getenv("DATABASE_URL"),
 		JwtSecret:   os.Getenv("JWT_SECRET"),
 		Port:        os.Getenv("PORT"),
 	}
+
 }
