@@ -19,7 +19,7 @@ func main() {
 
 	//initial Postgres
 	router.POST("/signup", api.Signup)
-
+	router.POST("/login", api.Login)
 	router.Run()
 
 	// router.POST("/user", api.Signup(conn))
