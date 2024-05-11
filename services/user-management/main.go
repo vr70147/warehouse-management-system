@@ -20,6 +20,7 @@ func main() {
 	//initial Postgres
 	router.POST("/signup", api.Signup)
 	router.POST("/login", api.Login)
+	router.GET("/validate", api.RequireAuth, api.Validate)
 	router.Run()
 
 	// router.POST("/user", api.Signup(conn))
