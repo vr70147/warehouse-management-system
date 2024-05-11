@@ -1,11 +1,13 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type Roles struct {
 	gorm.Model
 	RoleName    string `gorm:"unique:not null"`
 	Description string
-	Permission  string
-	IsActive    bool `gorm:"default:true"`
+	Permission  string `gorm:"type:jsonb"`
+	IsActive    bool   `gorm:"default:true"`
 }
