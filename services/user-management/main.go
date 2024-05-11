@@ -21,11 +21,6 @@ func main() {
 	router.POST("/signup", api.Signup)
 	router.POST("/login", api.Login)
 	router.GET("/validate", api.RequireAuth, api.Validate)
+	router.POST("/logout", api.Logout)
 	router.Run()
-
-	// router.POST("/user", api.Signup(conn))
-	// if err := router.Run(":" + os.Getenv("PORT")); err != nil {
-	// 	log.Fatalf("Failed to start server: %v", err)
-	// }
-
 }
