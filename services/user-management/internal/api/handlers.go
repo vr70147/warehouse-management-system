@@ -28,7 +28,7 @@ func Signup(c *gin.Context) {
 
 	if c.Bind(&body) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "Faild to read body",
+			"error": "Faild to read body",
 		})
 		return
 	}
@@ -37,17 +37,17 @@ func Signup(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "Failed to hash password",
+			"error": "Failed to hash password",
 		})
 		return
 	}
 
-	user := model.User{Email: body.Email, Age: body.Age, BirthDate: body.BirthDate, Role: body.Role, Phone: body.Phone, Street: body.Street, City: body.City, Password: string(hash)}
+	user := model.User{Email: body.Email, Name: body.Name, Age: body.Age, BirthDate: body.BirthDate, Role: body.Role, Phone: body.Phone, Street: body.Street, City: body.City, Password: string(hash)}
 	result := initializers.DB.Create(&user)
 
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "Failed to create user",
+			"error": "Failed to create user",
 		})
 		return
 	}
@@ -62,7 +62,7 @@ func Login(c *gin.Context) {
 
 	if c.Bind(&body) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "Faild to read body",
+			"error": "Faild to read body",
 		})
 		return
 	}
@@ -71,7 +71,7 @@ func Login(c *gin.Context) {
 
 	if user.ID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "Invalid email or password",
+			"error": "Invalid email or password",
 		})
 		return
 	}
@@ -80,7 +80,7 @@ func Login(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "Invalid email or password",
+			"error": "Invalid email or password",
 		})
 		return
 	}
@@ -95,12 +95,18 @@ func Login(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "Failed to create token",
+			"error": "Failed to create token",
 		})
 		return
 	}
 
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("Authorization", tokenString, 3600*24*30, "", "", false, true)
+	c.JSON(http.StatusOK, gin.H{})
+}
+func Validate(c *gin.Context) {
+	user, _ := c.Get("user")
 	c.JSON(http.StatusOK, gin.H{
-		"Token": tokenString,
+		"Message": user,
 	})
 }
