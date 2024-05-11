@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 	"user-management/internal/initializers"
 	"user-management/internal/model"
@@ -10,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func Signup(c *gin.Context) {
@@ -117,4 +119,63 @@ func Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Successfully logged out",
 	})
+}
+
+func UpdateUser() {
+
+}
+
+func GetUsers(c *gin.Context) {
+	queryCondition := model.User{}
+
+	var queryExists bool
+
+	if name := c.Query("name"); name != "" {
+		queryCondition.Name = name
+		queryExists = true
+	}
+	if email := c.Query("email"); email != "" {
+		queryCondition.Email = email
+		queryExists = true
+	}
+	if age := c.Query("age"); age != "" {
+		i, _ := strconv.Atoi(age)
+		queryCondition.Age = i
+		queryExists = true
+	}
+	if phone := c.Query("phone"); phone != "" {
+		queryCondition.Phone = phone
+		queryExists = true
+	}
+	if role := c.Query("role"); role != "" {
+		queryCondition.Role = role
+		queryExists = true
+	}
+
+	var users []model.User
+	var result *gorm.DB
+
+	if queryExists || len(c.Params) == 0 {
+		result = initializers.DB.Where(&queryCondition).Find(&users)
+	} else {
+		result = initializers.DB.Find(&users)
+	}
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to retrieve users",
+		})
+		return
+	}
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "No users found matching the criteria",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"users": users,
+	})
+
 }

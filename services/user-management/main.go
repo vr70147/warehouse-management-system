@@ -22,5 +22,6 @@ func main() {
 	router.POST("/login", api.Login)
 	router.GET("/validate", api.RequireAuth, api.Validate)
 	router.POST("/logout", api.Logout)
+	router.GET("/users", api.GetUsers)
 	router.Run()
 }
