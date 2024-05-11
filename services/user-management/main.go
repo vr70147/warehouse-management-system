@@ -23,5 +23,6 @@ func main() {
 	router.GET("/validate", api.RequireAuth, api.Validate)
 	router.POST("/logout", api.Logout)
 	router.GET("/users", api.GetUsers)
+	router.PUT("/users/:id", api.UpdateUser)
 	router.Run()
 }

@@ -121,8 +121,70 @@ func Logout(c *gin.Context) {
 	})
 }
 
-func UpdateUser() {
+func UpdateUser(c *gin.Context) {
+	userID := c.Param("id")
+	var user model.User
 
+	result := initializers.DB.First(&user, userID)
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "User not found",
+		})
+		return
+	}
+	var updateUser model.User
+	if err := c.BindJSON(&updateUser); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Faild to bind user data",
+		})
+		return
+	}
+
+	if updateUser.Name != "" {
+		user.Name = updateUser.Name
+	}
+	if updateUser.Email != "" {
+		user.Email = updateUser.Email
+	}
+	if updateUser.Phone != "" {
+		user.Phone = updateUser.Phone
+	}
+	if updateUser.Street != "" {
+		user.Street = updateUser.Street
+	}
+	if updateUser.City != "" {
+		user.City = updateUser.City
+	}
+	if updateUser.Age != 0 {
+		user.Age = updateUser.Age
+	}
+	if updateUser.Role != "" {
+		user.Role = updateUser.Role
+	}
+	if updateUser.BirthDate != "" {
+		user.BirthDate = updateUser.BirthDate
+	}
+	if updateUser.Password != "" {
+		hash, err := bcrypt.GenerateFromPassword([]byte(updateUser.Password), 10)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Failed to hash password",
+			})
+			return
+		}
+		user.BirthDate = string(hash)
+	}
+	if err := initializers.DB.Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to update user",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "User updated successfuly",
+		"user":    user,
+	})
 }
 
 func GetUsers(c *gin.Context) {
