@@ -26,5 +26,6 @@ func main() {
 	router.PUT("/users/:id", api.RequireAuth, api.UpdateUser)
 	router.POST("/roles", api.RequireAuth, api.CreateRole)
 	router.PUT("/roles/:id", api.RequireAuth, api.UpdateRole)
+	router.GET("/roles", api.RequireAuth, api.GetRoles)
 	router.Run()
 }

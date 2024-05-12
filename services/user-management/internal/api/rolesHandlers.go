@@ -99,3 +99,40 @@ func UpdateRole(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Role updated successfully"})
 
 }
+
+func GetRoles(c *gin.Context) {
+	queryCondition := model.Roles{}
+
+	var queryExists bool
+
+	if roleName := c.Query("role_name"); roleName != "" {
+		queryCondition.RoleName = roleName
+		queryExists = true
+	}
+
+	var roles []model.Roles
+	var result *gorm.DB
+
+	if queryExists || len(c.Params) == 0 {
+		result = initializers.DB.Where(&queryCondition).Find(&roles)
+	} else {
+		result = initializers.DB.Find(&roles)
+	}
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to retrieve roles",
+		})
+		return
+	}
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "No roles found matching the criteria",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"roles": roles,
+	})
+}
