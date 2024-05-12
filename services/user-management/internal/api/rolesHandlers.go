@@ -97,7 +97,6 @@ func UpdateRole(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Role updated successfully"})
-
 }
 
 func GetRoles(c *gin.Context) {
