@@ -21,11 +21,10 @@ func main() {
 	router.POST("/signup", api.Signup)
 	router.POST("/login", api.Login)
 	router.GET("/validate", api.RequireAuth, api.Validate)
+	router.POST("/logout", api.Logout)
+	router.GET("/users", api.RequireAuth, api.GetUsers)
+	router.PUT("/users/:id", api.RequireAuth, api.UpdateUser)
+	router.POST("/roles", api.RequireAuth, api.CreateRole)
+	router.PUT("/roles/:id", api.RequireAuth, api.UpdateRole)
 	router.Run()
-
-	// router.POST("/user", api.Signup(conn))
-	// if err := router.Run(":" + os.Getenv("PORT")); err != nil {
-	// 	log.Fatalf("Failed to start server: %v", err)
-	// }
-
 }
