@@ -239,5 +239,47 @@ func GetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"users": users,
 	})
+}
 
+func DeleteUser(c *gin.Context) {
+	userID := c.Param("id")
+
+	result := initializers.DB.Delete(&model.User{}, userID)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to delete user",
+		})
+		return
+	}
+
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "No user found with the given ID",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfuly"})
+}
+
+func RecoverUser(c *gin.Context) {
+	userID := c.Param("id")
+
+	result := initializers.DB.Model(&model.User{}).Unscoped().Where("id = ?", userID).Update("deleted_at", nil)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to recover user",
+		})
+		return
+	}
+
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "No deleted user found with the given ID",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User recovered successfully"})
 }

@@ -97,5 +97,84 @@ func UpdateRole(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Role updated successfully"})
+}
 
+func GetRoles(c *gin.Context) {
+	queryCondition := model.Roles{}
+
+	var queryExists bool
+
+	if roleName := c.Query("role_name"); roleName != "" {
+		queryCondition.RoleName = roleName
+		queryExists = true
+	}
+
+	var roles []model.Roles
+	var result *gorm.DB
+
+	if queryExists || len(c.Params) == 0 {
+		result = initializers.DB.Where(&queryCondition).Find(&roles)
+	} else {
+		result = initializers.DB.Find(&roles)
+	}
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to retrieve roles",
+		})
+		return
+	}
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "No roles found matching the criteria",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"roles": roles,
+	})
+}
+
+func DeleteRole(c *gin.Context) {
+	roleID := c.Param("id")
+
+	result := initializers.DB.Delete(&model.Roles{}, roleID)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to delete role",
+		})
+		return
+	}
+
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "No role found with the given ID",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Role deleted successfuly"})
+}
+
+func RecoverRole(c *gin.Context) {
+	roleID := c.Param("id")
+
+	result := initializers.DB.Model(&model.Roles{}).Unscoped().Where("id = ?", roleID).Update("deleted_at", nil)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to recover role",
+		})
+		return
+	}
+
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "No deleted role found with the given ID",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Role recovered successfully"})
 }
