@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -16,27 +17,26 @@ import (
 
 func Signup(c *gin.Context) {
 	var body struct {
-		ID        int64  `json:"id"`
-		Name      string `json:"name"`
-		Email     string `json:"email" gorm:"unique"`
-		Age       int    `json:"age"`
-		BirthDate string `json:"birthDate"`
-		Role      string `json:"role"`
-		Phone     string `json:"phone" gorm:"unique"`
+		ID        int    `json:"personalID" gorm:"unique;not null"`
+		Name      string `json:"name" gorm:"unique;not null"`
+		Email     string `json:"email" gorm:"unique;not null"`
+		Age       int    `json:"age" gorm:"not null"`
+		BirthDate string `json:"birthDate" gorm:"not null"`
+		RoleName  string `json:"roleName"`
+		Phone     string `json:"phone" gorm:"unique; not null"`
 		Street    string `json:"street"`
 		City      string `json:"city"`
-		Password  string `json:"password"`
+		Password  string `json:"password" gorm:"not null"`
 	}
 
-	if c.Bind(&body) != nil {
+	if err := c.Bind(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Faild to read body",
+			"error": "Failed to read body",
 		})
 		return
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
-
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to hash password",
@@ -44,18 +44,36 @@ func Signup(c *gin.Context) {
 		return
 	}
 
-	user := model.User{Email: body.Email, Name: body.Name, Age: body.Age, BirthDate: body.BirthDate, Role: body.Role, Phone: body.Phone, Street: body.Street, City: body.City, Password: string(hash)}
-	result := initializers.DB.Create(&user)
-
-	if result.Error != nil {
+	var role model.Role
+	fmt.Println(body)
+	if result := initializers.DB.Where("role_name = ?", body.RoleName).First(&role); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to create user",
+			"error": "Role not found",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{})
+	user := model.User{
+		Email:     body.Email,
+		Name:      body.Name,
+		Age:       body.Age,
+		BirthDate: body.BirthDate,
+		RoleID:    role.ID,
+		Phone:     body.Phone,
+		Street:    body.Street,
+		City:      body.City,
+		Password:  string(hash),
+	}
+	if result := initializers.DB.Create(&user); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to create user: " + result.Error.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User registered successfully"})
 }
+
 func Login(c *gin.Context) {
 	var body struct {
 		Email    string `json:"email" gorm:"unique"`
@@ -158,9 +176,6 @@ func UpdateUser(c *gin.Context) {
 	if updateUser.Age != 0 {
 		user.Age = updateUser.Age
 	}
-	if updateUser.Role != "" {
-		user.Role = updateUser.Role
-	}
 	if updateUser.BirthDate != "" {
 		user.BirthDate = updateUser.BirthDate
 	}
@@ -209,18 +224,25 @@ func GetUsers(c *gin.Context) {
 		queryCondition.Phone = phone
 		queryExists = true
 	}
-	if role := c.Query("role"); role != "" {
-		queryCondition.Role = role
-		queryExists = true
+
+	var users []struct {
+		model.User
+		RoleName   string `gorm:"column:role_name"`
+		Permission string `gorm:"column:permission"`
+		IsActive   bool   `gorm:"column:is_active"`
 	}
 
-	var users []model.User
 	var result *gorm.DB
 
 	if queryExists || len(c.Params) == 0 {
-		result = initializers.DB.Where(&queryCondition).Find(&users)
+		result = initializers.DB.Model(&model.User{}).
+			Select("users.*, roles.role_name as role_name, roles.permission, roles.is_active").
+			Joins("left join roles on roles.id = users.role_id").
+			Where(&queryCondition).Scan(&users)
 	} else {
-		result = initializers.DB.Find(&users)
+		result = initializers.DB.Model(&model.User{}).
+			Select("users.*, roles.role_name as role_name, roles.permission, roles.is_active").
+			Joins("left join roles on roles.id = users.role_id").Scan(&users)
 	}
 
 	if result.Error != nil {

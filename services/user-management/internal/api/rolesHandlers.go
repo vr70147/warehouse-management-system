@@ -17,6 +17,7 @@ func CreateRole(c *gin.Context) {
 		Description string
 		Permission  map[string]interface{} `json:"permission" binding:"required"`
 		IsActive    bool                   `gorm:"default:true"`
+		Users       []model.User           `gorm:"foreignKey:RoleID"`
 	}
 
 	if c.Bind(&body) != nil {
@@ -32,7 +33,7 @@ func CreateRole(c *gin.Context) {
 		})
 		return
 	}
-	role := model.Roles{
+	role := model.Role{
 		RoleName:    body.RoleName,
 		Description: body.Description,
 		Permission:  string(permissionsJSON),
@@ -88,7 +89,7 @@ func UpdateRole(c *gin.Context) {
 		updateData["is_active"] = body.IsActive
 	}
 
-	result := initializers.DB.Model(&model.Roles{}).Where("id = ?", roleID).Updates(updateData)
+	result := initializers.DB.Model(&model.Role{}).Where("id = ?", roleID).Updates(updateData)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to update role",
@@ -100,7 +101,7 @@ func UpdateRole(c *gin.Context) {
 }
 
 func GetRoles(c *gin.Context) {
-	queryCondition := model.Roles{}
+	queryCondition := model.Role{}
 
 	var queryExists bool
 
@@ -109,7 +110,7 @@ func GetRoles(c *gin.Context) {
 		queryExists = true
 	}
 
-	var roles []model.Roles
+	var roles []model.Role
 	var result *gorm.DB
 
 	if queryExists || len(c.Params) == 0 {
@@ -139,7 +140,7 @@ func GetRoles(c *gin.Context) {
 func DeleteRole(c *gin.Context) {
 	roleID := c.Param("id")
 
-	result := initializers.DB.Delete(&model.Roles{}, roleID)
+	result := initializers.DB.Delete(&model.Role{}, roleID)
 
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -161,7 +162,7 @@ func DeleteRole(c *gin.Context) {
 func RecoverRole(c *gin.Context) {
 	roleID := c.Param("id")
 
-	result := initializers.DB.Model(&model.Roles{}).Unscoped().Where("id = ?", roleID).Update("deleted_at", nil)
+	result := initializers.DB.Model(&model.Role{}).Unscoped().Where("id = ?", roleID).Update("deleted_at", nil)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to recover role",

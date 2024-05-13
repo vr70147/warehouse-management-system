@@ -12,7 +12,7 @@ func Routers() {
 	router.POST("/logout", Logout)
 	router.GET("/users", RequireAuth, GetUsers)
 	router.PUT("/users/:id", RequireAuth, UpdateUser)
-	router.POST("/roles", RequireAuth, CreateRole)
+	router.POST("/roles", CreateRole)
 	router.PUT("/roles/:id", RequireAuth, UpdateRole)
 	router.GET("/roles", RequireAuth, GetRoles)
 	router.DELETE("/roles/:id", RequireAuth, DeleteRole)
