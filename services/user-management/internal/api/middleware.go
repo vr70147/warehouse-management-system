@@ -46,7 +46,6 @@ func RequireAuth(c *gin.Context) {
 		if user.ID == 0 {
 			c.AbortWithStatus(http.StatusUnauthorized)
 		}
-		fmt.Println(user)
 		c.Set("user", user)
 
 		c.Next()
@@ -54,4 +53,27 @@ func RequireAuth(c *gin.Context) {
 	} else {
 		c.AbortWithStatus(http.StatusUnauthorized)
 	}
+}
+
+func RequireAdmin(c *gin.Context) {
+	userInterface, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.Abort()
+		return
+	}
+	user, ok := userInterface.(model.User)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User data corrupted"})
+		c.Abort()
+		return
+	}
+
+	if !user.IsAdmin {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied, admin privileges required"})
+		c.Abort()
+		return
+	}
+
+	c.Next()
 }

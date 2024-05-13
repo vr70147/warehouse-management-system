@@ -16,4 +16,5 @@ type User struct {
 	Street    string `json:"street"`
 	City      string `json:"city"`
 	Password  string `json:"password" gorm:"not null"`
+	IsAdmin   bool   `json:"is_admin" gorm:"default: false"`
 }
