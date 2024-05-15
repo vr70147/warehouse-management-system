@@ -6,5 +6,6 @@ import (
 
 func SyncDatabse() {
 	DB.AutoMigrate(&model.User{})
-	DB.AutoMigrate(&model.Roles{})
+	DB.AutoMigrate(&model.Role{})
+	DB.AutoMigrate(&model.Role{}, &model.User{})
 }

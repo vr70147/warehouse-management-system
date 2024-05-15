@@ -22,8 +22,6 @@ func RequireAuth(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("Token received:", tokenString)
-
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -46,7 +44,6 @@ func RequireAuth(c *gin.Context) {
 		if user.ID == 0 {
 			c.AbortWithStatus(http.StatusUnauthorized)
 		}
-		fmt.Println(user)
 		c.Set("user", user)
 
 		c.Next()
@@ -54,4 +51,27 @@ func RequireAuth(c *gin.Context) {
 	} else {
 		c.AbortWithStatus(http.StatusUnauthorized)
 	}
+}
+
+func RequireAdmin(c *gin.Context) {
+	userInterface, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		c.Abort()
+		return
+	}
+	user, ok := userInterface.(model.User)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User data corrupted"})
+		c.Abort()
+		return
+	}
+
+	if !user.IsAdmin {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied, admin privileges required"})
+		c.Abort()
+		return
+	}
+
+	c.Next()
 }
