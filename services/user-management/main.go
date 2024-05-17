@@ -13,4 +13,6 @@ func init() {
 
 func main() {
 	api.Routers()
+	Producer()
+
 }
