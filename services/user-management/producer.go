@@ -2,20 +2,10 @@ package main
 
 import (
 	"log"
-	"user-management/internal/api"
-	"user-management/internal/initializers"
 	"user-management/internal/kafka"
 )
 
-func init() {
-	initializers.LoadEnvVariables()
-	initializers.ConnectToDB()
-	initializers.SyncDatabse()
-}
-
-func main() {
-	api.Routers()
-
+func Producer() {
 	broker := "localhost:9092"
 	topic := "user-events"
 	event := kafka.UserEvent{
