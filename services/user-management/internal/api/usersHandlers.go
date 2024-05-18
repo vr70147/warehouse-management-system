@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 	"user-management/internal/initializers"
+	"user-management/internal/kafka"
 	"user-management/internal/model"
 
 	"github.com/gin-gonic/gin"
@@ -17,16 +18,18 @@ import (
 
 func Signup(c *gin.Context) {
 	var body struct {
-		ID        int    `json:"personalID" gorm:"unique;not null"`
-		Name      string `json:"name" gorm:"unique;not null"`
-		Email     string `json:"email" gorm:"unique;not null"`
-		Age       int    `json:"age" gorm:"not null"`
-		BirthDate string `json:"birthDate" gorm:"not null"`
-		RoleName  string `json:"roleName"`
-		Phone     string `json:"phone" gorm:"unique; not null"`
-		Street    string `json:"street"`
-		City      string `json:"city"`
-		Password  string `json:"password" gorm:"not null"`
+		PersonalID string `json:"personal_id" gorm:"unique;not null"`
+		Name       string `json:"name" gorm:"unique;not null"`
+		Email      string `json:"email" gorm:"unique;not null"`
+		Age        int    `json:"age" gorm:"not null"`
+		BirthDate  string `json:"birthDate" gorm:"not null"`
+		RoleID     uint   `json:"role_id" gorm:"not null"`
+		Role       string `json:"role" gorm:"foreignKey:RoleID"`
+		Phone      string `json:"phone" gorm:"unique; not null"`
+		Street     string `json:"street"`
+		City       string `json:"city"`
+		Password   string `json:"password" gorm:"not null"`
+		IsAdmin    bool   `json:"is_admin" gorm:"default: false"`
 	}
 
 	if err := c.Bind(&body); err != nil {
@@ -46,7 +49,7 @@ func Signup(c *gin.Context) {
 
 	var role model.Role
 	fmt.Println(body)
-	if result := initializers.DB.Where("role_name = ?", body.RoleName).First(&role); result.Error != nil {
+	if result := initializers.DB.Where("id = ?", body.RoleID).First(&role); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Role not found",
 		})
@@ -54,15 +57,17 @@ func Signup(c *gin.Context) {
 	}
 
 	user := model.User{
-		Email:     body.Email,
-		Name:      body.Name,
-		Age:       body.Age,
-		BirthDate: body.BirthDate,
-		RoleID:    role.ID,
-		Phone:     body.Phone,
-		Street:    body.Street,
-		City:      body.City,
-		Password:  string(hash),
+		PersonalID: body.PersonalID,
+		Email:      body.Email,
+		Name:       body.Name,
+		Age:        body.Age,
+		BirthDate:  body.BirthDate,
+		RoleID:     role.ID,
+		Phone:      body.Phone,
+		Street:     body.Street,
+		City:       body.City,
+		Password:   string(hash),
+		IsAdmin:    body.IsAdmin,
 	}
 	if result := initializers.DB.Create(&user); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -75,6 +80,7 @@ func Signup(c *gin.Context) {
 }
 
 func Login(c *gin.Context) {
+
 	var body struct {
 		Email    string `json:"email" gorm:"unique"`
 		Password string `json:"password"`
@@ -119,6 +125,11 @@ func Login(c *gin.Context) {
 		})
 		return
 	}
+	event := model.UserEvent{
+		EventType: "UserLoggedIn",
+		User:      user,
+	}
+	kafka.ProducerUserEvent(event)
 
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("Authorization", tokenString, 3600*24*30, "", "", false, true)
@@ -227,22 +238,25 @@ func GetUsers(c *gin.Context) {
 
 	var users []struct {
 		model.User
-		RoleName   string `gorm:"column:role_name"`
+		RoleID     string `gorm:"column:role_id"`
 		Permission string `gorm:"column:permission"`
 		IsActive   bool   `gorm:"column:is_active"`
+		Department string `gorm:"column:department"`
 	}
 
 	var result *gorm.DB
 
 	if queryExists || len(c.Params) == 0 {
 		result = initializers.DB.Model(&model.User{}).
-			Select("users.*, roles.role_name as role_name, roles.permission, roles.is_active").
+			Select("users.*, roles.role as role, roles.permission, roles.is_active, departments.name as department").
 			Joins("left join roles on roles.id = users.role_id").
+			Joins("left join departments on departments.id = roles.department_id").
 			Where(&queryCondition).Scan(&users)
 	} else {
 		result = initializers.DB.Model(&model.User{}).
-			Select("users.*, roles.role_name as role_name, roles.permission, roles.is_active").
-			Joins("left join roles on roles.id = users.role_id").Scan(&users)
+			Select("users.*, roles.role as role, roles.permission, roles.is_active, departments.name as department").
+			Joins("left join roles on roles.id = users.role_id").
+			Joins("left join departments on departments.id = roles.department_id").Scan(&users)
 	}
 
 	if result.Error != nil {

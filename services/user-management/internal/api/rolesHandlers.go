@@ -13,11 +13,13 @@ import (
 
 func CreateRole(c *gin.Context) {
 	var body struct {
-		RoleName    string `gorm:"unique:not null"`
-		Description string
-		Permission  map[string]interface{} `json:"permission" binding:"required"`
-		IsActive    bool                   `gorm:"default:true"`
-		Users       []model.User           `gorm:"foreignKey:RoleID"`
+		Role         string `gorm:"unique:not null"`
+		Description  string
+		Permission   map[string]interface{} `json:"permission"`
+		IsActive     bool                   `gorm:"default:true"`
+		Users        []model.User           `gorm:"foreignKey:RoleID"`
+		DepartmentID uint                   `gorm:"not null"`
+		Department   model.Department       `gorm:"foreignKey:DepartmentID"`
 	}
 
 	if c.Bind(&body) != nil {
@@ -34,10 +36,11 @@ func CreateRole(c *gin.Context) {
 		return
 	}
 	role := model.Role{
-		RoleName:    body.RoleName,
-		Description: body.Description,
-		Permission:  string(permissionsJSON),
-		IsActive:    body.IsActive,
+		Role:         body.Role,
+		Description:  body.Description,
+		Permission:   string(permissionsJSON),
+		IsActive:     body.IsActive,
+		DepartmentID: body.DepartmentID,
 	}
 	result := initializers.DB.Create(&role)
 
@@ -56,10 +59,13 @@ func UpdateRole(c *gin.Context) {
 	log.Printf("Received roleID: %s", roleID)
 
 	var body struct {
-		RoleName    string                 `json:"roleName"`
-		Description string                 `json:"description"`
-		Permission  map[string]interface{} `json:"permission"`
-		IsActive    *bool                  `json:"isActive"`
+		Role         string `gorm:"unique:not null"`
+		Description  string
+		Permission   map[string]interface{} `json:"permission"`
+		IsActive     bool                   `gorm:"default:true"`
+		Users        []model.User           `gorm:"foreignKey:RoleID"`
+		DepartmentID uint                   `gorm:"not null"`
+		Department   model.Department       `gorm:"foreignKey:DepartmentID"`
 	}
 
 	if err := c.ShouldBindJSON(&body); err != nil {
@@ -69,8 +75,8 @@ func UpdateRole(c *gin.Context) {
 		return
 	}
 	updateData := make(map[string]interface{})
-	if body.RoleName != "" {
-		updateData["role_name"] = body.RoleName
+	if body.Role != "" {
+		updateData["role"] = body.Role
 	}
 	if body.Description != "" {
 		updateData["description"] = body.Description
@@ -84,9 +90,6 @@ func UpdateRole(c *gin.Context) {
 			return
 		}
 		updateData["permission"] = gorm.Expr("permission || ?", string(permissionJSON))
-	}
-	if body.IsActive != nil {
-		updateData["is_active"] = body.IsActive
 	}
 
 	result := initializers.DB.Model(&model.Role{}).Where("id = ?", roleID).Updates(updateData)
@@ -105,8 +108,8 @@ func GetRoles(c *gin.Context) {
 
 	var queryExists bool
 
-	if roleName := c.Query("role_name"); roleName != "" {
-		queryCondition.RoleName = roleName
+	if role := c.Query("role_name"); role != "" {
+		queryCondition.Role = role
 		queryExists = true
 	}
 

@@ -1,33 +1,32 @@
 package model
 
 import (
-	"inventory-management/internal/kafka"
-
 	"gorm.io/gorm"
 )
 
-type Item struct {
+type InventoryItem struct {
 	gorm.Model
 	Name        string `gorm:"not null"`
 	Description string
 	Quantity    int `gorm:"not null"`
+	LocationID  uint
 	Location    string
 }
 
-type Order struct {
+type Location struct {
 	gorm.Model
-	OrderNumber string `gorm:"unique;not null"`
-	UserID      uint
-	User        kafka.UserEvent
-	Items       []OrderItem `gorm:"many2many:order_items"`
-	Status      string      `gorm:"not null"`
+	Name        string `gorm:"unique;not null"`
+	Description string `gorm:"not null"`
 }
 
-type OrderItem struct {
+type StockMovement struct {
 	gorm.Model
-	OrderID         uint
 	InventoryItemID uint
-	Quantity        int `gorm:"not null"`
+	InventoryItem   InventoryItem
+	MovementType    string
+	Quantity        int
+	UserID          uint
+	Description     string
 }
 
 type Supplier struct {
@@ -35,5 +34,17 @@ type Supplier struct {
 	Name    string `gorm:"not null"`
 	Contact string
 	Email   string
-	Items   []Item `gorm:"many2many:supplier_items"`
+	Items   []InventoryItem `gorm:"many2many:supplier_items"`
+}
+
+type User struct {
+	ID      int
+	Name    string
+	Email   string
+	IsAdmin bool
+}
+
+type UserEvent struct {
+	EventType string `json:"event_type"`
+	User      User   `json:"user"`
 }
