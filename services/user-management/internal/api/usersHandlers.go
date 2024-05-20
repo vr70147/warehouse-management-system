@@ -118,6 +118,7 @@ func Login(c *gin.Context) {
 
 	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	fmt.Println(tokenString)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -133,13 +134,12 @@ func Login(c *gin.Context) {
 
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("Authorization", tokenString, 3600*24*30, "", "", false, true)
-	c.JSON(http.StatusOK, gin.H{})
-}
-func Validate(c *gin.Context) {
-	user, _ := c.Get("user")
 	c.JSON(http.StatusOK, gin.H{
-		"Message": user,
+		"message": "User authenticated successfully",
 	})
+}
+
+func CheckUserAuthentication(c *gin.Context) {
 }
 
 func Logout(c *gin.Context) {

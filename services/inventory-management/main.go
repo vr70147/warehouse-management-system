@@ -1,6 +1,9 @@
 package main
 
-import "inventory-management/internal/initializers"
+import (
+	"inventory-management/internal/api"
+	"inventory-management/internal/initializers"
+)
 
 func init() {
 	initializers.LoadEnvVariables()
@@ -9,4 +12,6 @@ func init() {
 }
 
 func main() {
+	api.Routers()
+
 }

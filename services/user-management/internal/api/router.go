@@ -7,7 +7,7 @@ func Routers() {
 
 	router.POST("/signup", Signup)
 	router.POST("/login", Login)
-	router.GET("/validate", RequireAuth, Validate)
+	// router.GET("/validate", RequireAuth, Validate)
 	router.POST("/logout", Logout)
 	router.GET("/users", RequireAuth, RequireAdmin, GetUsers)
 	router.PUT("/users/:id", RequireAuth, RequireAdmin, UpdateUser)
