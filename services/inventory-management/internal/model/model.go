@@ -4,47 +4,36 @@ import (
 	"gorm.io/gorm"
 )
 
-type InventoryItem struct {
+type Product struct {
 	gorm.Model
-	Name        string `gorm:"not null"`
-	Description string
-	Quantity    int `gorm:"not null"`
-	LocationID  uint
-	Location    string
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Price       float64  `json:"price"`
+	CategoryID  uint     `json:"category_id"`
+	Category    Category `json:"category"`
+	SupplierID  uint     `json:"supplier_id"`
+	Supplier    Supplier `json:"supplier"`
+	Stocks      []Stock  `json:"stocks" gorm:"foreignKey:ProductID;constraint:OnDelete:CASCADE;"`
 }
 
-type Location struct {
+type Stock struct {
 	gorm.Model
-	Name        string `gorm:"unique;not null"`
-	Description string `gorm:"not null"`
+	ProductID uint    `json:"product_id"`
+	Product   Product `json:"product"`
+	Quantity  uint    `json:"quantity"`
+	Location  string  `json:"location"`
 }
 
-type StockMovement struct {
+type Category struct {
 	gorm.Model
-	InventoryItemID uint
-	InventoryItem   InventoryItem
-	MovementType    string
-	Quantity        int
-	UserID          uint
-	Description     string
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Products    []Product `json:"products"`
 }
 
 type Supplier struct {
 	gorm.Model
-	Name    string `gorm:"not null"`
-	Contact string
-	Email   string
-	Items   []InventoryItem `gorm:"many2many:supplier_items"`
-}
-
-type User struct {
-	ID      int
-	Name    string
-	Email   string
-	IsAdmin bool
-}
-
-type UserEvent struct {
-	EventType string `json:"event_type"`
-	User      User   `json:"user"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Products    []Product `json:"products"`
 }
