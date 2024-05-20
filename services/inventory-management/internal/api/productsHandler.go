@@ -1,115 +1,153 @@
 package api
 
 import (
-	"inventory-management/internal/initializers"
 	"inventory-management/internal/model"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-func CreateProducts(c *gin.Context) {
-	var product model.Product
-	if err := c.ShouldBindBodyWithJSON(&product); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	initializers.DB.Create(&product)
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Product created successfuly",
-	})
-}
-
-func GetProducts(c *gin.Context) {
-	var products []model.Product
-	id := c.Query("id")
-	name := c.Query("name")
-	categoryID := c.Query("category")
-	supplierID := c.Query("supplier")
-
-	query := initializers.DB.Preload("Category").Preload("Supplier").Preload("Stocks")
-
-	if id != "" {
-		if err := query.Where("id = ?", id).First(&products).Error; err != nil {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Product not found",
-			})
+// @Summary Create a new product
+// @Description Add a new product to the inventory
+// @Tags products
+// @Accept json
+// @Produce json
+// @Param product body model.Product true "Product to create"
+// @Success 200 {object} model.Product
+// @Failure 400 {object} model.ErrorResponse
+// @Router /products [post]
+func createProduct(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var product model.Product
+		if err := c.ShouldBindJSON(&product); err != nil {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Message: err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, products[0])
-		return
+		db.Create(&product)
+		c.JSON(http.StatusOK, product)
 	}
-
-	if name != "" {
-		query = query.Where("name LIKE ?", "%"+name+"%")
-	}
-
-	if categoryID != "" {
-		query = query.Where("category = ?", "%"+categoryID+"%")
-	}
-
-	if supplierID != "" {
-		query = query.Where("supplier = ?", "%"+supplierID+"%")
-	}
-
-	query.Find(&products)
-	c.JSON(http.StatusOK, products)
 }
 
-func UpdateProduct(c *gin.Context) {
-	id := c.Param("id")
-	var product model.Product
-	if err := initializers.DB.Where("id = ?", id).First(&product).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Product not found",
-		})
-		return
-	}
+// @Summary Get all products or filter by various criteria
+// @Description Retrieve all products or filter by ID, name, category ID, or supplier ID
+// @Tags products
+// @Produce json
+// @Param id query int false "Product ID"
+// @Param name query string false "Product name"
+// @Param category_id query int false "Category ID"
+// @Param supplier_id query int false "Supplier ID"
+// @Success 200 {array} model.Product
+// @Router /products [get]
+func getProducts(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var products []model.Product
+		id := c.Query("id")
+		name := c.Query("name")
+		categoryID := c.Query("category_id")
+		supplierID := c.Query("supplier_id")
 
-	if err := c.ShouldBindJSON(&product); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
+		query := db.Preload("Category").Preload("Supplier").Preload("Stocks")
 
-	initializers.DB.Save(&product)
-	c.JSON(http.StatusOK, product)
+		if id != "" {
+			if err := query.Where("id = ?", id).First(&products).Error; err != nil {
+				c.JSON(http.StatusNotFound, model.ErrorResponse{Message: "Product not found"})
+				return
+			}
+			c.JSON(http.StatusOK, products[0])
+			return
+		}
+
+		if name != "" {
+			query = query.Where("name LIKE ?", "%"+name+"%")
+		}
+
+		if categoryID != "" {
+			query = query.Where("category_id = ?", categoryID)
+		}
+
+		if supplierID != "" {
+			query = query.Where("supplier_id = ?", supplierID)
+		}
+
+		query.Find(&products)
+		c.JSON(http.StatusOK, products)
+	}
 }
 
-func DeleteProduct(c *gin.Context) {
-	id := c.Param("id")
-	if err := initializers.DB.Where("id = ?", id).Delete(&model.Product{}).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Product not found",
-		})
-		return
-	}
+// @Summary Update an existing product
+// @Description Update details of an existing product
+// @Tags products
+// @Accept json
+// @Produce json
+// @Param id path int true "Product ID"
+// @Param product body model.Product true "Product to update"
+// @Success 200 {object} model.Product
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Router /products/{id} [put]
+func updateProduct(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var product model.Product
+		if err := db.Where("id = ?", c.Param("id")).First(&product).Error; err != nil {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Message: "Product not found"})
+			return
+		}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Product deleted successfuly"})
+		if err := c.ShouldBindJSON(&product); err != nil {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Message: err.Error()})
+			return
+		}
+
+		db.Save(&product)
+		c.JSON(http.StatusOK, product)
+	}
 }
 
-func DeleteProductPermanently(c *gin.Context) {
-	id := c.Param("id")
-	trns := initializers.DB.Begin()
-
-	if err := trns.Where("product_id = ?", id).Unscoped().Delete(&model.Stock{}).Error; err != nil {
-		trns.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to delete product",
-		})
-		return
+// @Summary Soft delete an existing product
+// @Description Soft delete a product by ID
+// @Tags products
+// @Param id path int true "Product ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Router /products/{id} [delete]
+func softDeleteProduct(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if err := db.Where("id = ?", c.Param("id")).Delete(&model.Product{}).Error; err != nil {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Message: "Product not found"})
+			return
+		}
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Product soft deleted"})
 	}
+}
 
-	if err := trns.Unscoped().Where("id = ?", c.Param("id")).Delete(&model.Product{}).Error; err != nil {
-		trns.Rollback()
-		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
-		return
+// @Summary Hard delete an existing product and its stocks
+// @Description Hard delete a product by ID along with its associated stocks
+// @Tags products
+// @Param id path int true "Product ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /products/hard/{id} [delete]
+func hardDeleteProduct(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tx := db.Begin()
+
+		// Delete associated stocks
+		if err := tx.Where("product_id = ?", c.Param("id")).Unscoped().Delete(&model.Stock{}).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Message: "Failed to delete associated stocks"})
+			return
+		}
+
+		// Delete the product
+		if err := tx.Unscoped().Where("id = ?", c.Param("id")).Delete(&model.Product{}).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Message: "Product not found"})
+			return
+		}
+
+		tx.Commit()
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Product and associated stocks hard deleted"})
 	}
-
-	trns.Commit()
-	c.JSON(http.StatusOK, gin.H{"message": "Product and associated stocks hard deleted"})
 }

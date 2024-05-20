@@ -1,15 +1,20 @@
 package api
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+)
 
-func Routers() {
-	r := gin.Default()
+// router function
+func Routers(r *gin.Engine, db *gorm.DB) {
+	products := r.Group("/products")
 
-	r.POST("/inventory/products", CreateProducts)
-	r.GET("/inventory/products", GetProducts)
-	r.PUT("/inventory/products/:id", UpdateProduct)
-	r.DELETE("/inventory/products/:id", DeleteProduct)
-	r.DELETE("/inventory/products/hard/:id", DeleteProductPermanently)
+	// Swagger documentation endpoint
 
-	r.Run()
+	products.POST("/inventory/products", createProduct(db))
+	products.GET("/inventory/products", getProducts(db))
+	products.PUT("/inventory/products/:id", updateProduct(db))
+	products.DELETE("/inventory/products/:id", softDeleteProduct(db))
+	products.DELETE("/inventory/products/hard/:id", hardDeleteProduct(db))
+
 }

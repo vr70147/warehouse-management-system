@@ -2,6 +2,7 @@ package initializers
 
 import (
 	"fmt"
+	"inventory-management/internal/model"
 	"os"
 
 	"gorm.io/driver/postgres"
@@ -24,4 +25,6 @@ func ConnectToDB() {
 	if err != nil {
 		panic("Failed to connect to db")
 	}
+
+	DB.AutoMigrate(&model.Product{}, &model.Stock{}, &model.Category{}, &model.Supplier{})
 }
