@@ -158,7 +158,7 @@ func GetUsersByDepartment(c *gin.Context) {
 
 	var users []struct {
 		model.User
-		RoleName       string `gorm:"column:role_name"`
+		Role           string `gorm:"column:role"`
 		Permission     string `gorm:"column:permission"`
 		IsActive       bool   `gorm:"column:is_active"`
 		DepartmentName string `gorm:"column:department_name"`
@@ -166,7 +166,7 @@ func GetUsersByDepartment(c *gin.Context) {
 
 	// Fetch users from the database
 	result := initializers.DB.Table("users").
-		Select("users.*, roles.role_name as role_name, roles.permission, roles.is_active, departments.name as department_name").
+		Select("users.*, roles.role as role, roles.permission, roles.is_active, departments.name as department_name").
 		Joins("left join roles on roles.id = users.role_id").
 		Joins("left join departments on departments.id = roles.department_id").
 		Where("departments.name = ?", departmentName).

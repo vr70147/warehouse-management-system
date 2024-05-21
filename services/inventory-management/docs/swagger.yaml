@@ -1,0 +1,247 @@
+basePath: /
+definitions:
+  model.Category:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  model.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  model.Product:
+    properties:
+      category:
+        $ref: '#/definitions/model.Category'
+      category_id:
+        type: integer
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      price:
+        type: number
+      stocks:
+        items:
+          $ref: '#/definitions/model.Stock'
+        type: array
+      supplier:
+        $ref: '#/definitions/model.Supplier'
+      supplier_id:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  model.Stock:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: integer
+      location:
+        type: string
+      product:
+        $ref: '#/definitions/model.Product'
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  model.SuccessResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  model.Supplier:
+    properties:
+      contact:
+        type: string
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      description:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: localhost:8081
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server for managing inventory.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Inventory API
+  version: "1.0"
+paths:
+  /products:
+    get:
+      description: Retrieve all products or filter by ID, name, category ID, or supplier
+        ID
+      parameters:
+      - description: Product ID
+        in: query
+        name: id
+        type: integer
+      - description: Product name
+        in: query
+        name: name
+        type: string
+      - description: Category ID
+        in: query
+        name: category_id
+        type: integer
+      - description: Supplier ID
+        in: query
+        name: supplier_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Product'
+            type: array
+      summary: Get all products or filter by various criteria
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: Add a new product to the inventory
+      parameters:
+      - description: Product to create
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/model.Product'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Product'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Create a new product
+      tags:
+      - products
+  /products/{id}:
+    delete:
+      description: Soft delete a product by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Soft delete an existing product
+      tags:
+      - products
+    put:
+      consumes:
+      - application/json
+      description: Update details of an existing product
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Product to update
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/model.Product'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Product'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Update an existing product
+      tags:
+      - products
+  /products/hard/{id}:
+    delete:
+      description: Hard delete a product by ID along with its associated stocks
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Hard delete an existing product and its stocks
+      tags:
+      - products
+swagger: "2.0"

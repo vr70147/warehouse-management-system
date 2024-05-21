@@ -1,39 +1,59 @@
 package model
 
 import (
-	"inventory-management/internal/kafka"
-
-	"gorm.io/gorm"
+	"time"
 )
 
-type Item struct {
-	gorm.Model
-	Name        string `gorm:"not null"`
-	Description string
-	Quantity    int `gorm:"not null"`
-	Location    string
+type Product struct {
+	ID          uint       `gorm:"primarykey" json:"id"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	DeletedAt   *time.Time `gorm:"index" json:"deleted_at,omitempty"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	Price       float64    `json:"price"`
+	CategoryID  uint       `json:"category_id"`
+	Category    Category   `json:"category"`
+	SupplierID  uint       `json:"supplier_id"`
+	Supplier    Supplier   `json:"supplier"`
+	Stocks      []Stock    `json:"stocks" gorm:"foreignKey:ProductID;constraint:OnDelete:CASCADE;"`
 }
 
-type Order struct {
-	gorm.Model
-	OrderNumber string `gorm:"unique;not null"`
-	UserID      uint
-	User        kafka.UserEvent
-	Items       []OrderItem `gorm:"many2many:order_items"`
-	Status      string      `gorm:"not null"`
+type Stock struct {
+	ID        uint       `gorm:"primarykey" json:"id"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DeletedAt *time.Time `gorm:"index" json:"deleted_at,omitempty"`
+	ProductID uint       `json:"product_id"`
+	Product   Product    `json:"product"`
+	Quantity  uint       `json:"quantity"`
+	Location  string     `json:"location"`
 }
 
-type OrderItem struct {
-	gorm.Model
-	OrderID         uint
-	InventoryItemID uint
-	Quantity        int `gorm:"not null"`
+type Category struct {
+	ID          uint       `gorm:"primarykey" json:"id"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	DeletedAt   *time.Time `gorm:"index" json:"deleted_at,omitempty"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
 }
 
 type Supplier struct {
-	gorm.Model
-	Name    string `gorm:"not null"`
-	Contact string
-	Email   string
-	Items   []Item `gorm:"many2many:supplier_items"`
+	ID          uint       `gorm:"primarykey" json:"id"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	DeletedAt   *time.Time `gorm:"index" json:"deleted_at,omitempty"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	Email       string     `json:"email"`
+	Contact     string     `json:"contact"`
+}
+
+type ErrorResponse struct {
+	Message string `json:"message"`
+}
+
+type SuccessResponse struct {
+	Message string `json:"message"`
 }

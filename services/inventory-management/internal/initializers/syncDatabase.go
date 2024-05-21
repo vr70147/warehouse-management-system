@@ -5,8 +5,5 @@ import (
 )
 
 func SyncDatabse() {
-	DB.AutoMigrate(&model.Item{})
-	DB.AutoMigrate(&model.Order{})
-	DB.AutoMigrate(&model.OrderItem{})
-	DB.AutoMigrate(&model.Supplier{})
+	DB.AutoMigrate(&model.Product{}, &model.Stock{}, &model.Category{}, &model.Supplier{})
 }
