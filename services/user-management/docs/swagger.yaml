@@ -1,0 +1,695 @@
+basePath: /
+definitions:
+  model.Department:
+    properties:
+      created_at:
+        type: string
+      department:
+        type: string
+      id:
+        type: integer
+      roles:
+        items:
+          $ref: '#/definitions/model.Role'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  model.DepartmentResponse:
+    properties:
+      department:
+        type: string
+      roles:
+        items:
+          $ref: '#/definitions/model.Role'
+        type: array
+    type: object
+  model.DepartmentsResponse:
+    properties:
+      department:
+        items:
+          $ref: '#/definitions/model.DepartmentResponse'
+        type: array
+      message:
+        type: string
+    type: object
+  model.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  model.Role:
+    properties:
+      created_at:
+        type: string
+      department:
+        $ref: '#/definitions/model.Department'
+      departmentID:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      permission:
+        type: string
+      role:
+        type: string
+      updated_at:
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/model.User'
+        type: array
+    type: object
+  model.RolesResponse:
+    properties:
+      message:
+        type: string
+      roles:
+        items:
+          $ref: '#/definitions/model.Role'
+        type: array
+    type: object
+  model.SuccessResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  model.UpdateUserResponse:
+    properties:
+      message:
+        type: string
+      user:
+        $ref: '#/definitions/model.User'
+    type: object
+  model.User:
+    properties:
+      age:
+        type: integer
+      birthDate:
+        type: string
+      city:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      is_admin:
+        type: boolean
+      name:
+        type: string
+      password:
+        type: string
+      personal_id:
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+      role_id:
+        type: integer
+      street:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  model.UserResponse:
+    properties:
+      age:
+        type: integer
+      birthDate:
+        type: string
+      city:
+        type: string
+      created_at:
+        type: string
+      department:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      is_admin:
+        type: boolean
+      name:
+        type: string
+      password:
+        type: string
+      permission:
+        type: string
+      personal_id:
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+      role_id:
+        type: string
+      street:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  model.UsersResponse:
+    properties:
+      message:
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/model.UserResponse'
+        type: array
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a user management server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: User Management API
+  version: "1.0"
+paths:
+  /check-auth:
+    get:
+      description: Verify if the user is authenticated
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Check user authentication
+      tags:
+      - users
+  /departments:
+    get:
+      description: Retrieve all departments or filter by query parameters
+      parameters:
+      - description: Name
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.DepartmentsResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Get all departments
+      tags:
+      - departments
+    post:
+      consumes:
+      - application/json
+      description: Create a new department
+      parameters:
+      - description: Department data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Department'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Create a new department
+      tags:
+      - departments
+  /departments/{id}:
+    delete:
+      description: Delete a department by ID
+      parameters:
+      - description: Department ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Delete a department
+      tags:
+      - departments
+    put:
+      consumes:
+      - application/json
+      description: Update a department by ID
+      parameters:
+      - description: Department ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Department data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Department'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Update a department
+      tags:
+      - departments
+  /departments/{id}/recover:
+    post:
+      description: Recover a soft-deleted department by ID
+      parameters:
+      - description: Department ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Recover a deleted department
+      tags:
+      - departments
+  /departments/users:
+    get:
+      description: Retrieve users by department name
+      parameters:
+      - description: Department name
+        in: query
+        name: department
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.UsersResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Get users by department
+      tags:
+      - departments
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return a JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Login user
+      tags:
+      - users
+  /logout:
+    post:
+      description: Logout user and clear the authentication cookie
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+      summary: Logout user
+      tags:
+      - users
+  /roles:
+    get:
+      description: Retrieve all roles or filter by query parameters
+      parameters:
+      - description: Role name
+        in: query
+        name: role_name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.RolesResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Get all roles
+      tags:
+      - roles
+    post:
+      consumes:
+      - application/json
+      description: Create a new role with permissions and department
+      parameters:
+      - description: Role data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Role'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Create a new role
+      tags:
+      - roles
+  /roles/{id}:
+    delete:
+      description: Delete a role by ID
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Delete a role
+      tags:
+      - roles
+    put:
+      consumes:
+      - application/json
+      description: Update a role by ID
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Role data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Role'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Update a role
+      tags:
+      - roles
+  /roles/{id}/recover:
+    post:
+      description: Recover a soft-deleted role by ID
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Recover a deleted role
+      tags:
+      - roles
+  /signup:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with personal details and role
+      parameters:
+      - description: User data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Signup a new user
+      tags:
+      - users
+  /users:
+    get:
+      description: Retrieve all users or filter by query parameters
+      parameters:
+      - description: Name
+        in: query
+        name: name
+        type: string
+      - description: Email
+        in: query
+        name: email
+        type: string
+      - description: Age
+        in: query
+        name: age
+        type: integer
+      - description: Phone
+        in: query
+        name: phone
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Get all users
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      description: Delete a user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Delete a user
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Update user information by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.UpdateUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Update user details
+      tags:
+      - users
+  /users/{id}/recover:
+    post:
+      description: Recover a soft-deleted user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Recover a deleted user
+      tags:
+      - users
+swagger: "2.0"

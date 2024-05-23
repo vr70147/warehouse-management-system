@@ -9,8 +9,6 @@ import (
 func Routers(r *gin.Engine, db *gorm.DB) {
 	products := r.Group("/products")
 
-	// Swagger documentation endpoint
-
 	products.POST("/inventory/products", createProduct(db))
 	products.GET("/inventory/products", getProducts(db))
 	products.PUT("/inventory/products/:id", updateProduct(db))
