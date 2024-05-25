@@ -1,12 +1,14 @@
 package model
 
 import (
-	"gorm.io/gorm"
+	"time"
 )
 
 type Role struct {
-	gorm.Model
-	Role         string `gorm:"unique:not null"`
+	ID           uint      `gorm:"primarykey" json:"id"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	Role         string    `gorm:"unique:not null"`
 	Description  string
 	Permission   string     `gorm:"type:jsonb"`
 	IsActive     bool       `gorm:"default:true"`
