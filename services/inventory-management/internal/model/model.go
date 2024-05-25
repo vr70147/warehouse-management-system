@@ -13,9 +13,9 @@ type Product struct {
 	Description string     `json:"description"`
 	Price       float64    `json:"price"`
 	CategoryID  uint       `json:"category_id"`
-	Category    Category   `json:"category"`
+	Category    Category   `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"category"`
 	SupplierID  uint       `json:"supplier_id"`
-	Supplier    Supplier   `json:"supplier"`
+	Supplier    Supplier   `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"supplier"`
 	Stocks      []Stock    `json:"stocks" gorm:"foreignKey:ProductID;constraint:OnDelete:CASCADE;"`
 }
 

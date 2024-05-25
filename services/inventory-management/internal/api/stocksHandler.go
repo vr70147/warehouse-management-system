@@ -131,7 +131,7 @@ func GetStocks(db *gorm.DB) gin.HandlerFunc {
 // @Failure 404 {object} model.ErrorResponse
 // @Failure 500 {object} model.ErrorResponse
 // @Router /stocks/{id} [delete]
-func DeleteStock(db *gorm.DB) gin.HandlerFunc {
+func SoftDeleteStock(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		stockID := c.Param("id")
 

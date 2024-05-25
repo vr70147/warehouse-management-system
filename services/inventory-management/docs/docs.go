@@ -141,14 +141,55 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a category by ID",
+                "description": "Soft deletes a category and reassigns its products to the default category",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "categories"
                 ],
-                "summary": "Delete a category",
+                "summary": "Soft delete a category",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/categories/{id}/hard": {
+            "delete": {
+                "description": "Hard deletes a category and reassigns its products to the default category",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Hard delete a category",
                 "parameters": [
                     {
                         "type": "integer",
@@ -182,7 +223,7 @@ const docTemplate = `{
         },
         "/categories/{id}/recover": {
             "post": {
-                "description": "Recover a soft-deleted category by ID",
+                "description": "Recover a soft-deleted category by ID and reassign its products back to the category",
                 "produces": [
                     "application/json"
                 ],
@@ -757,6 +798,41 @@ const docTemplate = `{
                 }
             }
         },
+        "/suppliers/hard/{id}": {
+            "delete": {
+                "description": "Hard deletes a supplier by ID and sets the supplier field in related products to null",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "suppliers"
+                ],
+                "summary": "Hard delete a supplier",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Supplier ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SuccessResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/suppliers/{id}": {
             "put": {
                 "description": "Update a supplier by ID",
@@ -810,14 +886,14 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Hard delete a supplier by ID",
+                "description": "Soft deletes a supplier by ID and sets the supplier field in related products to null",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "suppliers"
                 ],
-                "summary": "Hard delete a supplier",
+                "summary": "Soft delete a supplier",
                 "parameters": [
                     {
                         "type": "integer",
@@ -834,6 +910,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/model.SuccessResponse"
                         }
                     },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -845,7 +927,7 @@ const docTemplate = `{
         },
         "/suppliers/{id}/recover": {
             "post": {
-                "description": "Recover a soft-deleted supplier by ID",
+                "description": "Recover a soft-deleted supplier by ID and reassign its products back to the supplier",
                 "produces": [
                     "application/json"
                 ],
@@ -1130,7 +1212,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Inventory API",
-	Description:      "This is a sample server for managing inventory.",
+	Description:      "This is a server for managing inventory.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
