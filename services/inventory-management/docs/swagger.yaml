@@ -1,5 +1,14 @@
 basePath: /
 definitions:
+  model.CategoriesResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/model.CategoryResponse'
+        type: array
+      message:
+        type: string
+    type: object
   model.Category:
     properties:
       created_at:
@@ -14,6 +23,15 @@ definitions:
         type: string
       updated_at:
         type: string
+    type: object
+  model.CategoryResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      parent_id:
+        type: integer
     type: object
   model.ErrorResponse:
     properties:
@@ -68,6 +86,26 @@ definitions:
       updated_at:
         type: string
     type: object
+  model.StockResponse:
+    properties:
+      id:
+        type: integer
+      location:
+        type: string
+      product_name:
+        type: string
+      quantity:
+        type: integer
+    type: object
+  model.StocksResponse:
+    properties:
+      message:
+        type: string
+      stocks:
+        items:
+          $ref: '#/definitions/model.StockResponse'
+        type: array
+    type: object
   model.SuccessResponse:
     properties:
       message:
@@ -92,6 +130,28 @@ definitions:
       updated_at:
         type: string
     type: object
+  model.SupplierResponse:
+    properties:
+      contact:
+        type: string
+      description:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  model.SuppliersResponse:
+    properties:
+      message:
+        type: string
+      suppliers:
+        items:
+          $ref: '#/definitions/model.SupplierResponse'
+        type: array
+    type: object
 host: localhost:8081
 info:
   contact:
@@ -106,6 +166,136 @@ info:
   title: Inventory API
   version: "1.0"
 paths:
+  /categories:
+    get:
+      description: Retrieve all categories or filter by query parameters
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.CategoriesResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Get all categories
+      tags:
+      - categories
+    post:
+      consumes:
+      - application/json
+      description: Create a new category in the inventory
+      parameters:
+      - description: Category data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Category'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Create a new category
+      tags:
+      - categories
+  /categories/{id}:
+    delete:
+      description: Delete a category by ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Delete a category
+      tags:
+      - categories
+    put:
+      consumes:
+      - application/json
+      description: Update a category by ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Category data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Category'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Update a category
+      tags:
+      - categories
+  /categories/{id}/recover:
+    post:
+      description: Recover a soft-deleted category by ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Recover a deleted category
+      tags:
+      - categories
   /products:
     get:
       description: Retrieve all products or filter by ID, name, category ID, or supplier
@@ -219,6 +409,27 @@ paths:
       summary: Update an existing product
       tags:
       - products
+  /products/{id}/recover:
+    post:
+      description: Recover a soft-deleted product by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Recover a soft-deleted product
+      tags:
+      - products
   /products/hard/{id}:
     delete:
       description: Hard delete a product by ID along with its associated stocks
@@ -244,4 +455,283 @@ paths:
       summary: Hard delete an existing product and its stocks
       tags:
       - products
+  /stocks:
+    get:
+      description: Retrieve all stock items or filter by query parameters
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.StocksResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Get all stock items
+      tags:
+      - stocks
+    post:
+      consumes:
+      - application/json
+      description: Create a new stock item in the inventory
+      parameters:
+      - description: Stock data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Stock'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Create a new stock item
+      tags:
+      - stocks
+  /stocks/{id}:
+    delete:
+      description: Delete a stock item by ID
+      parameters:
+      - description: Stock ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Delete a stock item
+      tags:
+      - stocks
+    put:
+      consumes:
+      - application/json
+      description: Update a stock item by ID
+      parameters:
+      - description: Stock ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Stock data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Stock'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Update a stock item
+      tags:
+      - stocks
+  /stocks/{id}/hard:
+    delete:
+      description: Permanently delete a stock item by ID
+      parameters:
+      - description: Stock ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Hard delete a stock item
+      tags:
+      - stocks
+  /stocks/{id}/recover:
+    post:
+      description: Recover a soft-deleted stock item by ID
+      parameters:
+      - description: Stock ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Recover a deleted stock item
+      tags:
+      - stocks
+  /suppliers:
+    get:
+      description: Retrieve all suppliers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuppliersResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Get all suppliers
+      tags:
+      - suppliers
+    post:
+      consumes:
+      - application/json
+      description: Create a new supplier in the inventory
+      parameters:
+      - description: Supplier data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Supplier'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Create a new supplier
+      tags:
+      - suppliers
+  /suppliers/{id}:
+    delete:
+      description: Hard delete a supplier by ID
+      parameters:
+      - description: Supplier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Hard delete a supplier
+      tags:
+      - suppliers
+    put:
+      consumes:
+      - application/json
+      description: Update a supplier by ID
+      parameters:
+      - description: Supplier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Supplier data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Supplier'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Update a supplier
+      tags:
+      - suppliers
+  /suppliers/{id}/recover:
+    post:
+      description: Recover a soft-deleted supplier by ID
+      parameters:
+      - description: Supplier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Recover a deleted supplier
+      tags:
+      - suppliers
 swagger: "2.0"
