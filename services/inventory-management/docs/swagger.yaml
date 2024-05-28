@@ -158,7 +158,7 @@ info:
     email: support@swagger.io
     name: API Support
     url: http://www.swagger.io/support
-  description: This is a sample server for managing inventory.
+  description: This is a server for managing inventory.
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -210,7 +210,8 @@ paths:
       - categories
   /categories/{id}:
     delete:
-      description: Delete a category by ID
+      description: Soft deletes a category and reassigns its products to the default
+        category
       parameters:
       - description: Category ID
         in: path
@@ -232,7 +233,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.ErrorResponse'
-      summary: Delete a category
+      summary: Soft delete a category
       tags:
       - categories
     put:
@@ -269,9 +270,38 @@ paths:
       summary: Update a category
       tags:
       - categories
+  /categories/{id}/hard:
+    delete:
+      description: Hard deletes a category and reassigns its products to the default
+        category
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Hard delete a category
+      tags:
+      - categories
   /categories/{id}/recover:
     post:
-      description: Recover a soft-deleted category by ID
+      description: Recover a soft-deleted category by ID and reassign its products
+        back to the category
       parameters:
       - description: Category ID
         in: path
@@ -652,7 +682,8 @@ paths:
       - suppliers
   /suppliers/{id}:
     delete:
-      description: Hard delete a supplier by ID
+      description: Soft deletes a supplier by ID and sets the supplier field in related
+        products to null
       parameters:
       - description: Supplier ID
         in: path
@@ -666,11 +697,15 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.ErrorResponse'
-      summary: Hard delete a supplier
+      summary: Soft delete a supplier
       tags:
       - suppliers
     put:
@@ -709,7 +744,8 @@ paths:
       - suppliers
   /suppliers/{id}/recover:
     post:
-      description: Recover a soft-deleted supplier by ID
+      description: Recover a soft-deleted supplier by ID and reassign its products
+        back to the supplier
       parameters:
       - description: Supplier ID
         in: path
@@ -732,6 +768,30 @@ paths:
           schema:
             $ref: '#/definitions/model.ErrorResponse'
       summary: Recover a deleted supplier
+      tags:
+      - suppliers
+  /suppliers/hard/{id}:
+    delete:
+      description: Hard deletes a supplier by ID and sets the supplier field in related
+        products to null
+      parameters:
+      - description: Supplier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Hard delete a supplier
       tags:
       - suppliers
 swagger: "2.0"

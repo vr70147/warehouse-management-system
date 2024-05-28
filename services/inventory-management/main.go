@@ -2,7 +2,7 @@ package main
 
 import (
 	_ "inventory-management/docs"
-	"inventory-management/internal/api"
+	"inventory-management/internal/api/routes"
 	"inventory-management/internal/initializers"
 
 	"github.com/gin-gonic/gin"
@@ -13,12 +13,11 @@ import (
 func init() {
 	initializers.LoadEnvVariables()
 	initializers.ConnectToDB()
-	initializers.SyncDatabse()
 }
 
 // @title Inventory API
 // @version 1.0
-// @description This is a sample server for managing inventory.
+// @description This is a server for managing inventory.
 // @termsOfService http://swagger.io/terms/
 
 // @contact.name API Support
@@ -36,7 +35,7 @@ func main() {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	api.Routers(r, initializers.DB)
+	routes.Routers(r, initializers.DB)
 
 	r.Run()
 

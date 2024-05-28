@@ -122,9 +122,9 @@ func GetSuppliers(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-// DeleteSupplier godoc
-// @Summary Delete a supplier
-// @Description Delete a supplier by ID
+// SoftDeleteSupplier godoc
+// @Summary Soft delete a supplier
+// @Description Soft deletes a supplier by ID and sets the supplier field in related products to null
 // @Tags suppliers
 // @Produce json
 // @Param id path int true "Supplier ID"
@@ -132,52 +132,72 @@ func GetSuppliers(db *gorm.DB) gin.HandlerFunc {
 // @Failure 404 {object} model.ErrorResponse
 // @Failure 500 {object} model.ErrorResponse
 // @Router /suppliers/{id} [delete]
-func DeleteSupplier(db *gorm.DB) gin.HandlerFunc {
+func SoftDeleteSupplier(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		supplierID := c.Param("id")
 
-		if result := db.Delete(&model.Supplier{}, supplierID); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to delete supplier",
-			})
+		// Find the supplier by ID
+		var supplier model.Supplier
+		if err := db.First(&supplier, supplierID).Error; err != nil {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Supplier not found"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Supplier deleted successfully",
-		})
+		// Set supplier field in related products to null
+		if err := db.Model(&model.Product{}).Where("supplier_id = ?", supplierID).Update("supplier_id", nil).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to reassign products"})
+			return
+		}
+
+		// Soft delete the supplier
+		if err := db.Delete(&supplier).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to delete supplier"})
+			return
+		}
+
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Supplier deleted successfully"})
 	}
 }
 
 // HardDeleteSupplier godoc
 // @Summary Hard delete a supplier
-// @Description Hard delete a supplier by ID
+// @Description Hard deletes a supplier by ID and sets the supplier field in related products to null
 // @Tags suppliers
 // @Produce json
 // @Param id path int true "Supplier ID"
 // @Success 200 {object} model.SuccessResponse
 // @Failure 500 {object} model.ErrorResponse
-// @Router /suppliers/{id} [delete]
+// @Router /suppliers/hard/{id} [delete]
 func HardDeleteSupplier(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		supplierID := c.Param("id")
 
-		if result := db.Unscoped().Delete(&model.Supplier{}, supplierID); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to delete supplier",
-			})
+		// Find the supplier by ID
+		var supplier model.Supplier
+		if err := db.Unscoped().First(&supplier, supplierID).Error; err != nil {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Supplier not found"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Supplier deleted permanently",
-		})
+		// Set supplier field in related products to null
+		if err := db.Model(&model.Product{}).Where("supplier_id = ?", supplierID).Update("supplier_id", nil).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to reassign products"})
+			return
+		}
+
+		// Hard delete the supplier
+		if err := db.Unscoped().Delete(&supplier).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to delete supplier"})
+			return
+		}
+
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Supplier deleted permanently"})
 	}
 }
 
 // RecoverSupplier godoc
 // @Summary Recover a deleted supplier
-// @Description Recover a soft-deleted supplier by ID
+// @Description Recover a soft-deleted supplier by ID and reassign its products back to the supplier
 // @Tags suppliers
 // @Produce json
 // @Param id path int true "Supplier ID"
@@ -189,10 +209,17 @@ func RecoverSupplier(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		supplierID := c.Param("id")
 
+		// Recover the soft-deleted supplier by setting deleted_at to NULL
 		if result := db.Model(&model.Supplier{}).Unscoped().Where("id = ?", supplierID).Update("deleted_at", nil); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
 				Error: "Failed to recover supplier",
 			})
+			return
+		}
+
+		// Reassign products back to the recovered supplier
+		if err := db.Model(&model.Product{}).Where("supplier_id IS NULL").Where("previous_supplier_id = ?", supplierID).Update("supplier_id", supplierID).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to reassign products"})
 			return
 		}
 
