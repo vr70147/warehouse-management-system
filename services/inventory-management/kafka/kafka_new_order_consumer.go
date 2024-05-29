@@ -36,5 +36,24 @@ func ConsumerOrderEvents() {
 			order.Status = "Out of Stock"
 		}
 		initializers.DB.Save(&order)
+
+		PublishOrderStatus(order.ID, order.Status)
+	}
+}
+
+func PublishOrderStatus(orderID uint, status string) {
+	w := kafka.Writer{
+		Addr:     kafka.TCP("localhost:9092"),
+		Topic:    "inventory-status",
+		Balancer: &kafka.LeastBytes{},
+	}
+
+	err := w.WriteMessages(context.Background(), kafka.Message{
+		Key:   []byte("orderID"),
+		Value: []byte(status),
+	})
+
+	if err != nil {
+		log.Fatalf("failed to write message to kafka: %v", err)
 	}
 }
