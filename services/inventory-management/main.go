@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "inventory-management/docs"
+	"inventory-management/internal/api/middleware"
 	"inventory-management/internal/api/routes"
 	"inventory-management/internal/initializers"
 
@@ -33,6 +34,7 @@ func main() {
 
 	r := gin.Default()
 
+	r.Use(middleware.CORSMiddleware())
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	routes.Routers(r, initializers.DB)

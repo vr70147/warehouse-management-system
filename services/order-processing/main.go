@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "order-processing/docs"
+	"order-processing/internal/api/middleware"
 	"order-processing/internal/api/routes"
 	"order-processing/internal/initializers"
 
@@ -18,7 +19,7 @@ func init() {
 func main() {
 
 	r := gin.Default()
-
+	r.Use(middleware.CORSMiddleware())
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	routes.Routers(r, initializers.DB)
