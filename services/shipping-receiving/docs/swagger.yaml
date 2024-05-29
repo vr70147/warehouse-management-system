@@ -1,0 +1,230 @@
+definitions:
+  model.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  model.Shipping:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: integer
+      orderID:
+        type: integer
+      receiverID:
+        type: integer
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  model.SuccessResponse:
+    properties:
+      message:
+        type: string
+      shipping:
+        $ref: '#/definitions/model.Shipping'
+    type: object
+info:
+  contact: {}
+paths:
+  /shippings:
+    get:
+      consumes:
+      - application/json
+      description: Get Shippings
+      parameters:
+      - description: Shipping ID
+        in: query
+        name: id
+        type: string
+      - description: Shipping Status
+        in: query
+        name: status
+        type: string
+      - description: Receiver ID
+        in: query
+        name: receiver_id
+        type: string
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Shipping'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Get Shippings
+      tags:
+      - Shippings
+    post:
+      consumes:
+      - application/json
+      description: Create a new Shipping
+      parameters:
+      - description: Shipping
+        in: body
+        name: Shipping
+        required: true
+        schema:
+          $ref: '#/definitions/model.Shipping'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Create a new Shipping
+      tags:
+      - Shippings
+  /shippings/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Soft delete a Shipping
+      parameters:
+      - description: Shipping ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Soft delete a Shipping
+      tags:
+      - Shippings
+    put:
+      consumes:
+      - application/json
+      description: Update a Shipping
+      parameters:
+      - description: Shipping ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Shipping
+        in: body
+        name: Shipping
+        required: true
+        schema:
+          $ref: '#/definitions/model.Shipping'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Update a Shipping
+      tags:
+      - Shippings
+  /shippings/hard/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Hard delete a Shipping
+      parameters:
+      - description: Shipping ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Hard delete a Shipping
+      tags:
+      - Shippings
+  /shippings/recover/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Recover a soft-deleted Shipping
+      parameters:
+      - description: Shipping ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Recover a soft-deleted Shipping
+      tags:
+      - Shippings
+swagger: "2.0"
