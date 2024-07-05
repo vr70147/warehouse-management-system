@@ -1,4 +1,138 @@
+basePath: /
+definitions:
+  model.InventoryLevel:
+    properties:
+      created_at:
+        type: string
+      current_level:
+        type: integer
+      deleted_at:
+        type: string
+      id:
+        type: integer
+      last_updated:
+        type: string
+      product_id:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  model.SalesReport:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: integer
+      order_id:
+        type: integer
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+      timestamp:
+        type: string
+      total_price:
+        type: number
+      updated_at:
+        type: string
+    type: object
+  model.ShippingStatus:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: integer
+      last_updated:
+        type: string
+      order_id:
+        type: integer
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  model.UserActivity:
+    properties:
+      activity:
+        type: string
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      id:
+        type: integer
+      timestamp:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+host: localhost:8084
 info:
-  contact: {}
-paths: {}
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a server for reporting analytics service.
+  termsOfService: http://swagger.io/terms/
+  title: Reporting Analytics Service API
+  version: "1.0"
+paths:
+  /reports/inventory:
+    get:
+      description: Get inventory levels
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.InventoryLevel'
+            type: array
+      summary: Get inventory levels
+  /reports/sales:
+    get:
+      description: Get sales reports
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.SalesReport'
+            type: array
+      summary: Get sales reports
+  /reports/shipping:
+    get:
+      description: Get shipping statuses
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.ShippingStatus'
+            type: array
+      summary: Get shipping statuses
+  /reports/users:
+    get:
+      description: Get user activities
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.UserActivity'
+            type: array
+      summary: Get user activities
 swagger: "2.0"

@@ -1,0 +1,47 @@
+package kafka
+
+import (
+	"context"
+	"encoding/json"
+	"log"
+	"reporting-analytics/internal/initializers"
+	"reporting-analytics/internal/model"
+	"time"
+
+	"github.com/segmentio/kafka-go"
+)
+
+func ConsumerSalesEvent() {
+	r := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:  []string{"localhost:9092"},
+		Topic:    "sales-events",
+		GroupID:  "reporting-analytics-group",
+		MinBytes: 10e3, // 10KB
+		MaxBytes: 10e6, // 10MB
+	})
+
+	for {
+		m, err := r.ReadMessage(context.Background())
+		if err != nil {
+			panic("could not read message " + err.Error())
+		}
+		log.Printf("received message: %s\n", string(m.Value))
+
+		var salesReport model.SalesReport
+		err = json.Unmarshal(m.Value, &salesReport)
+
+		if err != nil {
+			log.Printf("failed to unmarshal message: %v", err)
+			continue
+		}
+
+		salesReport.Timestamp = time.Now()
+
+		if results := initializers.DB.Create(&salesReport); results.Error != nil {
+			log.Printf("failed to create sales report: %v", results.Error)
+			continue
+		}
+
+		log.Printf("Sales report created successfully: %v", salesReport)
+	}
+}
