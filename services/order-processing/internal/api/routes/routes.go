@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"order-processing/internal/api"
+	"order-processing/internal/api/handlers"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -9,10 +9,10 @@ import (
 
 func Routers(r *gin.Engine, db *gorm.DB) {
 	orders := r.Group("/orders")
-	orders.POST("/", api.CreateOrder(db))
-	orders.GET("/", api.GetOrders(db))
-	orders.PUT("/:id", api.UpdateOrder(db))
-	orders.DELETE("/:id", api.SoftDeleteOrder(db))
-	orders.DELETE("hard/:id", api.HardDeleteOrder(db))
-	orders.POST("/:id/recover", api.RecoverOrder(db))
+	orders.POST("/", handlers.CreateOrder(db))
+	orders.GET("/", handlers.GetOrders(db))
+	orders.PUT("/:id", handlers.UpdateOrder(db))
+	orders.DELETE("/:id", handlers.SoftDeleteOrder(db))
+	orders.DELETE("hard/:id", handlers.HardDeleteOrder(db))
+	orders.POST("/:id/recover", handlers.RecoverOrder(db))
 }

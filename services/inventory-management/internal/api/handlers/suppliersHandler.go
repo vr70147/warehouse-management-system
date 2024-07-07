@@ -1,4 +1,4 @@
-package api
+package handlers
 
 import (
 	"inventory-management/internal/model"
