@@ -5,6 +5,7 @@ import (
 	"order-processing/internal/api/middleware"
 	"order-processing/internal/api/routes"
 	"order-processing/internal/initializers"
+	"order-processing/kafka"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -17,6 +18,7 @@ func init() {
 }
 
 func main() {
+	go kafka.ConsumerOrderEvent()
 
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())

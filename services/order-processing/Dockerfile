@@ -1,4 +1,4 @@
-FROM golang:1.18 as builder
+FROM golang:1.22.2 as builder
 
 WORKDIR /app
 
@@ -9,16 +9,16 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o inventory-management .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o order-processing .
 
 FROM alpine:latest  
 
-LABEL maintainer="Your Name <your.email@example.com>"
+LABEL maintainer="Raanan Adut radesigner84@gmail.com"
 
 WORKDIR /root/
 
-COPY --from=builder /app/inventory-management .
+COPY --from=builder /app/order-processing .
 
-EXPOSE 8080
+EXPOSE 8082
 
-CMD ["./inventory-management"]
+CMD ["./main"]

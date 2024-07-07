@@ -4,6 +4,7 @@ import (
 	_ "shipping-receiving/docs"
 	"shipping-receiving/internal/api/routes"
 	"shipping-receiving/internal/initializers"
+	"shipping-receiving/kafka"
 
 	"shipping-receiving/internal/api/middleware"
 
@@ -18,6 +19,7 @@ func init() {
 }
 
 func main() {
+	go kafka.ConsumeInventoryStatus()
 
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
