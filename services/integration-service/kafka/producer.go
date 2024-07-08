@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"log"
+	"os"
 	"time"
 
 	"github.com/segmentio/kafka-go"
@@ -10,7 +11,7 @@ import (
 
 func ProduceMessage(topic string, message string) error {
 	w := &kafka.Writer{
-		Addr:         kafka.TCP("localhost:9092"),
+		Addr:         kafka.TCP(os.Getenv("KAFKA_BROKERS")),
 		Topic:        topic,
 		BatchTimeout: 10 * time.Millisecond,
 	}

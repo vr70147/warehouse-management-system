@@ -12,7 +12,7 @@ import (
 
 var httpClient = &http.Client{Timeout: 10 * time.Second}
 
-func CallOrderService(orderRequest model.OrderRequest, url string) (model.OrderResponse, error) {
+func CallOrderService(orderRequest model.OrderRequest, OrderServiceURL string) (model.OrderResponse, error) {
 	var orderResponse model.OrderResponse
 
 	body, err := json.Marshal(orderRequest)
@@ -20,7 +20,7 @@ func CallOrderService(orderRequest model.OrderRequest, url string) (model.OrderR
 		return orderResponse, err
 	}
 
-	resp, err := httpClient.Post(url+"/orders", "application/json", bytes.NewBuffer(body))
+	resp, err := httpClient.Post(OrderServiceURL, "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		return orderResponse, err
 	}

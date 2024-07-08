@@ -5,13 +5,14 @@ import (
 	"inventory-management/internal/initializers"
 	"inventory-management/internal/model"
 	"log"
+	"os"
 
 	"github.com/segmentio/kafka-go"
 )
 
 func ConsumerOrderEvents() {
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  []string{"localhost:9092"},
+		Brokers:  []string{os.Getenv("KAFKA_BROKERS")},
 		Topic:    "order-events",
 		GroupID:  "inventory-management-group",
 		MinBytes: 10e3, // 10KB
@@ -20,7 +21,7 @@ func ConsumerOrderEvents() {
 	for {
 		m, err := r.ReadMessage(context.Background())
 		if err != nil {
-			panic("could not read message " + err.Error())
+			log.Fatal("could not read message " + err.Error())
 		}
 		log.Printf("received message: %s\n", string(m.Value))
 
@@ -43,7 +44,7 @@ func ConsumerOrderEvents() {
 
 func PublishOrderStatus(orderID uint, status string) {
 	w := kafka.Writer{
-		Addr:     kafka.TCP("localhost:9092"),
+		Addr:     kafka.TCP(os.Getenv("KAFKA_BROKERS")),
 		Topic:    "inventory-status",
 		Balancer: &kafka.LeastBytes{},
 	}

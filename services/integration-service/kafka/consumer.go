@@ -3,13 +3,14 @@ package kafka
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/segmentio/kafka-go"
 )
 
 func ConsumeMessages(topic string, handleMessage func(kafka.Message)) {
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{"localhost:9092"},
+		Brokers: []string{os.Getenv("KAFKA_BROKERS")},
 		Topic:   topic,
 		GroupID: "integration-service-group",
 	})
