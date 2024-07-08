@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
+	"order-processing/internal/cache"
 	"order-processing/internal/model"
 	"strconv"
 
@@ -13,14 +15,11 @@ func GetOrders(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Query("id")
 
-		if id != "" {
-			// Fetch a single order by ID
+		cachedOrder, err := cache.GetCache(id)
+		if err == nil {
 			var order model.Order
-			if result := db.First(&order, id); result.Error != nil {
-				c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Order not found"})
-				return
-			}
-			c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order found", Order: order})
+			json.Unmarshal([]byte(cachedOrder), &order)
+			c.JSON(http.StatusOK, order)
 			return
 		}
 
@@ -52,6 +51,10 @@ func GetOrders(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
 			return
 		}
+
+		// Cache the list of orders
+		orderJSON, _ := json.Marshal(orders)
+		cache.SetCache(id, string(orderJSON))
 
 		c.JSON(http.StatusOK, model.SuccessResponses{Message: "Orders found", Orders: orders})
 	}

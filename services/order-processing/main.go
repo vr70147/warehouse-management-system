@@ -4,6 +4,7 @@ import (
 	_ "order-processing/docs"
 	"order-processing/internal/api/middleware"
 	"order-processing/internal/api/routes"
+	"order-processing/internal/cache"
 	"order-processing/internal/initializers"
 	"order-processing/kafka"
 
@@ -15,6 +16,7 @@ import (
 func init() {
 	initializers.LoadEnvVariables()
 	initializers.ConnectToDB()
+	cache.InitRedis()
 }
 
 func main() {
