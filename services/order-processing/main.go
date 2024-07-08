@@ -22,6 +22,7 @@ func main() {
 
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.AuthMiddleware())
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	routes.Routers(r, initializers.DB)

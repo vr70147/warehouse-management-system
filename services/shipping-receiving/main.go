@@ -6,7 +6,7 @@ import (
 	"shipping-receiving/internal/initializers"
 	"shipping-receiving/kafka"
 
-	"shipping-receiving/internal/api/middleware"
+	"shipping-receiving/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -23,6 +23,7 @@ func main() {
 
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.AuthMiddleware())
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	routes.Routers(r, initializers.DB)

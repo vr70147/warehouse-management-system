@@ -6,7 +6,7 @@ import (
 	"reporting-analytics/internal/initializers"
 	"reporting-analytics/kafka"
 
-	"reporting-analytics/internal/api/middleware"
+	"reporting-analytics/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -34,6 +34,7 @@ func main() {
 
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.AuthMiddleware())
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	routes.Routers(r, initializers.DB)
