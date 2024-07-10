@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"order-processing/internal/cache"
+	"order-processing/internal/initializers"
 	"order-processing/internal/model"
 	"strconv"
 
@@ -62,14 +63,34 @@ func GetOrders(db *gorm.DB) gin.HandlerFunc {
 
 func CreateOrder(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var order model.Order
-		if err := c.ShouldBindJSON(&order); err != nil {
+		var orderRequest model.Order
+		if err := c.ShouldBindJSON(&orderRequest); err != nil {
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: err.Error()})
 			return
 		}
 
-		if result := db.Create(&order); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
+		tx := initializers.DB.Begin()
+		if tx.Error != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: tx.Error.Error()})
+			return
+		}
+
+		order := model.Order{
+			CustomerID: orderRequest.CustomerID,
+			Quantity:   orderRequest.Quantity,
+			ProductID:  orderRequest.ProductID,
+			Status:     "Pending",
+		}
+
+		if err := tx.Create(&order).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		if err := tx.Commit().Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: err.Error()})
 			return
 		}
 
@@ -79,24 +100,34 @@ func CreateOrder(db *gorm.DB) gin.HandlerFunc {
 
 func UpdateOrder(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id := c.Param("id")
-		var order model.Order
-		if result := db.First(&order, id); result.Error != nil {
-			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Order not found"})
-			return
-		}
+		var orderUpdate model.Order
 
-		if err := c.ShouldBindJSON(&order); err != nil {
+		if err := c.ShouldBindJSON(&orderUpdate); err != nil {
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: err.Error()})
 			return
 		}
 
-		if result := db.Save(&order); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
+		var currentOrder model.Order
+		if err := initializers.DB.Where("id = ?", orderUpdate.ID).First(&currentOrder).Error; err != nil {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Order not found"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order updated successfully", Order: order})
+		if orderUpdate.Version != currentOrder.Version {
+			c.JSON(http.StatusConflict, model.ErrorResponse{Error: "Order version mismatch"})
+			return
+		}
+
+		orderUpdate.Version++
+		if err := initializers.DB.Model(&model.Order{}).Where("id = ? AND version = ?", orderUpdate.ID, currentOrder.Version).Updates(map[string]interface{}{
+			"status":  orderUpdate.Status,
+			"version": orderUpdate.Version,
+		}).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update order"})
+			return
+		}
+
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order updated successfully", Order: orderUpdate})
 	}
 }
 
@@ -135,6 +166,7 @@ func RecoverOrder(db *gorm.DB) gin.HandlerFunc {
 
 		// Recover the order by setting DeletedAt to NULL
 		if result := db.Model(&order).Update("DeletedAt", nil); result.Error != nil {
+
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
 			return
 		}
