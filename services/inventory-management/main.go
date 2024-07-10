@@ -2,9 +2,10 @@ package main
 
 import (
 	_ "inventory-management/docs"
-	"inventory-management/internal/api/middleware"
 	"inventory-management/internal/api/routes"
+	"inventory-management/internal/cache"
 	"inventory-management/internal/initializers"
+	"inventory-management/internal/middleware"
 	"inventory-management/kafka"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,7 @@ import (
 func init() {
 	initializers.LoadEnvVariables()
 	initializers.ConnectToDB()
+	cache.InitRedis()
 }
 
 // @title Inventory API
@@ -36,6 +38,7 @@ func main() {
 	r := gin.Default()
 
 	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.AuthMiddleware())
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	routes.Routers(r, initializers.DB)

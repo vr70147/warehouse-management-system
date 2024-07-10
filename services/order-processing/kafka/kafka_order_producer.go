@@ -3,13 +3,14 @@ package kafka
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/segmentio/kafka-go"
 )
 
 func PublishOrderEvent(orderID string) {
 	w := kafka.Writer{
-		Addr:     kafka.TCP("localhost:9092"),
+		Addr:     kafka.TCP(os.Getenv("KAFKA_BROKERS")),
 		Topic:    "order-events",
 		Balancer: &kafka.LeastBytes{},
 	}

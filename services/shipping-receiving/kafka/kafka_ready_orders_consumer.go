@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"log"
+	"os"
 	"shipping-receiving/internal/initializers"
 	"shipping-receiving/internal/model"
 
@@ -11,7 +12,7 @@ import (
 
 func ConsumeInventoryStatus() {
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  []string{"localhost:9092"},
+		Brokers:  []string{os.Getenv("KAFKA_BROKERS")},
 		Topic:    "inventory-status",
 		GroupID:  "shipping-receiving-group",
 		MinBytes: 10e3, // 10KB
@@ -20,7 +21,7 @@ func ConsumeInventoryStatus() {
 	for {
 		m, err := r.ReadMessage(context.Background())
 		if err != nil {
-			panic("could not read message " + err.Error())
+			log.Fatal("could not read message " + err.Error())
 		}
 		log.Printf("received message: %s\n", string(m.Value))
 
@@ -44,7 +45,7 @@ func ConsumeInventoryStatus() {
 
 func PublishShippingStatus(shippingID uint, status string) {
 	w := kafka.Writer{
-		Addr:     kafka.TCP("localhost:9092"),
+		Addr:     kafka.TCP(os.Getenv("KAFKA_BROKERS")),
 		Topic:    "shipping-status",
 		Balancer: &kafka.LeastBytes{},
 	}

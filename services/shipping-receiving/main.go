@@ -3,10 +3,11 @@ package main
 import (
 	_ "shipping-receiving/docs"
 	"shipping-receiving/internal/api/routes"
+	"shipping-receiving/internal/cache"
 	"shipping-receiving/internal/initializers"
 	"shipping-receiving/kafka"
 
-	"shipping-receiving/internal/api/middleware"
+	"shipping-receiving/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -16,6 +17,7 @@ import (
 func init() {
 	initializers.LoadEnvVariables()
 	initializers.ConnectToDB()
+	cache.InitRedis()
 }
 
 func main() {
@@ -23,6 +25,7 @@ func main() {
 
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.AuthMiddleware())
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	routes.Routers(r, initializers.DB)

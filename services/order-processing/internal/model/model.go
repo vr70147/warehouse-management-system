@@ -13,6 +13,7 @@ type Order struct {
 	Quantity   uint
 	CustomerID uint
 	Status     string
+	Version    int
 }
 
 type ErrorResponse struct {
