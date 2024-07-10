@@ -3,6 +3,7 @@ package main
 import (
 	_ "inventory-management/docs"
 	"inventory-management/internal/api/routes"
+	"inventory-management/internal/cache"
 	"inventory-management/internal/initializers"
 	"inventory-management/internal/middleware"
 	"inventory-management/kafka"
@@ -15,6 +16,7 @@ import (
 func init() {
 	initializers.LoadEnvVariables()
 	initializers.ConnectToDB()
+	cache.InitRedis()
 }
 
 // @title Inventory API

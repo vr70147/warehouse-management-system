@@ -3,6 +3,7 @@ package main
 import (
 	_ "user-management/docs"
 	"user-management/internal/api"
+	"user-management/internal/cache"
 	"user-management/internal/initializers"
 
 	swaggerFiles "github.com/swaggo/files"
@@ -15,6 +16,7 @@ func init() {
 	initializers.LoadEnvVariables()
 	initializers.ConnectToDB()
 	initializers.SyncDatabse()
+	cache.InitRedis()
 }
 
 // @title User Management API

@@ -3,6 +3,7 @@ package main
 import (
 	_ "shipping-receiving/docs"
 	"shipping-receiving/internal/api/routes"
+	"shipping-receiving/internal/cache"
 	"shipping-receiving/internal/initializers"
 	"shipping-receiving/kafka"
 
@@ -16,6 +17,7 @@ import (
 func init() {
 	initializers.LoadEnvVariables()
 	initializers.ConnectToDB()
+	cache.InitRedis()
 }
 
 func main() {

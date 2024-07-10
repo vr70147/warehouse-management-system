@@ -3,6 +3,7 @@ package main
 import (
 	_ "reporting-analytics/docs"
 	"reporting-analytics/internal/api/routes"
+	"reporting-analytics/internal/cache"
 	"reporting-analytics/internal/initializers"
 	"reporting-analytics/kafka"
 
@@ -16,6 +17,7 @@ import (
 func init() {
 	initializers.LoadEnvVariables()
 	initializers.ConnectToDB()
+	cache.InitRedis()
 }
 
 // @title Reporting Analytics Service API
