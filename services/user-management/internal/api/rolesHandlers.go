@@ -27,11 +27,11 @@ func CreateRole(db *gorm.DB) gin.HandlerFunc {
 		var body struct {
 			Role         string `gorm:"unique;not null"`
 			Description  string
-			Permission   map[string]interface{} `json:"permission"`
-			IsActive     bool                   `gorm:"default:true"`
-			Users        []model.User           `gorm:"foreignKey:RoleID"`
-			DepartmentID uint                   `gorm:"not null"`
-			Department   model.Department       `gorm:"foreignKey:DepartmentID"`
+			Permissions  []model.Permission `gorm:"many2many:role_permissions"`
+			IsActive     bool               `gorm:"default:true"`
+			Users        []model.User       `gorm:"foreignKey:RoleID"`
+			DepartmentID uint               `gorm:"not null"`
+			Department   model.Department   `gorm:"foreignKey:DepartmentID"`
 		}
 
 		if c.Bind(&body) != nil {
@@ -40,17 +40,11 @@ func CreateRole(db *gorm.DB) gin.HandlerFunc {
 			})
 			return
 		}
-		permissionsJSON, err := json.Marshal(body.Permission)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to encode permissions",
-			})
-			return
-		}
+
 		role := model.Role{
 			Role:         body.Role,
 			Description:  body.Description,
-			Permission:   string(permissionsJSON),
+			Permissions:  body.Permissions,
 			IsActive:     body.IsActive,
 			DepartmentID: body.DepartmentID,
 		}

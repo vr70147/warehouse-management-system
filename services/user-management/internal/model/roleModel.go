@@ -10,9 +10,14 @@ type Role struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 	Role         string    `gorm:"unique:not null"`
 	Description  string
-	Permission   string     `gorm:"type:jsonb"`
-	IsActive     bool       `gorm:"default:true"`
-	Users        []User     `gorm:"foreignKey:RoleID"`
-	DepartmentID uint       `gorm:"not null"`
-	Department   Department `gorm:"foreignKey:DepartmentID"`
+	Permissions  []Permission `gorm:"many2many:role_permissions"`
+	IsActive     bool         `gorm:"default:true"`
+	Users        []User       `gorm:"foreignKey:RoleID"`
+	DepartmentID uint         `gorm:"not null"`
+	Department   Department   `gorm:"foreignKey:DepartmentID"`
+}
+
+type Permission struct {
+	ID   uint   `gorm:"primaryKey"`
+	Name string `gorm:"unique"`
 }
