@@ -9,6 +9,7 @@ type Product struct {
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
 	DeletedAt   *time.Time `gorm:"index" json:"deleted_at,omitempty"`
+	AccountID   uint       `gorm:"index"` // Foreign key to Account
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
 	Price       float64    `json:"price"`
@@ -28,6 +29,7 @@ type Stock struct {
 	Product   Product    `json:"product"`
 	Quantity  uint       `json:"quantity"`
 	Location  string     `json:"location"`
+	AccountID uint       `gorm:"index"` // Foreign key to Account
 }
 
 type Category struct {
@@ -37,6 +39,7 @@ type Category struct {
 	DeletedAt   *time.Time `gorm:"index" json:"deleted_at,omitempty"`
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
+	AccountID   uint       `gorm:"index"` // Foreign key to Account
 }
 
 type Supplier struct {
@@ -48,6 +51,7 @@ type Supplier struct {
 	Description string     `json:"description"`
 	Email       string     `json:"email"`
 	Contact     string     `json:"contact"`
+	AccountID   uint       `gorm:"index"` // Foreign key to Account
 }
 
 type Order struct {
@@ -55,10 +59,11 @@ type Order struct {
 	CreatedAt  time.Time  `json:"created_at"`
 	UpdatedAt  time.Time  `json:"updated_at"`
 	DeletedAt  *time.Time `gorm:"index" json:"deleted_at,omitempty"`
-	ProductID  uint
-	Quantity   uint
-	CustomerID uint
-	Status     string
+	ProductID  uint       `json:"product_id"`
+	Quantity   uint       `json:"quantity"`
+	CustomerID uint       `json:"customer_id"`
+	Status     string     `json:"status"`
+	AccountID  uint       `gorm:"index"` // Foreign key to Account
 }
 
 type ErrorResponse struct {

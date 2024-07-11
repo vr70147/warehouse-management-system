@@ -9,6 +9,7 @@ type Order struct {
 	CreatedAt  time.Time  `json:"created_at"`
 	UpdatedAt  time.Time  `json:"updated_at"`
 	DeletedAt  *time.Time `gorm:"index" json:"deleted_at,omitempty"`
+	AccountID  uint       `gorm:"index"`
 	ProductID  uint
 	Quantity   uint
 	CustomerID uint
