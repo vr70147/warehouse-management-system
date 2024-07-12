@@ -20,6 +20,12 @@ import (
 // @Router /suppliers [post]
 func CreateSupplier(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		var supplier model.Supplier
 
 		if err := c.ShouldBindJSON(&supplier); err != nil {
@@ -28,6 +34,8 @@ func CreateSupplier(db *gorm.DB) gin.HandlerFunc {
 			})
 			return
 		}
+
+		supplier.AccountID = accountID.(uint)
 
 		if result := db.Create(&supplier); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
@@ -56,10 +64,16 @@ func CreateSupplier(db *gorm.DB) gin.HandlerFunc {
 // @Router /suppliers/{id} [put]
 func UpdateSupplier(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		supplierID := c.Param("id")
 		var supplier model.Supplier
 
-		if result := db.First(&supplier, supplierID); result.Error != nil {
+		if result := db.Where("id = ? AND account_id = ?", supplierID, accountID).First(&supplier); result.Error != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{
 				Error: "Supplier not found",
 			})
@@ -72,6 +86,8 @@ func UpdateSupplier(db *gorm.DB) gin.HandlerFunc {
 			})
 			return
 		}
+
+		supplier.AccountID = accountID.(uint)
 
 		if result := db.Save(&supplier); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
@@ -96,8 +112,14 @@ func UpdateSupplier(db *gorm.DB) gin.HandlerFunc {
 // @Router /suppliers [get]
 func GetSuppliers(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		var suppliers []model.Supplier
-		if result := db.Find(&suppliers); result.Error != nil {
+		if result := db.Where("account_id = ?", accountID).Find(&suppliers); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
 				Error: "Failed to retrieve suppliers",
 			})
@@ -134,17 +156,23 @@ func GetSuppliers(db *gorm.DB) gin.HandlerFunc {
 // @Router /suppliers/{id} [delete]
 func SoftDeleteSupplier(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		supplierID := c.Param("id")
 
 		// Find the supplier by ID
 		var supplier model.Supplier
-		if err := db.First(&supplier, supplierID).Error; err != nil {
+		if err := db.Where("id = ? AND account_id = ?", supplierID, accountID).First(&supplier).Error; err != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Supplier not found"})
 			return
 		}
 
 		// Set supplier field in related products to null
-		if err := db.Model(&model.Product{}).Where("supplier_id = ?", supplierID).Update("supplier_id", nil).Error; err != nil {
+		if err := db.Model(&model.Product{}).Where("supplier_id = ? AND account_id = ?", supplierID, accountID).Update("supplier_id", nil).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to reassign products"})
 			return
 		}
@@ -170,17 +198,23 @@ func SoftDeleteSupplier(db *gorm.DB) gin.HandlerFunc {
 // @Router /suppliers/hard/{id} [delete]
 func HardDeleteSupplier(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		supplierID := c.Param("id")
 
 		// Find the supplier by ID
 		var supplier model.Supplier
-		if err := db.Unscoped().First(&supplier, supplierID).Error; err != nil {
+		if err := db.Unscoped().Where("id = ? AND account_id = ?", supplierID, accountID).First(&supplier).Error; err != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Supplier not found"})
 			return
 		}
 
 		// Set supplier field in related products to null
-		if err := db.Model(&model.Product{}).Where("supplier_id = ?", supplierID).Update("supplier_id", nil).Error; err != nil {
+		if err := db.Model(&model.Product{}).Where("supplier_id = ? AND account_id = ?", supplierID, accountID).Update("supplier_id", nil).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to reassign products"})
 			return
 		}
@@ -207,10 +241,16 @@ func HardDeleteSupplier(db *gorm.DB) gin.HandlerFunc {
 // @Router /suppliers/{id}/recover [post]
 func RecoverSupplier(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		supplierID := c.Param("id")
 
 		// Recover the soft-deleted supplier by setting deleted_at to NULL
-		if result := db.Model(&model.Supplier{}).Unscoped().Where("id = ?", supplierID).Update("deleted_at", nil); result.Error != nil {
+		if result := db.Model(&model.Supplier{}).Unscoped().Where("id = ? AND account_id = ?", supplierID, accountID).Update("deleted_at", nil); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
 				Error: "Failed to recover supplier",
 			})
@@ -218,7 +258,7 @@ func RecoverSupplier(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		// Reassign products back to the recovered supplier
-		if err := db.Model(&model.Product{}).Where("supplier_id IS NULL").Where("previous_supplier_id = ?", supplierID).Update("supplier_id", supplierID).Error; err != nil {
+		if err := db.Model(&model.Product{}).Where("supplier_id IS NULL AND account_id = ? AND previous_supplier_id = ?", accountID, supplierID).Update("supplier_id", supplierID).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to reassign products"})
 			return
 		}

@@ -2,12 +2,17 @@ package routes
 
 import (
 	"inventory-management/internal/api/handlers"
+	"inventory-management/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 func Routers(r *gin.Engine, db *gorm.DB) {
+
+	r.Use(middleware.AuthMiddleware(db))
+	r.Use(middleware.CORSMiddleware())
+
 	products := r.Group("/products")
 	products.POST("/", handlers.CreateProduct(db))
 	products.GET("/", handlers.GetProducts(db))

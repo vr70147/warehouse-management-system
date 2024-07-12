@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"reporting-analytics/internal/initializers"
 	"reporting-analytics/internal/model"
 
 	"github.com/gin-gonic/gin"
@@ -17,8 +16,14 @@ import (
 // @Router /reports/sales [get]
 func GetSalesReports(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Account ID not found"})
+			return
+		}
+
 		var reports []model.SalesReport
-		initializers.DB.Find(&reports)
+		db.Where("account_id = ?", accountID).Find(&reports)
 		c.JSON(http.StatusOK, reports)
 	}
 }
@@ -31,8 +36,14 @@ func GetSalesReports(db *gorm.DB) gin.HandlerFunc {
 // @Router /reports/inventory [get]
 func GetInventoryLevels(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Account ID not found"})
+			return
+		}
+
 		var levels []model.InventoryLevel
-		initializers.DB.Find(&levels)
+		db.Where("account_id = ?", accountID).Find(&levels)
 		c.JSON(http.StatusOK, levels)
 	}
 }
@@ -45,8 +56,14 @@ func GetInventoryLevels(db *gorm.DB) gin.HandlerFunc {
 // @Router /reports/shipping [get]
 func GetShippingStatuses(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Account ID not found"})
+			return
+		}
+
 		var statuses []model.ShippingStatus
-		initializers.DB.Find(&statuses)
+		db.Where("account_id = ?", accountID).Find(&statuses)
 		c.JSON(http.StatusOK, statuses)
 	}
 }
@@ -59,8 +76,14 @@ func GetShippingStatuses(db *gorm.DB) gin.HandlerFunc {
 // @Router /reports/users [get]
 func GetUserActivities(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Account ID not found"})
+			return
+		}
+
 		var activities []model.UserActivity
-		initializers.DB.Find(&activities)
+		db.Where("account_id = ?", accountID).Find(&activities)
 		c.JSON(http.StatusOK, activities)
 	}
 }

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"inventory-management/internal/initializers"
 	"inventory-management/internal/model"
 	"net/http"
 
@@ -41,7 +42,18 @@ func CreateProduct(db *gorm.DB) gin.HandlerFunc {
 // @Router /products [get]
 func GetProducts(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		var products []model.Product
+		if err := initializers.DB.Where("account_id = ?", accountID).Find(&products).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: err.Error()})
+			return
+		}
+
 		id := c.Query("id")
 		name := c.Query("name")
 		categoryID := c.Query("category_id")
@@ -88,8 +100,14 @@ func GetProducts(db *gorm.DB) gin.HandlerFunc {
 // @Router /products/{id} [put]
 func UpdateProduct(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		var product model.Product
-		if err := db.Where("id = ?", c.Param("id")).First(&product).Error; err != nil {
+		if err := db.Where("account_id = ?", c.Param("id"), accountID).First(&product).Error; err != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Product not found"})
 			return
 		}
@@ -98,6 +116,8 @@ func UpdateProduct(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: err.Error()})
 			return
 		}
+
+		product.AccountID = accountID.(uint)
 
 		db.Save(&product)
 		c.JSON(http.StatusOK, product)
@@ -113,7 +133,13 @@ func UpdateProduct(db *gorm.DB) gin.HandlerFunc {
 // @Router /products/{id} [delete]
 func SoftDeleteProduct(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if err := db.Where("id = ?", c.Param("id")).Delete(&model.Product{}).Error; err != nil {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
+		if err := db.Where("id = ? AND account_id = ?", c.Param("id"), accountID).Delete(&model.Product{}).Error; err != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Product not found"})
 			return
 		}
@@ -131,17 +157,23 @@ func SoftDeleteProduct(db *gorm.DB) gin.HandlerFunc {
 // @Router /products/hard/{id} [delete]
 func HardDeleteProduct(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		tx := db.Begin()
 
 		// Delete associated stocks
-		if err := tx.Where("product_id = ?", c.Param("id")).Unscoped().Delete(&model.Stock{}).Error; err != nil {
+		if err := tx.Where("product_id = ? AND account_id = ?", c.Param("id"), accountID).Unscoped().Delete(&model.Stock{}).Error; err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to delete associated stocks"})
 			return
 		}
 
 		// Delete the product
-		if err := tx.Unscoped().Where("id = ?", c.Param("id")).Delete(&model.Product{}).Error; err != nil {
+		if err := tx.Unscoped().Where("id = ? AND account_id = ?", c.Param("id"), accountID).Delete(&model.Product{}).Error; err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Product not found"})
 			return
@@ -161,9 +193,15 @@ func HardDeleteProduct(db *gorm.DB) gin.HandlerFunc {
 // @Router /products/{id}/recover [post]
 func RecoverProduct(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		productID := c.Param("id")
 
-		if err := db.Unscoped().Model(&model.Product{}).Where("id = ?", productID).Update("deleted_at", nil).Error; err != nil {
+		if err := db.Unscoped().Model(&model.Product{}).Where("id = ? AND account_id = ?", productID, accountID).Update("deleted_at", nil).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
 				Error: "Failed to recover product",
 			})

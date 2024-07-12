@@ -2,7 +2,6 @@ package main
 
 import (
 	_ "order-processing/docs"
-	"order-processing/internal/api/middleware"
 	"order-processing/internal/api/routes"
 	"order-processing/internal/cache"
 	"order-processing/internal/initializers"
@@ -23,8 +22,7 @@ func main() {
 	go kafka.ConsumerOrderEvent()
 
 	r := gin.Default()
-	r.Use(middleware.CORSMiddleware())
-	r.Use(middleware.AuthMiddleware())
+
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	routes.Routers(r, initializers.DB)

@@ -2,12 +2,17 @@ package routes
 
 import (
 	"order-processing/internal/api/handlers"
+	"order-processing/internal/api/middleware"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 func Routers(r *gin.Engine, db *gorm.DB) {
+
+	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.AuthMiddleware(db))
+
 	orders := r.Group("/orders")
 	orders.POST("/", handlers.CreateOrder(db))
 	orders.GET("/", handlers.GetOrders(db))

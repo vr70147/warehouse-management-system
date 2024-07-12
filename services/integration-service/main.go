@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"integration-service/internal/config"
 	"integration-service/internal/service"
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -29,8 +31,8 @@ func main() {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	log.Println("integration service running on port 8085")
-	if err := r.Run(":8085"); err != nil {
+	log.Printf("integration service running on port %s", os.Getenv("PORT"))
+	if err := r.Run(fmt.Sprintf(":%s", os.Getenv("PORT"))); err != nil {
 		log.Fatal("failed to run server: ", err)
 	}
 }

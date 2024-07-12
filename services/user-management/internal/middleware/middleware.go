@@ -2,76 +2,121 @@ package middleware
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
-	"time"
-	"user-management/internal/initializers"
+	"strings"
 	"user-management/internal/model"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
-func RequireAuth(c *gin.Context) {
-	tokenString, err := c.Cookie("Authorization")
-
-	if err != nil || tokenString == "" {
-		log.Printf("No token present: %v", err)
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
-	}
-
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+// RequireAuth checks if the request contains a valid JWT token
+func RequireAuth(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tokenString := c.GetHeader("Authorization")
+		if tokenString == "" {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{
+				Error: "Authorization header is required",
+			})
+			c.Abort()
+			return
 		}
-		return []byte(os.Getenv("JWT_SECRET")), nil
-	})
-	if err != nil {
-		log.Printf("Error parsing token: %v", err)
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
-	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		if float64(time.Now().Unix()) > claims["exp"].(float64) {
-			c.AbortWithStatus(http.StatusUnauthorized)
+		tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte(os.Getenv("JWT_SECRET")), nil
+		})
+
+		if err != nil || !token.Valid {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{
+				Error: "Invalid token",
+			})
+			c.Abort()
+			return
 		}
+
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{
+				Error: "Invalid token claims",
+			})
+			c.Abort()
+			return
+		}
+
+		accountID, ok := claims["account_id"].(string)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{
+				Error: "Account ID not found in token",
+			})
+			c.Abort()
+			return
+		}
+
+		userID, ok := claims["sub"].(float64)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{
+				Error: "User ID not found in token",
+			})
+			c.Abort()
+			return
+		}
+
+		// Retrieve user from database
 		var user model.User
-		initializers.DB.First(&user, claims["sub"])
-
-		if user.ID == 0 {
-			c.AbortWithStatus(http.StatusUnauthorized)
+		if err := db.First(&user, uint(userID)).Error; err != nil {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{
+				Error: "User not found",
+			})
+			c.Abort()
+			return
 		}
+
+		// Set accountID and user to the context
+		c.Set("account_id", accountID)
 		c.Set("user", user)
 
 		c.Next()
-
-	} else {
-		c.AbortWithStatus(http.StatusUnauthorized)
 	}
 }
 
-func RequireAdmin(c *gin.Context) {
-	userInterface, exists := c.Get("user")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
-		c.Abort()
-		return
-	}
-	user, ok := userInterface.(model.User)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "User data corrupted"})
-		c.Abort()
-		return
-	}
+func RequireAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user, exists := c.Get("user")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{
+				Error: "User not found in context",
+			})
+			c.Abort()
+			return
+		}
 
-	if !user.IsAdmin {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied, admin privileges required"})
-		c.Abort()
-		return
-	}
+		u, ok := user.(model.User)
+		if !ok || !u.IsAdmin {
+			c.JSON(http.StatusForbidden, model.ErrorResponse{
+				Error: "Admin privileges required",
+			})
+			c.Abort()
+			return
+		}
 
-	c.Next()
+		c.Next()
+	}
+}
+
+func RequirePermission(permission model.Permission) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.GetString("permission") != permission.String() {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
 }
