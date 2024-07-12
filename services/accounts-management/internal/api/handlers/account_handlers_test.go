@@ -44,3 +44,39 @@ func TestCreateAccount(t *testing.T) {
 	assert.Equal(t, account.Email, responseAccount.Email)
 	assert.Equal(t, account.Name, responseAccount.Name)
 }
+
+func TestGetAccounts(t *testing.T) {
+	db := setupTestDB()
+	db.Create(&model.Account{
+		Email:          "test@example.com",
+		Name:           "Test Account",
+		PhoneNumber:    "123456789",
+		Password:       "password",
+		PlanID:         1,
+		IsActive:       true,
+		Metadata:       "{}",
+		Preferences:    "{}",
+		Plan:           model.Plan{ID: 1, Name: "test", Price: 0.0, Description: "something"},
+		CompanyName:    "test",
+		Address:        "test",
+		City:           "test",
+		State:          "test",
+		PostalCode:     "test",
+		Country:        "test",
+		BillingEmail:   "test",
+		BillingAddress: "test",
+	})
+
+	router := gin.Default()
+	router.GET("/accounts", GetAccounts(db))
+
+	req, _ := http.NewRequest("GET", "/accounts", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	var accounts []model.Account
+	json.Unmarshal(w.Body.Bytes(), &accounts)
+	assert.Equal(t, 1, len(accounts))
+	assert.Equal(t, "test@example.com", accounts[0].Email)
+}
