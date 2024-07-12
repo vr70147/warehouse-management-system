@@ -32,18 +32,19 @@ func Signup(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		var body struct {
-			PersonalID string `json:"personal_id" gorm:"unique;not null"`
-			Name       string `json:"name" gorm:"unique;not null"`
-			Email      string `json:"email" gorm:"unique;not null"`
-			Age        int    `json:"age" gorm:"not null"`
-			BirthDate  string `json:"birthDate" gorm:"not null"`
-			RoleID     uint   `json:"role_id" gorm:"not null"`
-			Role       string `json:"role" gorm:"foreignKey:RoleID"`
-			Phone      string `json:"phone" gorm:"unique; not null"`
-			Street     string `json:"street"`
-			City       string `json:"city"`
-			Password   string `json:"password" gorm:"not null"`
-			IsAdmin    bool   `json:"is_admin" gorm:"default: false"`
+			PersonalID string           `json:"personal_id" gorm:"unique;not null"`
+			Name       string           `json:"name" gorm:"unique;not null"`
+			Email      string           `json:"email" gorm:"unique;not null"`
+			Age        int              `json:"age" gorm:"not null"`
+			BirthDate  string           `json:"birthDate" gorm:"not null"`
+			RoleID     uint             `json:"role_id" gorm:"not null"`
+			Role       string           `json:"role" gorm:"foreignKey:RoleID"`
+			Permission model.Permission `json:"permission" gorm:"not null"`
+			Phone      string           `json:"phone" gorm:"unique; not null"`
+			Street     string           `json:"street"`
+			City       string           `json:"city"`
+			Password   string           `json:"password" gorm:"not null"`
+			IsAdmin    bool             `json:"is_admin" gorm:"default: false"`
 		}
 
 		if err := c.Bind(&body); err != nil {
@@ -82,6 +83,7 @@ func Signup(db *gorm.DB) gin.HandlerFunc {
 			Password:   string(hash),
 			IsAdmin:    body.IsAdmin,
 			AccountID:  accountID.(uint),
+			Permission: body.Permission,
 		}
 		if result := db.Create(&user); result.Error != nil {
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Failed to create user: " + result.Error.Error()})

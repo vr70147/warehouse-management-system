@@ -109,3 +109,14 @@ func RequireAdmin() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func RequirePermission(permission model.Permission) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.GetString("permission") != permission.String() {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}

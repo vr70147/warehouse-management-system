@@ -49,7 +49,6 @@ func CreateRole(db *gorm.DB) gin.HandlerFunc {
 		role := model.Role{
 			Role:         body.Role,
 			Description:  body.Description,
-			Permissions:  body.Permissions,
 			IsActive:     body.IsActive,
 			DepartmentID: body.DepartmentID,
 			AccountID:    accountID.(uint),
