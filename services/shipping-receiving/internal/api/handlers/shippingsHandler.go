@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"shipping-receiving/internal/initializers"
 	"shipping-receiving/internal/model"
 	"strconv"
 
@@ -23,13 +22,21 @@ import (
 // @Router /shippings [post]
 func CreateShipping(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		var Shipping model.Shipping
 		if err := c.ShouldBindJSON(&Shipping); err != nil {
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: err.Error()})
 			return
 		}
 
-		if result := initializers.DB.Create(&Shipping); result.Error != nil {
+		Shipping.AccountID = accountID.(uint)
+
+		if result := db.Create(&Shipping); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
 			return
 		}
@@ -54,12 +61,18 @@ func CreateShipping(db *gorm.DB) gin.HandlerFunc {
 // @Router /shippings [get]
 func GetShippings(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		id := c.Query("id")
 
 		if id != "" {
 			// Fetch a single Shipping by ID
 			var Shipping model.Shipping
-			if result := initializers.DB.First(&Shipping, id); result.Error != nil {
+			if result := db.Where("id = ? AND account_id = ?", id, accountID).First(&Shipping); result.Error != nil {
 				c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Shipping not found"})
 				return
 			}
@@ -69,7 +82,7 @@ func GetShippings(db *gorm.DB) gin.HandlerFunc {
 
 		// Fetch list of Shippings with optional query parameters
 		var Shippings []model.Shipping
-		query := initializers.DB
+		query := db.Where("account_id = ?", accountID)
 
 		if status := c.Query("status"); status != "" {
 			query = query.Where("status = ?", status)
@@ -115,9 +128,15 @@ func GetShippings(db *gorm.DB) gin.HandlerFunc {
 // @Router /shippings/{id} [put]
 func UpdateShipping(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		id := c.Param("id")
 		var Shipping model.Shipping
-		if result := initializers.DB.First(&Shipping, id); result.Error != nil {
+		if result := db.Where("id = ? AND account_id = ?", id, accountID).First(&Shipping); result.Error != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Shipping not found"})
 			return
 		}
@@ -127,7 +146,9 @@ func UpdateShipping(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		if result := initializers.DB.Save(&Shipping); result.Error != nil {
+		Shipping.AccountID = accountID.(uint)
+
+		if result := db.Save(&Shipping); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
 			return
 		}
@@ -149,14 +170,20 @@ func UpdateShipping(db *gorm.DB) gin.HandlerFunc {
 // @Router /shippings/{id} [delete]
 func SoftDeleteShipping(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		id := c.Param("id")
 		var Shipping model.Shipping
-		if result := initializers.DB.First(&Shipping, id); result.Error != nil {
+		if result := db.Where("id = ? AND account_id = ?", id, accountID).First(&Shipping); result.Error != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Shipping not found"})
 			return
 		}
 
-		if result := initializers.DB.Delete(&Shipping); result.Error != nil {
+		if result := db.Delete(&Shipping); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
 			return
 		}
@@ -178,8 +205,14 @@ func SoftDeleteShipping(db *gorm.DB) gin.HandlerFunc {
 // @Router /shippings/hard/{id} [delete]
 func HardDeleteShipping(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		id := c.Param("id")
-		if result := initializers.DB.Unscoped().Delete(&model.Shipping{}, id); result.Error != nil {
+		if result := db.Unscoped().Where("id = ? AND account_id = ?", id, accountID).Delete(&model.Shipping{}); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
 			return
 		}
@@ -201,17 +234,23 @@ func HardDeleteShipping(db *gorm.DB) gin.HandlerFunc {
 // @Router /shippings/recover/{id} [put]
 func RecoverShipping(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		id := c.Param("id")
 		var Shipping model.Shipping
 
 		// Find the soft-deleted Shipping
-		if result := initializers.DB.Unscoped().First(&Shipping, id); result.Error != nil {
+		if result := db.Unscoped().Where("id = ? AND account_id = ?", id, accountID).First(&Shipping); result.Error != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Shipping not found"})
 			return
 		}
 
 		// Recover the Shipping by setting DeletedAt to NULL
-		if result := initializers.DB.Model(&Shipping).Update("DeletedAt", nil); result.Error != nil {
+		if result := db.Model(&Shipping).Update("DeletedAt", nil); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
 			return
 		}
