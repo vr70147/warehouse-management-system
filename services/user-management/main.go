@@ -2,7 +2,7 @@ package main
 
 import (
 	_ "user-management/docs"
-	"user-management/internal/api"
+	"user-management/internal/api/routes"
 	"user-management/internal/cache"
 	"user-management/internal/initializers"
 
@@ -38,7 +38,7 @@ func main() {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	api.Routers(r, initializers.DB)
+	routes.Routers(r, initializers.DB)
 
 	r.Run()
 }
