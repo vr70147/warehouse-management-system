@@ -3,6 +3,7 @@ package model
 // SuccessResponse represents a generic success response
 type SuccessResponse struct {
 	Message string `json:"message"`
+	Token   string `json:"token"`
 }
 
 // ErrorResponse represents a generic error response
