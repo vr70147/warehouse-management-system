@@ -5,7 +5,6 @@ import (
 	"inventory-management/internal/api/routes"
 	"inventory-management/internal/cache"
 	"inventory-management/internal/initializers"
-	"inventory-management/internal/middleware"
 	"inventory-management/kafka"
 
 	"github.com/gin-gonic/gin"
@@ -37,8 +36,6 @@ func main() {
 	go kafka.ConsumerOrderEvents()
 	r := gin.Default()
 
-	r.Use(middleware.CORSMiddleware())
-	r.Use(middleware.AuthMiddleware())
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	routes.Routers(r, initializers.DB)
