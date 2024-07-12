@@ -28,7 +28,7 @@ func CreateAccount(db *gorm.DB) gin.HandlerFunc {
 func GetAccounts(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var accounts []model.Account
-		if err := db.Find(&accounts).Error; err != nil {
+		if err := db.Preload("Plan").Find(&accounts).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: err.Error()})
 			return
 		}
@@ -45,10 +45,27 @@ func UpdateAccount(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		if err := c.ShouldBindJSON(&account); err != nil {
+		var updateData model.Account
+		if err := c.ShouldBindJSON(&updateData); err != nil {
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: err.Error()})
 			return
 		}
+
+		account.Email = updateData.Email
+		account.Name = updateData.Name
+		account.PhoneNumber = updateData.PhoneNumber
+		account.CompanyName = updateData.CompanyName
+		account.Address = updateData.Address
+		account.City = updateData.City
+		account.State = updateData.State
+		account.PostalCode = updateData.PostalCode
+		account.Country = updateData.Country
+		account.BillingEmail = updateData.BillingEmail
+		account.BillingAddress = updateData.BillingAddress
+		account.PlanID = updateData.PlanID
+		account.IsActive = updateData.IsActive
+		account.Metadata = updateData.Metadata
+		account.Preferences = updateData.Preferences
 
 		if err := db.Save(&account).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: err.Error()})
@@ -101,6 +118,7 @@ func RecoverAccount(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		account.DeletedAt = nil
 		if err := db.Save(&account).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: err.Error()})
 			return
