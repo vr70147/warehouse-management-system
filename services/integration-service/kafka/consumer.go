@@ -22,6 +22,17 @@ func ConsumeMessages(topic string, handleMessage func(kafka.Message)) {
 			continue
 		}
 
+		log.Printf("Consumed message from topic %s: %s with account_id: %s", topic, string(m.Value), getAccountIDFromHeaders(m.Headers))
 		handleMessage(m)
 	}
+}
+
+// Helper function to get account_id from message headers
+func getAccountIDFromHeaders(headers []kafka.Header) string {
+	for _, h := range headers {
+		if h.Key == "account_id" {
+			return string(h.Value)
+		}
+	}
+	return ""
 }
