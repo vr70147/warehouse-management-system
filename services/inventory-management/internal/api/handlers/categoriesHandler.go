@@ -20,6 +20,12 @@ import (
 // @Router /categories [post]
 func CreateCategory(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		var category model.Category
 
 		// Bind JSON body to category struct
@@ -29,6 +35,8 @@ func CreateCategory(db *gorm.DB) gin.HandlerFunc {
 			})
 			return
 		}
+
+		category.AccountID = accountID.(uint)
 
 		// Save the new category to the database
 		if result := db.Create(&category); result.Error != nil {
@@ -58,14 +66,18 @@ func CreateCategory(db *gorm.DB) gin.HandlerFunc {
 // @Router /categories/{id} [put]
 func UpdateCategory(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		categoryID := c.Param("id")
 		var category model.Category
 
 		// Find the category by ID
-		if result := db.First(&category, categoryID); result.Error != nil {
-			c.JSON(http.StatusNotFound, model.ErrorResponse{
-				Error: "Category not found",
-			})
+		if err := db.Where("id = ? AND account_id = ?", categoryID, accountID).First(&category).Error; err != nil {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Category not found"})
 			return
 		}
 
@@ -77,8 +89,10 @@ func UpdateCategory(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		category.AccountID = accountID.(uint) // Ensure the AccountID remains the same
+
 		// Save the updated category to the database
-		if result := db.Save(&category); result.Error != nil {
+		if err := db.Save(&category).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
 				Error: "Failed to update category",
 			})
@@ -101,10 +115,16 @@ func UpdateCategory(db *gorm.DB) gin.HandlerFunc {
 // @Router /categories [get]
 func GetCategories(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		var categories []model.Category
 
 		// Retrieve all categories from the database
-		if result := db.Find(&categories); result.Error != nil {
+		if err := db.Where("account_id = ?", accountID).Find(&categories).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
 				Error: "Failed to retrieve categories",
 			})
@@ -117,7 +137,7 @@ func GetCategories(db *gorm.DB) gin.HandlerFunc {
 			categoryResponses = append(categoryResponses, model.CategoryResponse{
 				ID:       category.ID,
 				Name:     category.Name,
-				ParentID: nil, // Adjust based on your category hierarchy implementation
+				ParentID: nil,
 			})
 		}
 
@@ -140,24 +160,30 @@ func GetCategories(db *gorm.DB) gin.HandlerFunc {
 // @Router /categories/{id} [delete]
 func SoftDeleteCategory(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var category model.Category
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		id := c.Param("id")
+		var category model.Category
 
 		// Find the category by ID
-		if err := db.First(&category, id).Error; err != nil {
+		if err := db.Where("id = ? AND account_id = ?", id, accountID).First(&category).Error; err != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Category not found"})
 			return
 		}
 
 		// Get the default category
 		var defaultCategory model.Category
-		if err := db.First(&defaultCategory, "name = ?", "Uncategorized").Error; err != nil {
+		if err := db.First(&defaultCategory, "name = ? AND account_id = ?", "Uncategorized", accountID).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Default category not found"})
 			return
 		}
 
 		// Reassign products to the default category
-		if err := db.Model(&model.Product{}).Where("category_id = ?", category.ID).Update("category_id", defaultCategory.ID).Error; err != nil {
+		if err := db.Model(&model.Product{}).Where("category_id = ? AND account_id = ?", category.ID, accountID).Update("category_id", defaultCategory.ID).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to reassign products"})
 			return
 		}
@@ -184,24 +210,30 @@ func SoftDeleteCategory(db *gorm.DB) gin.HandlerFunc {
 // @Router /categories/{id}/hard [delete]
 func HardDeleteCategory(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var category model.Category
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		id := c.Param("id")
+		var category model.Category
 
 		// Find the category by ID
-		if err := db.Unscoped().First(&category, id).Error; err != nil {
+		if err := db.Unscoped().Where("id = ? AND account_id = ?", id, accountID).First(&category).Error; err != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Category not found"})
 			return
 		}
 
 		// Get the default category
 		var defaultCategory model.Category
-		if err := db.First(&defaultCategory, "name = ?", "Uncategorized").Error; err != nil {
+		if err := db.First(&defaultCategory, "name = ? AND account_id = ?", "Uncategorized", accountID).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Default category not found"})
 			return
 		}
 
 		// Reassign products to the default category
-		if err := db.Model(&model.Product{}).Where("category_id = ?", category.ID).Update("category_id", defaultCategory.ID).Error; err != nil {
+		if err := db.Model(&model.Product{}).Where("category_id = ? AND account_id = ?", category.ID, accountID).Update("category_id", defaultCategory.ID).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to reassign products"})
 			return
 		}
@@ -228,10 +260,16 @@ func HardDeleteCategory(db *gorm.DB) gin.HandlerFunc {
 // @Router /categories/{id}/recover [post]
 func RecoverCategory(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		categoryID := c.Param("id")
 
 		// Recover the soft-deleted category by setting deleted_at to NULL
-		if result := db.Model(&model.Category{}).Unscoped().Where("id = ?", categoryID).Update("deleted_at", nil); result.Error != nil {
+		if result := db.Unscoped().Model(&model.Category{}).Where("id = ? AND account_id = ?", categoryID, accountID).Update("deleted_at", nil); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
 				Error: "Failed to recover category",
 			})
@@ -239,7 +277,7 @@ func RecoverCategory(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		// Reassign products back to the recovered category
-		if err := db.Model(&model.Product{}).Where("category_id IS NULL").Where("previous_category_id = ?", categoryID).Update("category_id", categoryID).Error; err != nil {
+		if err := db.Model(&model.Product{}).Where("category_id IS NULL AND account_id = ? AND previous_category_id = ?", accountID, categoryID).Update("category_id", categoryID).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to reassign products"})
 			return
 		}
