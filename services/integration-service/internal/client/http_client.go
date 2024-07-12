@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"integration-service/internal/model"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -20,7 +21,14 @@ func CallOrderService(orderRequest model.OrderRequest, OrderServiceURL string) (
 		return orderResponse, err
 	}
 
-	resp, err := httpClient.Post(OrderServiceURL, "application/json", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", OrderServiceURL, bytes.NewBuffer(body))
+	if err != nil {
+		return orderResponse, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("account_id", strconv.FormatUint(uint64(orderRequest.AccountID), 10))
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return orderResponse, err
 	}
@@ -38,10 +46,16 @@ func CallOrderService(orderRequest model.OrderRequest, OrderServiceURL string) (
 	return orderResponse, nil
 }
 
-func CallGetOrderService(orderID, url string) (model.OrderResponse, error) {
+func CallGetOrderService(orderID, accountID, url string) (model.OrderResponse, error) {
 	var orderResponse model.OrderResponse
 
-	resp, err := httpClient.Get(fmt.Sprintf("%s/orders/%s", url, orderID))
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/orders/%s", url, orderID), nil)
+	if err != nil {
+		return orderResponse, err
+	}
+	req.Header.Set("account_id", accountID)
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return orderResponse, err
 	}
@@ -67,7 +81,14 @@ func CallShippingService(shippingRequest model.ShippingRequest, url string) (mod
 		return shippingResponse, err
 	}
 
-	resp, err := httpClient.Post(url+"/shipping", "application/json", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", url+"/shipping", bytes.NewBuffer(body))
+	if err != nil {
+		return shippingResponse, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("account_id", strconv.FormatUint(uint64(shippingRequest.AccountID), 10))
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return shippingResponse, err
 	}
@@ -93,14 +114,21 @@ func CallInventoryService(inventoryRequest model.InventoryRequest, url string) (
 		return inventoryResponse, err
 	}
 
-	resp, err := httpClient.Post(url+"/inventory", "application/json", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", url+"/inventory", bytes.NewBuffer(body))
+	if err != nil {
+		return inventoryResponse, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("account_id", strconv.FormatUint(uint64(inventoryRequest.AccountID), 10))
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return inventoryResponse, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return inventoryResponse, errors.New("failed to call order service")
+		return inventoryResponse, errors.New("failed to call inventory service")
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&inventoryResponse)
@@ -119,7 +147,14 @@ func CallUsersService(userRequest model.UserRequest, url string) (model.UserResp
 		return userResponse, err
 	}
 
-	resp, err := httpClient.Post(url+"/users", "application/json", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", url+"/users", bytes.NewBuffer(body))
+	if err != nil {
+		return userResponse, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("account_id", strconv.FormatUint(uint64(userRequest.AccountID), 10))
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return userResponse, err
 	}
@@ -145,7 +180,14 @@ func CallSalesReportService(request model.SalesReportRequest, url string) ([]mod
 		return response, err
 	}
 
-	resp, err := httpClient.Post(url+"/reports/sales", "application/json", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", url+"/reports/sales", bytes.NewBuffer(body))
+	if err != nil {
+		return response, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("account_id", strconv.FormatUint(uint64(request.AccountID), 10))
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return response, err
 	}

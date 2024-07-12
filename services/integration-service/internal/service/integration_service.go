@@ -7,6 +7,7 @@ import (
 	"integration-service/internal/model"
 	"integration-service/kafka"
 	"net/http"
+	"strconv"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -23,6 +24,24 @@ const maxRetries = 3
 const retryDelay = 2 * time.Second
 
 func CreateOrder(c *gin.Context) {
+	accountIDStr := c.GetHeader("account_id")
+	if accountIDStr == "" {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "Account ID not found",
+		})
+		return
+	}
+
+	accountID, err := strconv.ParseUint(accountIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid Account ID",
+		})
+		return
+	}
+
 	var orderRequest model.OrderRequest
 	if err := c.ShouldBindJSON(&orderRequest); err != nil {
 		log.WithFields(log.Fields{
@@ -36,8 +55,9 @@ func CreateOrder(c *gin.Context) {
 		return
 	}
 
+	orderRequest.AccountID = uint(accountID) // Add account ID to the request
+
 	var orderResponse model.OrderResponse
-	var err error
 	for i := 0; i < maxRetries; i++ {
 		orderResponse, err = client.CallOrderService(orderRequest, config.OrderServiceURL)
 		if err == nil {
@@ -60,7 +80,7 @@ func CreateOrder(c *gin.Context) {
 	}
 
 	orderEvent := fmt.Sprintf(`{"order_id": %d,"order_status": "%s"}`, orderResponse.OrderID, orderResponse.Status)
-	if err := kafka.ProduceMessage(config.OrderEventsTopic, orderEvent); err != nil {
+	if err := kafka.ProduceMessage(config.OrderEventsTopic, accountIDStr, orderEvent); err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
 		}).Error("Failed to publish order event")
@@ -69,10 +89,18 @@ func CreateOrder(c *gin.Context) {
 }
 
 func GetOrder(c *gin.Context) {
+	accountIDStr := c.GetHeader("account_id")
+	if accountIDStr == "" {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "Account ID not found",
+		})
+		return
+	}
+
 	orderID := c.Param("id")
 
-	// Assuming an implementation to get order details from the order service
-	orderResponse, err := client.CallGetOrderService(orderID, config.OrderServiceURL)
+	orderResponse, err := client.CallGetOrderService(orderID, accountIDStr, config.OrderServiceURL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
 			Code:    http.StatusInternalServerError,
@@ -86,6 +114,24 @@ func GetOrder(c *gin.Context) {
 }
 
 func GetSalesReports(c *gin.Context) {
+	accountIDStr := c.GetHeader("account_id")
+	if accountIDStr == "" {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "Account ID not found",
+		})
+		return
+	}
+
+	accountID, err := strconv.ParseUint(accountIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid Account ID",
+		})
+		return
+	}
+
 	var request model.SalesReportRequest
 	if err := c.ShouldBindQuery(&request); err != nil {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
@@ -95,6 +141,8 @@ func GetSalesReports(c *gin.Context) {
 		})
 		return
 	}
+
+	request.AccountID = uint(accountID) // Add account ID to the request
 
 	response, err := client.CallSalesReportService(request, config.ReportingAnalyticsURL)
 	if err != nil {
@@ -110,6 +158,24 @@ func GetSalesReports(c *gin.Context) {
 }
 
 func GetInventoryLevel(c *gin.Context) {
+	accountIDStr := c.GetHeader("account_id")
+	if accountIDStr == "" {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "Account ID not found",
+		})
+		return
+	}
+
+	accountID, err := strconv.ParseUint(accountIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid Account ID",
+		})
+		return
+	}
+
 	var request model.InventoryRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
@@ -119,6 +185,8 @@ func GetInventoryLevel(c *gin.Context) {
 		})
 		return
 	}
+
+	request.AccountID = uint(accountID) // Add account ID to the request
 
 	response, err := client.CallInventoryService(request, config.ReportingAnalyticsURL)
 	if err != nil {
@@ -134,6 +202,24 @@ func GetInventoryLevel(c *gin.Context) {
 }
 
 func GetShippingStatus(c *gin.Context) {
+	accountIDStr := c.GetHeader("account_id")
+	if accountIDStr == "" {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "Account ID not found",
+		})
+		return
+	}
+
+	accountID, err := strconv.ParseUint(accountIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid Account ID",
+		})
+		return
+	}
+
 	var request model.ShippingRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
@@ -143,6 +229,8 @@ func GetShippingStatus(c *gin.Context) {
 		})
 		return
 	}
+
+	request.AccountID = uint(accountID) // Add account ID to the request
 
 	response, err := client.CallShippingService(request, config.ReportingAnalyticsURL)
 	if err != nil {
@@ -158,6 +246,24 @@ func GetShippingStatus(c *gin.Context) {
 }
 
 func GetUserActivities(c *gin.Context) {
+	accountIDStr := c.GetHeader("account_id")
+	if accountIDStr == "" {
+		c.JSON(http.StatusUnauthorized, model.ErrorResponse{
+			Code:    http.StatusUnauthorized,
+			Message: "Account ID not found",
+		})
+		return
+	}
+
+	accountID, err := strconv.ParseUint(accountIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Code:    http.StatusBadRequest,
+			Message: "Invalid Account ID",
+		})
+		return
+	}
+
 	var request model.UserRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
@@ -167,6 +273,8 @@ func GetUserActivities(c *gin.Context) {
 		})
 		return
 	}
+
+	request.AccountID = uint(accountID) // Add account ID to the request
 
 	response, err := client.CallUsersService(request, config.ReportingAnalyticsURL)
 	if err != nil {
