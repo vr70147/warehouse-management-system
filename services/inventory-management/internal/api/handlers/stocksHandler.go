@@ -20,6 +20,12 @@ import (
 // @Router /stocks [post]
 func CreateStock(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		var stock model.Stock
 
 		if err := c.ShouldBindJSON(&stock); err != nil {
@@ -28,6 +34,8 @@ func CreateStock(db *gorm.DB) gin.HandlerFunc {
 			})
 			return
 		}
+
+		stock.AccountID = accountID.(uint)
 
 		if result := db.Create(&stock); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
@@ -56,10 +64,16 @@ func CreateStock(db *gorm.DB) gin.HandlerFunc {
 // @Router /stocks/{id} [put]
 func UpdateStock(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		stockID := c.Param("id")
 		var stock model.Stock
 
-		if result := db.First(&stock, stockID); result.Error != nil {
+		if result := db.Where("id = ? AND account_id = ?", stockID, accountID).First(&stock); result.Error != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{
 				Error: "Stock not found",
 			})
@@ -72,6 +86,8 @@ func UpdateStock(db *gorm.DB) gin.HandlerFunc {
 			})
 			return
 		}
+
+		stock.AccountID = accountID.(uint)
 
 		if result := db.Save(&stock); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
@@ -96,8 +112,14 @@ func UpdateStock(db *gorm.DB) gin.HandlerFunc {
 // @Router /stocks [get]
 func GetStocks(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		var stocks []model.Stock
-		if result := db.Find(&stocks); result.Error != nil {
+		if result := db.Where("account_id = ?", accountID).Find(&stocks); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
 				Error: "Failed to retrieve stocks",
 			})
@@ -133,9 +155,15 @@ func GetStocks(db *gorm.DB) gin.HandlerFunc {
 // @Router /stocks/{id} [delete]
 func SoftDeleteStock(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		stockID := c.Param("id")
 
-		if result := db.Delete(&model.Stock{}, stockID); result.Error != nil {
+		if result := db.Where("id = ? AND account_id = ?", stockID, accountID).Delete(&model.Stock{}); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
 				Error: "Failed to delete stock",
 			})
@@ -159,9 +187,15 @@ func SoftDeleteStock(db *gorm.DB) gin.HandlerFunc {
 // @Router /stocks/{id}/hard [delete]
 func HardDeleteStock(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		stockID := c.Param("id")
 
-		if result := db.Unscoped().Delete(&model.Stock{}, stockID); result.Error != nil {
+		if result := db.Unscoped().Where("id = ? AND account_id = ?", stockID, accountID).Delete(&model.Stock{}); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
 				Error: "Failed to delete stock",
 			})
@@ -186,9 +220,15 @@ func HardDeleteStock(db *gorm.DB) gin.HandlerFunc {
 // @Router /stocks/{id}/recover [post]
 func RecoverStock(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
 		stockID := c.Param("id")
 
-		if result := db.Model(&model.Stock{}).Unscoped().Where("id = ?", stockID).Update("deleted_at", nil); result.Error != nil {
+		if result := db.Model(&model.Stock{}).Unscoped().Where("id = ? AND account_id = ?", stockID, accountID).Update("deleted_at", nil); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
 				Error: "Failed to recover stock",
 			})
