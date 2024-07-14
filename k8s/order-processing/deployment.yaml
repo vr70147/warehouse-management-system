@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-processing
+spec:
+  selector:
+    matchLabels:
+      app: order-processing
+  template:
+    metadata:
+      labels:
+        app: order-processing
+    spec:
+      containers:
+        - name: order-processing
+          image: raanan7784/warehouse-order-processing:v1.0.0
+          envFrom:
+            - configMapRef:
+                name: order-processing
+            - secretRef:
+                name: order-processing
+          resources:
+            limits:
+              memory: '128Mi'
+              cpu: '500m'
+            requests:
+              memory: '64Mi'
+              cpu: '250m'
+          ports:
+            - containerPort: 8083
+              name: web
