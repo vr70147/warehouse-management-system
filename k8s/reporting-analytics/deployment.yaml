@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reporting-analytics
+spec:
+  selector:
+    matchLabels:
+      app: reporting-analytics
+  template:
+    metadata:
+      labels:
+        app: reporting-analytics
+    spec:
+      containers:
+        - name: reporting-analytics
+          image: raanan7784/warehouse-reporting-analytics:v1.0.0
+          envFrom:
+            - configMapRef:
+                name: reporting-analytics
+            - secretRef:
+                name: reporting-analytics
+          resources:
+            limits:
+              memory: '128Mi'
+              cpu: '500m'
+            requests:
+              memory: '64Mi'
+              cpu: '250m'
+          ports:
+            - containerPort: 8084
+              name: web
