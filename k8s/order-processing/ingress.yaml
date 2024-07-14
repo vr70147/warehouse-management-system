@@ -1,18 +1,18 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: user-management
+  name: order-processing
   labels:
-    name: user-management
+    name: order-processing
 spec:
   rules:
     - host: localhost
       http:
         paths:
           - pathType: Prefix
-            path: '/'
+            path: '/order-processing'
             backend:
               service:
-                name: user-management
+                name: order-processing
                 port:
-                  number: 8080
+                  number: 8083

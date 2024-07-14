@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-management
+  name: order-processing
 spec:
   selector:
     matchLabels:
-      app: user-management
+      app: order-processing
   template:
     metadata:
       labels:
-        app: user-management
+        app: order-processing
     spec:
       containers:
-        - name: user-management
-          image: raanan7784/warehouse-user-service:v1.0.0
+        - name: order-processing
+          image: raanan7784/warehouse-order-processing:v1.0.0
           envFrom:
             - configMapRef:
-                name: user-management
+                name: order-processing
             - secretRef:
-                name: user-management
+                name: order-processing
           resources:
             limits:
               memory: '128Mi'
@@ -27,5 +27,5 @@ spec:
               memory: '64Mi'
               cpu: '250m'
           ports:
-            - containerPort: 8080
+            - containerPort: 8083
               name: web

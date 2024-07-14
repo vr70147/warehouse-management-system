@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-management
+  name: reporting-analytics
 spec:
   selector:
     matchLabels:
-      app: user-management
+      app: reporting-analytics
   template:
     metadata:
       labels:
-        app: user-management
+        app: reporting-analytics
     spec:
       containers:
-        - name: user-management
-          image: raanan7784/warehouse-user-service:v1.0.0
+        - name: reporting-analytics
+          image: raanan7784/warehouse-reporting-analytics:v1.0.0
           envFrom:
             - configMapRef:
-                name: user-management
+                name: reporting-analytics
             - secretRef:
-                name: user-management
+                name: reporting-analytics
           resources:
             limits:
               memory: '128Mi'
@@ -27,5 +27,5 @@ spec:
               memory: '64Mi'
               cpu: '250m'
           ports:
-            - containerPort: 8080
+            - containerPort: 8084
               name: web

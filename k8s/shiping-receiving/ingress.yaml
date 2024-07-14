@@ -1,18 +1,18 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: user-management
+  name: shipping-receiving
   labels:
-    name: user-management
+    name: shipping-receiving
 spec:
   rules:
     - host: localhost
       http:
         paths:
           - pathType: Prefix
-            path: '/'
+            path: '/shipping-receiving'
             backend:
               service:
-                name: user-management
+                name: shipping-receiving
                 port:
-                  number: 8080
+                  number: 8082

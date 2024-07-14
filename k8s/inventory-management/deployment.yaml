@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-management
+  name: inventory-management
 spec:
   selector:
     matchLabels:
-      app: user-management
+      app: inventory-management
   template:
     metadata:
       labels:
-        app: user-management
+        app: inventory-management
     spec:
       containers:
-        - name: user-management
-          image: raanan7784/warehouse-user-service:v1.0.0
+        - name: inventory-management
+          image: raanan7784/warehouse-inventory-management:v1.0.0
           envFrom:
             - configMapRef:
-                name: user-management
+                name: inventory-management
             - secretRef:
-                name: user-management
+                name: inventory-management
           resources:
             limits:
               memory: '128Mi'
@@ -27,5 +27,5 @@ spec:
               memory: '64Mi'
               cpu: '250m'
           ports:
-            - containerPort: 8080
+            - containerPort: 8081
               name: web

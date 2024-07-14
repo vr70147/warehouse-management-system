@@ -1,22 +1,17 @@
-FROM golang:1.18-alpine AS builder
+FROM golang:1.22.2 as builder
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+COPY . .
 
 RUN go mod download
 
-COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
-RUN go build -o main .
-
-FROM alpine:latest
+FROM alpine:3.19.1
 
 WORKDIR /root/
 
 COPY --from=builder /app/main .
-COPY --from=builder /app/.env .
-
-EXPOSE 8086
 
 CMD ["./main"]

@@ -1,18 +1,18 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: user-management
+  name: reporting-analytics
   labels:
-    name: user-management
+    name: reporting-analytics
 spec:
   rules:
     - host: localhost
       http:
         paths:
           - pathType: Prefix
-            path: '/'
+            path: '/reporting-analytics/'
             backend:
               service:
-                name: user-management
+                name: reporting-analytics
                 port:
-                  number: 8080
+                  number: 8084
