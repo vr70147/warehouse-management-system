@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shipping-receiving
+spec:
+  selector:
+    matchLabels:
+      app: shipping-receiving
+  template:
+    metadata:
+      labels:
+        app: shipping-receiving
+    spec:
+      containers:
+        - name: shipping-receiving
+          image: raanan7784/warehouse-shipping-receiving:v1.0.0
+          envFrom:
+            - configMapRef:
+                name: shipping-receiving
+            - secretRef:
+                name: shipping-receiving
+          resources:
+            limits:
+              memory: '128Mi'
+              cpu: '500m'
+            requests:
+              memory: '64Mi'
+              cpu: '250m'
+          ports:
+            - containerPort: 8082
+              name: web
