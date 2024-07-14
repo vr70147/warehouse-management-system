@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-management
+spec:
+  selector:
+    matchLabels:
+      app: inventory-management
+  template:
+    metadata:
+      labels:
+        app: inventory-management
+    spec:
+      containers:
+        - name: inventory-management
+          image: raanan7784/warehouse-inventory-management:v1.0.0
+          envFrom:
+            - configMapRef:
+                name: inventory-management
+            - secretRef:
+                name: inventory-management
+          resources:
+            limits:
+              memory: '128Mi'
+              cpu: '500m'
+            requests:
+              memory: '64Mi'
+              cpu: '250m'
+          ports:
+            - containerPort: 8081
+              name: web
