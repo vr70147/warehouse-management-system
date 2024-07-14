@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-management
+data:
+  POSTGRES_HOST: postgres-postgresql.postgres.svc.cluster.local
+  POSTGRES_USER: raananadut
+  POSTGRES_DB: user_management
+  POSTGRES_PORT: '5432'
+  PORT: '8080'
+  REDIS_ADDR: 'localhost:6379'
+  TOKEN_EXPIRED_IN: '60m'
+  TOKEN_MAXAGE: '60'
