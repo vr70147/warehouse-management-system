@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: accounts-management
+  labels:
+    name: accounts-management
+spec:
+  rules:
+    - host: localhost
+      http:
+        paths:
+          - pathType: Prefix
+            path: '/accounts-management'
+            backend:
+              service:
+                name: accounts-management
+                port:
+                  number: 8086

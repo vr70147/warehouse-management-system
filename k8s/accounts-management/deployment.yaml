@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: accounts-management
+spec:
+  selector:
+    matchLabels:
+      app: accounts-management
+  template:
+    metadata:
+      labels:
+        app: accounts-management
+    spec:
+      containers:
+        - name: accounts-management
+          image: raanan7784/warehouse-accounts-management:v1.0.1
+          envFrom:
+            - configMapRef:
+                name: accounts-management
+            - secretRef:
+                name: accounts-management
+          resources:
+            limits:
+              memory: '128Mi'
+              cpu: '500m'
+            requests:
+              memory: '64Mi'
+              cpu: '250m'
+          ports:
+            - containerPort: 8086
+              name: web
