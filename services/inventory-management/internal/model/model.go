@@ -39,7 +39,8 @@ type Category struct {
 	DeletedAt   *time.Time `gorm:"index" json:"deleted_at,omitempty"`
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
-	AccountID   uint       `gorm:"index"` // Foreign key to Account
+	AccountID   uint       `gorm:"index"`
+	ParentID    *uint      `gorm:"index" json:"parent_id,omitempty"`
 }
 
 type Supplier struct {
