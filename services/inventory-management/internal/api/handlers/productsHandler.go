@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"inventory-management/internal/initializers"
 	"inventory-management/internal/model"
 	"net/http"
 
@@ -9,6 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// CreateProduct godoc
 // @Summary Create a new product
 // @Description Add a new product to the inventory
 // @Tags products
@@ -22,14 +22,20 @@ func CreateProduct(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var product model.Product
 		if err := c.ShouldBindJSON(&product); err != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: err.Error()})
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid request data"})
 			return
 		}
-		db.Create(&product)
+
+		if err := db.Create(&product).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to create product"})
+			return
+		}
+
 		c.JSON(http.StatusOK, product)
 	}
 }
 
+// GetProducts godoc
 // @Summary Get all products or filter by various criteria
 // @Description Retrieve all products or filter by ID, name, category ID, or supplier ID
 // @Tags products
@@ -49,19 +55,10 @@ func GetProducts(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		var products []model.Product
-		if err := initializers.DB.Where("account_id = ?", accountID).Find(&products).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: err.Error()})
-			return
-		}
 
-		id := c.Query("id")
-		name := c.Query("name")
-		categoryID := c.Query("category_id")
-		supplierID := c.Query("supplier_id")
+		query := db.Preload("Category").Preload("Supplier").Preload("Stocks").Where("account_id = ?", accountID)
 
-		query := db.Preload("Category").Preload("Supplier").Preload("Stocks")
-
-		if id != "" {
+		if id := c.Query("id"); id != "" {
 			if err := query.Where("id = ?", id).First(&products).Error; err != nil {
 				c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Product not found"})
 				return
@@ -70,23 +67,28 @@ func GetProducts(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		if name != "" {
+		if name := c.Query("name"); name != "" {
 			query = query.Where("name LIKE ?", "%"+name+"%")
 		}
 
-		if categoryID != "" {
+		if categoryID := c.Query("category_id"); categoryID != "" {
 			query = query.Where("category_id = ?", categoryID)
 		}
 
-		if supplierID != "" {
+		if supplierID := c.Query("supplier_id"); supplierID != "" {
 			query = query.Where("supplier_id = ?", supplierID)
 		}
 
-		query.Find(&products)
+		if err := query.Find(&products).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to retrieve products"})
+			return
+		}
+
 		c.JSON(http.StatusOK, products)
 	}
 }
 
+// UpdateProduct godoc
 // @Summary Update an existing product
 // @Description Update details of an existing product
 // @Tags products
@@ -107,23 +109,27 @@ func UpdateProduct(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		var product model.Product
-		if err := db.Where("account_id = ?", c.Param("id"), accountID).First(&product).Error; err != nil {
+		if err := db.Where("id = ? AND account_id = ?", c.Param("id"), accountID).First(&product).Error; err != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Product not found"})
 			return
 		}
 
 		if err := c.ShouldBindJSON(&product); err != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: err.Error()})
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid request data"})
 			return
 		}
 
 		product.AccountID = accountID.(uint)
+		if err := db.Save(&product).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to update product"})
+			return
+		}
 
-		db.Save(&product)
 		c.JSON(http.StatusOK, product)
 	}
 }
 
+// SoftDeleteProduct godoc
 // @Summary Soft delete an existing product
 // @Description Soft delete a product by ID
 // @Tags products
@@ -143,10 +149,12 @@ func SoftDeleteProduct(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Product not found"})
 			return
 		}
+
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Product soft deleted"})
 	}
 }
 
+// HardDeleteProduct godoc
 // @Summary Hard delete an existing product and its stocks
 // @Description Hard delete a product by ID along with its associated stocks
 // @Tags products
@@ -165,14 +173,12 @@ func HardDeleteProduct(db *gorm.DB) gin.HandlerFunc {
 
 		tx := db.Begin()
 
-		// Delete associated stocks
 		if err := tx.Where("product_id = ? AND account_id = ?", c.Param("id"), accountID).Unscoped().Delete(&model.Stock{}).Error; err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to delete associated stocks"})
 			return
 		}
 
-		// Delete the product
 		if err := tx.Unscoped().Where("id = ? AND account_id = ?", c.Param("id"), accountID).Delete(&model.Product{}).Error; err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Product not found"})
@@ -184,6 +190,7 @@ func HardDeleteProduct(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
+// RecoverProduct godoc
 // @Summary Recover a soft-deleted product
 // @Description Recover a soft-deleted product by ID
 // @Tags products
@@ -202,14 +209,10 @@ func RecoverProduct(db *gorm.DB) gin.HandlerFunc {
 		productID := c.Param("id")
 
 		if err := db.Unscoped().Model(&model.Product{}).Where("id = ? AND account_id = ?", productID, accountID).Update("deleted_at", nil).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to recover product",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to recover product"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Product recovered",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Product recovered"})
 	}
 }
