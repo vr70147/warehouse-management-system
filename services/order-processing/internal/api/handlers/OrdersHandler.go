@@ -33,16 +33,16 @@ func GetOrders(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		id := c.Query("id")
-
-		cachedOrder, err := cache.GetCache(id)
-		if err == nil {
-			var order model.Order
-			json.Unmarshal([]byte(cachedOrder), &order)
-			c.JSON(http.StatusOK, order)
-			return
+		if id != "" {
+			cachedOrder, err := cache.GetCache(id)
+			if err == nil {
+				var order model.Order
+				json.Unmarshal([]byte(cachedOrder), &order)
+				c.JSON(http.StatusOK, order)
+				return
+			}
 		}
 
-		// Fetch list of orders with optional query parameters
 		var orders []model.Order
 		query := db.Where("account_id = ?", accountID)
 
@@ -71,9 +71,10 @@ func GetOrders(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Cache the list of orders
-		orderJSON, _ := json.Marshal(orders)
-		cache.SetCache(id, string(orderJSON))
+		if id != "" {
+			orderJSON, _ := json.Marshal(orders)
+			cache.SetCache(id, string(orderJSON))
+		}
 
 		c.JSON(http.StatusOK, model.SuccessResponses{Message: "Orders found", Orders: orders})
 	}
@@ -99,13 +100,18 @@ func CreateOrder(db *gorm.DB) gin.HandlerFunc {
 
 		var orderRequest model.Order
 		if err := c.ShouldBindJSON(&orderRequest); err != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: err.Error()})
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid order data"})
+			return
+		}
+
+		if orderRequest.CustomerID == 0 || orderRequest.Quantity <= 0 || orderRequest.ProductID == 0 {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Missing or invalid fields"})
 			return
 		}
 
 		tx := db.Begin()
 		if tx.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: tx.Error.Error()})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Database transaction error"})
 			return
 		}
 
@@ -119,13 +125,13 @@ func CreateOrder(db *gorm.DB) gin.HandlerFunc {
 
 		if err := tx.Create(&order).Error; err != nil {
 			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: err.Error()})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to create order"})
 			return
 		}
 
 		if err := tx.Commit().Error; err != nil {
 			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: err.Error()})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to commit transaction"})
 			return
 		}
 
@@ -156,9 +162,8 @@ func UpdateOrder(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		var orderUpdate model.Order
-
 		if err := c.ShouldBindJSON(&orderUpdate); err != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: err.Error()})
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid order data"})
 			return
 		}
 
@@ -178,7 +183,7 @@ func UpdateOrder(db *gorm.DB) gin.HandlerFunc {
 			"status":  orderUpdate.Status,
 			"version": orderUpdate.Version,
 		}).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update order"})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to update order"})
 			return
 		}
 
@@ -206,7 +211,7 @@ func SoftDeleteOrder(db *gorm.DB) gin.HandlerFunc {
 
 		id := c.Param("id")
 		if result := db.Where("id = ? AND account_id = ?", id, accountID).Delete(&model.Order{}); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to delete order"})
 			return
 		}
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order deleted successfully"})
@@ -232,7 +237,7 @@ func HardDeleteOrder(db *gorm.DB) gin.HandlerFunc {
 
 		id := c.Param("id")
 		if result := db.Unscoped().Where("id = ? AND account_id = ?", id, accountID).Delete(&model.Order{}); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to delete order"})
 			return
 		}
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order deleted permanently"})
@@ -260,15 +265,13 @@ func RecoverOrder(db *gorm.DB) gin.HandlerFunc {
 		id := c.Param("id")
 		var order model.Order
 
-		// Find the soft-deleted order
 		if result := db.Unscoped().Where("id = ? AND account_id = ?", id, accountID).First(&order); result.Error != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Order not found"})
 			return
 		}
 
-		// Recover the order by setting DeletedAt to NULL
 		if result := db.Model(&order).Update("DeletedAt", nil); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to recover order"})
 			return
 		}
 
