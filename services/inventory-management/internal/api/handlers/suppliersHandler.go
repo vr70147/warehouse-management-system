@@ -27,26 +27,18 @@ func CreateSupplier(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		var supplier model.Supplier
-
 		if err := c.ShouldBindJSON(&supplier); err != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{
-				Error: "Failed to read body",
-			})
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid request data"})
 			return
 		}
 
 		supplier.AccountID = accountID.(uint)
-
 		if result := db.Create(&supplier); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to create supplier",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to create supplier"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Supplier created successfully",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Supplier created successfully"})
 	}
 }
 
@@ -72,33 +64,23 @@ func UpdateSupplier(db *gorm.DB) gin.HandlerFunc {
 
 		supplierID := c.Param("id")
 		var supplier model.Supplier
-
 		if result := db.Where("id = ? AND account_id = ?", supplierID, accountID).First(&supplier); result.Error != nil {
-			c.JSON(http.StatusNotFound, model.ErrorResponse{
-				Error: "Supplier not found",
-			})
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Supplier not found"})
 			return
 		}
 
 		if err := c.ShouldBindJSON(&supplier); err != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{
-				Error: "Invalid request data",
-			})
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid request data"})
 			return
 		}
 
 		supplier.AccountID = accountID.(uint)
-
 		if result := db.Save(&supplier); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to update supplier",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to update supplier"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Supplier updated successfully",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Supplier updated successfully"})
 	}
 }
 
@@ -120,9 +102,7 @@ func GetSuppliers(db *gorm.DB) gin.HandlerFunc {
 
 		var suppliers []model.Supplier
 		if result := db.Where("account_id = ?", accountID).Find(&suppliers); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to retrieve suppliers",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to retrieve suppliers"})
 			return
 		}
 
@@ -251,9 +231,7 @@ func RecoverSupplier(db *gorm.DB) gin.HandlerFunc {
 
 		// Recover the soft-deleted supplier by setting deleted_at to NULL
 		if result := db.Model(&model.Supplier{}).Unscoped().Where("id = ? AND account_id = ?", supplierID, accountID).Update("deleted_at", nil); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to recover supplier",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to recover supplier"})
 			return
 		}
 
@@ -263,8 +241,6 @@ func RecoverSupplier(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Supplier recovered successfully",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Supplier recovered successfully"})
 	}
 }
