@@ -1,7 +1,7 @@
-package e2e
+package handlers_test
 
 import (
-	"accounts-management/internal/api/handlers"
+	"accounts-management/internal/api/routes"
 	"accounts-management/internal/model"
 	"bytes"
 	"encoding/json"
@@ -10,79 +10,231 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
-func setupRouter() *gin.Engine {
-	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	db.AutoMigrate(&model.Account{}, &model.Plan{}) // Include Plan in the migration
-
-	router := gin.Default()
-	router.POST("/accounts", handlers.CreateAccount(db))
-	router.GET("/accounts", handlers.GetAccounts(db))
-	return router
+func setupRouter(db *gorm.DB) *gin.Engine {
+	r := gin.Default()
+	routes.Routers(r, db)
+	return r
 }
 
-func TestE2E_CreateAndGetAccounts(t *testing.T) {
-	router := setupRouter()
+func setupTestDB() *gorm.DB {
+	db, _ := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	db.AutoMigrate(&model.Account{}, &model.Plan{})
+	return db
+}
 
-	// Create Account
+func TestCreateAccount(t *testing.T) {
+	db := setupTestDB()
+	router := setupRouter(db)
+
 	account := model.Account{
 		Email:          "test@example.com",
-		Name:           "Test Account",
+		Name:           "Test User",
 		PhoneNumber:    "123456789",
-		CompanyName:    "test",
+		CompanyName:    "Test Company",
+		Address:        "123 Test St",
+		City:           "Test City",
+		State:          "Test State",
+		PostalCode:     "12345",
+		Country:        "Test Country",
 		BillingEmail:   "billing@example.com",
-		BillingAddress: "test",
+		BillingAddress: "123 Billing St",
 		PlanID:         1,
 		IsActive:       true,
 		Metadata:       "{}",
 		Preferences:    "{}",
 	}
+
 	body, _ := json.Marshal(account)
 	req, _ := http.NewRequest("POST", "/accounts", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	resp := httptest.NewRecorder()
 
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected status OK; got %v", w.Code)
+	router.ServeHTTP(resp, req)
+
+	assert.Equal(t, http.StatusOK, resp.Code)
+	var response model.SuccessResponse
+	json.Unmarshal(resp.Body.Bytes(), &response)
+	assert.Equal(t, "Account created successfully", response.Message)
+}
+
+func TestGetAccounts(t *testing.T) {
+	db := setupTestDB()
+	router := setupRouter(db)
+
+	// Create an account to retrieve
+	db.Create(&model.Account{
+		Email:          "test@example.com",
+		Name:           "Test User",
+		PhoneNumber:    "123456789",
+		CompanyName:    "Test Company",
+		Address:        "123 Test St",
+		City:           "Test City",
+		State:          "Test State",
+		PostalCode:     "12345",
+		Country:        "Test Country",
+		BillingEmail:   "billing@example.com",
+		BillingAddress: "123 Billing St",
+		PlanID:         1,
+		IsActive:       true,
+		Metadata:       "{}",
+		Preferences:    "{}",
+	})
+
+	req, _ := http.NewRequest("GET", "/accounts", nil)
+	resp := httptest.NewRecorder()
+
+	router.ServeHTTP(resp, req)
+
+	assert.Equal(t, http.StatusOK, resp.Code)
+	var response model.SuccessResponse
+	json.Unmarshal(resp.Body.Bytes(), &response)
+	assert.Equal(t, "Accounts retrieved successfully", response.Message)
+	assert.NotEmpty(t, response.Data)
+}
+
+func TestUpdateAccount(t *testing.T) {
+	db := setupTestDB()
+	router := setupRouter(db)
+
+	account := model.Account{
+		Email:          "test@example.com",
+		Name:           "Test User",
+		PhoneNumber:    "123456789",
+		CompanyName:    "Test Company",
+		Address:        "123 Test St",
+		City:           "Test City",
+		State:          "Test State",
+		PostalCode:     "12345",
+		Country:        "Test Country",
+		BillingEmail:   "billing@example.com",
+		BillingAddress: "123 Billing St",
+		PlanID:         1,
+		IsActive:       true,
+		Metadata:       "{}",
+		Preferences:    "{}",
 	}
 
-	// Get Accounts
-	req, _ = http.NewRequest("GET", "/accounts", nil)
-	w = httptest.NewRecorder()
-	router.ServeHTTP(w, req)
+	db.Create(&account)
+	account.Name = "Updated User"
+	body, _ := json.Marshal(account)
+	req, _ := http.NewRequest("PUT", "/accounts/1", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	resp := httptest.NewRecorder()
 
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected status OK; got %v", w.Code)
+	router.ServeHTTP(resp, req)
+
+	assert.Equal(t, http.StatusOK, resp.Code)
+	var response model.SuccessResponse
+	json.Unmarshal(resp.Body.Bytes(), &response)
+	assert.Equal(t, "Account updated successfully", response.Message)
+	assert.Equal(t, "Updated User", response.Data.(map[string]interface{})["name"])
+}
+
+func TestSoftDeleteAccount(t *testing.T) {
+	db := setupTestDB()
+	router := setupRouter(db)
+
+	account := model.Account{
+		Email:          "test@example.com",
+		Name:           "Test User",
+		PhoneNumber:    "123456789",
+		CompanyName:    "Test Company",
+		Address:        "123 Test St",
+		City:           "Test City",
+		State:          "Test State",
+		PostalCode:     "12345",
+		Country:        "Test Country",
+		BillingEmail:   "billing@example.com",
+		BillingAddress: "123 Billing St",
+		PlanID:         1,
+		IsActive:       true,
+		Metadata:       "{}",
+		Preferences:    "{}",
 	}
 
-	var accounts []model.Account
-	err := json.Unmarshal(w.Body.Bytes(), &accounts)
-	if err != nil {
-		t.Fatalf("failed to unmarshal response: %v", err)
+	db.Create(&account)
+	req, _ := http.NewRequest("DELETE", "/accounts/1", nil)
+	resp := httptest.NewRecorder()
+
+	router.ServeHTTP(resp, req)
+
+	assert.Equal(t, http.StatusOK, resp.Code)
+	var response model.SuccessResponse
+	json.Unmarshal(resp.Body.Bytes(), &response)
+	assert.Equal(t, "Account soft deleted successfully", response.Message)
+}
+
+func TestHardDeleteAccount(t *testing.T) {
+	db := setupTestDB()
+	router := setupRouter(db)
+
+	account := model.Account{
+		Email:          "test@example.com",
+		Name:           "Test User",
+		PhoneNumber:    "123456789",
+		CompanyName:    "Test Company",
+		Address:        "123 Test St",
+		City:           "Test City",
+		State:          "Test State",
+		PostalCode:     "12345",
+		Country:        "Test Country",
+		BillingEmail:   "billing@example.com",
+		BillingAddress: "123 Billing St",
+		PlanID:         1,
+		IsActive:       true,
+		Metadata:       "{}",
+		Preferences:    "{}",
 	}
 
-	expected := []model.Account{
-		{
-			Email:          "test@example.com",
-			Name:           "Test Account",
-			PhoneNumber:    "123456789",
-			CompanyName:    "test",
-			BillingEmail:   "billing@example.com",
-			BillingAddress: "test",
-			PlanID:         1,
-			IsActive:       true,
-			Metadata:       "{}",
-			Preferences:    "{}",
-		},
+	db.Create(&account)
+	req, _ := http.NewRequest("DELETE", "/accounts/hard/1", nil)
+	resp := httptest.NewRecorder()
+
+	router.ServeHTTP(resp, req)
+
+	assert.Equal(t, http.StatusOK, resp.Code)
+	var response model.SuccessResponse
+	json.Unmarshal(resp.Body.Bytes(), &response)
+	assert.Equal(t, "Account hard deleted successfully", response.Message)
+}
+
+func TestRecoverAccount(t *testing.T) {
+	db := setupTestDB()
+	router := setupRouter(db)
+
+	account := model.Account{
+		Email:          "test@example.com",
+		Name:           "Test User",
+		PhoneNumber:    "123456789",
+		CompanyName:    "Test Company",
+		Address:        "123 Test St",
+		City:           "Test City",
+		State:          "Test State",
+		PostalCode:     "12345",
+		Country:        "Test Country",
+		BillingEmail:   "billing@example.com",
+		BillingAddress: "123 Billing St",
+		PlanID:         1,
+		IsActive:       true,
+		Metadata:       "{}",
+		Preferences:    "{}",
 	}
 
-	if diff := cmp.Diff(expected, accounts, cmpopts.IgnoreFields(model.Account{}, "ID", "CreatedAt", "UpdatedAt", "DeletedAt", "Password", "Plan")); diff != "" {
-		t.Fatalf("unexpected accounts (-want +got):\n%s", diff)
-	}
+	db.Create(&account)
+	db.Delete(&account) // Soft delete the account
+
+	req, _ := http.NewRequest("POST", "/accounts/1/recover", nil)
+	resp := httptest.NewRecorder()
+
+	router.ServeHTTP(resp, req)
+
+	assert.Equal(t, http.StatusOK, resp.Code)
+	var response model.SuccessResponse
+	json.Unmarshal(resp.Body.Bytes(), &response)
+	assert.Equal(t, "Account recovered successfully", response.Message)
 }

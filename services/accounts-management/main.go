@@ -4,7 +4,6 @@ import (
 	"accounts-management/internal/api/routes"
 	"accounts-management/internal/cache"
 	"accounts-management/internal/initializers"
-	"accounts-management/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,7 +16,6 @@ func init() {
 
 func main() {
 	r := gin.Default()
-	r.Use(middleware.CORSMiddleware())
 	routes.Routers(r, initializers.DB)
 
 	r.Run()

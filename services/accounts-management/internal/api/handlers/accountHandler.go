@@ -2,12 +2,24 @@ package handlers
 
 import (
 	"accounts-management/internal/model"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
+// CreateAccount godoc
+// @Summary Create a new account
+// @Description Create a new account
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Param body body model.Account true "Account data"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /accounts [post]
 func CreateAccount(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var account model.Account
@@ -21,10 +33,19 @@ func CreateAccount(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, account)
+		// Log the created account ID
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Account created successfully", Data: account})
 	}
 }
 
+// GetAccounts godoc
+// @Summary Get all accounts
+// @Description Retrieve all accounts
+// @Tags accounts
+// @Produce json
+// @Success 200 {object} model.SuccessResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /accounts [get]
 func GetAccounts(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var accounts []model.Account
@@ -33,10 +54,22 @@ func GetAccounts(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, accounts)
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Accounts retrieved successfully", Data: accounts})
 	}
 }
 
+// UpdateAccount godoc
+// @Summary Update an account
+// @Description Update account by ID
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Param id path int true "Account ID"
+// @Param body body model.Account true "Account data"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /accounts/{id} [put]
 func UpdateAccount(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var account model.Account
@@ -72,15 +105,25 @@ func UpdateAccount(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, account)
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Account updated successfully", Data: account})
 	}
 }
 
+// SoftDeleteAccount godoc
+// @Summary Soft delete an account
+// @Description Soft delete account by ID
+// @Tags accounts
+// @Produce json
+// @Param id path int true "Account ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /accounts/{id} [delete]
 func SoftDeleteAccount(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var account model.Account
 		if err := db.Where("id = ?", c.Param("id")).First(&account).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: err.Error()})
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: err.Error()})
 			return
 		}
 
@@ -89,15 +132,25 @@ func SoftDeleteAccount(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, account)
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Account soft deleted successfully", Data: account})
 	}
 }
 
+// HardDeleteAccount godoc
+// @Summary Hard delete an account
+// @Description Hard delete account by ID
+// @Tags accounts
+// @Produce json
+// @Param id path int true "Account ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /accounts/hard/{id} [delete]
 func HardDeleteAccount(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var account model.Account
 		if err := db.Where("id = ?", c.Param("id")).First(&account).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: err.Error()})
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: err.Error()})
 			return
 		}
 
@@ -106,24 +159,41 @@ func HardDeleteAccount(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, account)
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Account hard deleted successfully", Data: account})
 	}
 }
 
+// RecoverAccount godoc
+// @Summary Recover a deleted account
+// @Description Recover a soft-deleted account by ID
+// @Tags accounts
+// @Produce json
+// @Param id path int true "Account ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /accounts/{id}/recover [post]
 func RecoverAccount(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var account model.Account
-		if err := db.Unscoped().Where("id = ?", c.Param("id")).First(&account).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: err.Error()})
+		id := c.Param("id")
+		if err := db.Unscoped().Where("id = ?", id).First(&account).Error; err != nil {
+			fmt.Println("Error finding account:", id)
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Account not found"})
 			return
 		}
 
-		account.DeletedAt = nil
+		if !account.DeletedAt.Valid {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Account is not deleted"})
+			return
+		}
+
+		account.DeletedAt = gorm.DeletedAt{}
 		if err := db.Save(&account).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: err.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, account)
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Account recovered successfully", Data: account})
 	}
 }

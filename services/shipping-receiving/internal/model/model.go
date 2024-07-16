@@ -52,11 +52,11 @@ type ErrorResponse struct {
 }
 
 type SuccessResponse struct {
-	Message  string   `json:"message"`
-	Shipping Shipping `json:"shipping"`
+	Message string   `json:"message"`
+	Data    Shipping `json:"shipping"`
 }
 
 type SuccessResponses struct {
-	Message   string     `json:"message"`
-	Shippings []Shipping `json:"shippings"`
+	Message string     `json:"message"`
+	Data    []Shipping `json:"shippings"`
 }
