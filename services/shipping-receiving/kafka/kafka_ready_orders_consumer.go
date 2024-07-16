@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"os"
 	"shipping-receiving/internal/initializers"
@@ -10,6 +11,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+// ConsumeInventoryStatus consumes inventory status messages from Kafka and updates the shipping status accordingly
 func ConsumeInventoryStatus() {
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  []string{os.Getenv("KAFKA_BROKERS")},
@@ -18,43 +20,81 @@ func ConsumeInventoryStatus() {
 		MinBytes: 10e3, // 10KB
 		MaxBytes: 10e6, // 10MB
 	})
+
 	for {
 		m, err := r.ReadMessage(context.Background())
 		if err != nil {
-			log.Fatal("could not read message " + err.Error())
+			log.Printf("Error reading message: %v\n", err)
+			continue
 		}
-		log.Printf("received message: %s\n", string(m.Value))
+		log.Printf("Received message: %s\n", string(m.Value))
 
-		var shipping model.Shipping
-		if result := initializers.DB.First(&shipping, string(m.Key)); result.Error != nil {
-			log.Printf("failed to find shipping: %v", result.Error)
+		var statusMessage struct {
+			OrderID uint   `json:"order_id"`
+			Status  string `json:"status"`
+		}
+
+		if err := json.Unmarshal(m.Value, &statusMessage); err != nil {
+			log.Printf("Failed to unmarshal message: %v\n", err)
 			continue
 		}
 
-		if string(m.Value) == "Ready" {
-			shipping.Status = "Shipped"
-		} else {
-			shipping.Status = "Cannot Ship"
+		if err := updateShippingStatus(statusMessage.OrderID, statusMessage.Status); err != nil {
+			log.Printf("Failed to update shipping status: %v\n", err)
+			continue
 		}
-
-		initializers.DB.Save(&shipping)
-
-		PublishShippingStatus(shipping.ID, shipping.Status)
 	}
 }
 
-func PublishShippingStatus(shippingID uint, status string) {
+// updateShippingStatus updates the shipping status based on the received inventory status
+func updateShippingStatus(orderID uint, status string) error {
+	var shipping model.Shipping
+	if result := initializers.DB.First(&shipping, orderID); result.Error != nil {
+		return result.Error
+	}
+
+	if status == "Ready" {
+		shipping.Status = "Shipped"
+	} else {
+		shipping.Status = "Cannot Ship"
+	}
+
+	if result := initializers.DB.Save(&shipping); result.Error != nil {
+		return result.Error
+	}
+
+	return publishShippingStatus(shipping.ID, shipping.Status)
+}
+
+// publishShippingStatus publishes the updated shipping status to Kafka
+func publishShippingStatus(shippingID uint, status string) error {
 	w := kafka.Writer{
 		Addr:     kafka.TCP(os.Getenv("KAFKA_BROKERS")),
 		Topic:    "shipping-status",
 		Balancer: &kafka.LeastBytes{},
 	}
-	err := w.WriteMessages(context.Background(), kafka.Message{
+
+	message := struct {
+		ShippingID uint   `json:"shipping_id"`
+		Status     string `json:"status"`
+	}{
+		ShippingID: shippingID,
+		Status:     status,
+	}
+
+	messageBytes, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	err = w.WriteMessages(context.Background(), kafka.Message{
 		Key:   []byte("shippingID"),
-		Value: []byte(status),
+		Value: messageBytes,
 	})
 
 	if err != nil {
-		log.Fatalf("failed to write message to kafka: %v", err)
+		return err
 	}
+
+	return nil
 }

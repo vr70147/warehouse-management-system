@@ -90,7 +90,7 @@ func Signup(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{Message: "User registered successfully"})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "User registered successfully", Data: user})
 	}
 }
 
@@ -152,7 +152,7 @@ func Login(db *gorm.DB) gin.HandlerFunc {
 		c.SetCookie("Authorization", tokenString, 3600*24*30, "", "", false, true)
 		c.JSON(http.StatusOK, model.SuccessResponse{
 			Message: "User authenticated successfully",
-			Token:   tokenString, // Optionally return the token in the response
+			Data:    tokenString, // Optionally return the token in the response
 		})
 	}
 }
@@ -231,9 +231,9 @@ func UpdateUser(db *gorm.DB) gin.HandlerFunc {
 		}
 		if updateUser.Age != 0 {
 			user.Age = updateUser.Age
-		}
-		if updateUser.BirthDate != "" {
-			user.BirthDate = updateUser.BirthDate
+			// updating birth date as well
+			birthYear := time.Now().Year() - user.Age
+			user.BirthDate = strconv.Itoa(birthYear) + "-01-01"
 		}
 		if updateUser.Password != "" {
 			hash, err := bcrypt.GenerateFromPassword([]byte(updateUser.Password), 10)
@@ -343,7 +343,7 @@ func GetUsers(db *gorm.DB) gin.HandlerFunc {
 		for _, user := range users {
 			userResponses = append(userResponses, model.UserResponse{
 				User:       user.User,
-				RoleID:     user.RoleID,
+				Role:       user.RoleID,
 				Permission: user.Permission,
 				IsActive:   user.IsActive,
 				Department: user.Department,

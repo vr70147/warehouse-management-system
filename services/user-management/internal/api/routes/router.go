@@ -33,7 +33,7 @@ func Routers(r *gin.Engine, db *gorm.DB) {
 
 	users.POST("/departments", middleware.RequirePermission(model.PermissionManager), handlers.CreateDepartment(db))
 	users.PUT("/departments/:id", middleware.RequirePermission(model.PermissionManager), handlers.UpdateDepartment(db))
-	users.GET("/departments", middleware.RequirePermission(model.PermissionManager), handlers.GetDepartment(db))
+	users.GET("/departments", middleware.RequirePermission(model.PermissionManager), handlers.GetDepartments(db))
 	users.DELETE("/departments/:id", middleware.RequirePermission(model.PermissionManager), handlers.SoftDeleteDepartment(db))
 	users.DELETE("/departments/hard/:id", middleware.RequirePermission(model.PermissionManager), handlers.HardDeleteDepartment(db))
 	users.PATCH("/departments/recover/:id", middleware.RequirePermission(model.PermissionManager), handlers.RecoverDepartment(db))

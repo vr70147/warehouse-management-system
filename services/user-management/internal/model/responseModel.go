@@ -2,8 +2,8 @@ package model
 
 // SuccessResponse represents a generic success response
 type SuccessResponse struct {
-	Message string `json:"message"`
-	Token   string `json:"token"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
 }
 
 // ErrorResponse represents a generic error response
@@ -18,7 +18,7 @@ type UpdateUserResponse struct {
 
 type UserResponse struct {
 	User
-	RoleID     string `json:"role_id"`
+	Role       string `json:"role"`
 	Permission string `json:"permission"`
 	IsActive   bool   `json:"is_active"`
 	Department string `json:"department"`
@@ -30,6 +30,7 @@ type UsersResponse struct {
 }
 
 type DepartmentResponse struct {
+	ID    uint   `json:"id"`
 	Name  string `json:"department"`
 	Roles []Role `json:"roles"`
 }

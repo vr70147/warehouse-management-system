@@ -28,20 +28,20 @@ func CreateShipping(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		var Shipping model.Shipping
-		if err := c.ShouldBindJSON(&Shipping); err != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: err.Error()})
+		var shipping model.Shipping
+		if err := c.ShouldBindJSON(&shipping); err != nil {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid request data"})
 			return
 		}
 
-		Shipping.AccountID = accountID.(uint)
+		shipping.AccountID = accountID.(uint)
 
-		if result := db.Create(&Shipping); result.Error != nil {
+		if result := db.Create(&shipping); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Shipping created successfully", Shipping: Shipping})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Shipping created successfully", Data: shipping})
 	}
 }
 
@@ -49,7 +49,6 @@ func CreateShipping(db *gorm.DB) gin.HandlerFunc {
 // @Summary Get Shippings
 // @Description Get Shippings
 // @Tags Shippings
-// @Accept json
 // @Produce json
 // @Param id query string false "Shipping ID"
 // @Param status query string false "Shipping Status"
@@ -71,17 +70,17 @@ func GetShippings(db *gorm.DB) gin.HandlerFunc {
 
 		if id != "" {
 			// Fetch a single Shipping by ID
-			var Shipping model.Shipping
-			if result := db.Where("id = ? AND account_id = ?", id, accountID).First(&Shipping); result.Error != nil {
+			var shipping model.Shipping
+			if result := db.Where("id = ? AND account_id = ?", id, accountID).First(&shipping); result.Error != nil {
 				c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Shipping not found"})
 				return
 			}
-			c.JSON(http.StatusOK, model.SuccessResponse{Message: "Shipping retrieved successfully", Shipping: Shipping})
+			c.JSON(http.StatusOK, model.SuccessResponse{Message: "Shipping retrieved successfully", Data: shipping})
 			return
 		}
 
 		// Fetch list of Shippings with optional query parameters
-		var Shippings []model.Shipping
+		var shippings []model.Shipping
 		query := db.Where("account_id = ?", accountID)
 
 		if status := c.Query("status"); status != "" {
@@ -104,12 +103,12 @@ func GetShippings(db *gorm.DB) gin.HandlerFunc {
 			}
 		}
 
-		if result := query.Find(&Shippings); result.Error != nil {
+		if result := query.Find(&shippings); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponses{Message: "Shippings retrieved successfully", Shippings: Shippings})
+		c.JSON(http.StatusOK, model.SuccessResponses{Message: "Shippings retrieved successfully", Data: shippings})
 	}
 }
 
@@ -135,25 +134,25 @@ func UpdateShipping(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		id := c.Param("id")
-		var Shipping model.Shipping
-		if result := db.Where("id = ? AND account_id = ?", id, accountID).First(&Shipping); result.Error != nil {
+		var shipping model.Shipping
+		if result := db.Where("id = ? AND account_id = ?", id, accountID).First(&shipping); result.Error != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Shipping not found"})
 			return
 		}
 
-		if err := c.ShouldBindJSON(&Shipping); err != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: err.Error()})
+		if err := c.ShouldBindJSON(&shipping); err != nil {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid request data"})
 			return
 		}
 
-		Shipping.AccountID = accountID.(uint)
+		shipping.AccountID = accountID.(uint)
 
-		if result := db.Save(&Shipping); result.Error != nil {
+		if result := db.Save(&shipping); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Shipping updated successfully", Shipping: Shipping})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Shipping updated successfully", Data: shipping})
 	}
 }
 
@@ -161,7 +160,6 @@ func UpdateShipping(db *gorm.DB) gin.HandlerFunc {
 // @Summary Soft delete a Shipping
 // @Description Soft delete a Shipping
 // @Tags Shippings
-// @Accept json
 // @Produce json
 // @Param id path string true "Shipping ID"
 // @Success 200 {object} model.SuccessResponse
@@ -177,18 +175,18 @@ func SoftDeleteShipping(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		id := c.Param("id")
-		var Shipping model.Shipping
-		if result := db.Where("id = ? AND account_id = ?", id, accountID).First(&Shipping); result.Error != nil {
+		var shipping model.Shipping
+		if result := db.Where("id = ? AND account_id = ?", id, accountID).First(&shipping); result.Error != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Shipping not found"})
 			return
 		}
 
-		if result := db.Delete(&Shipping); result.Error != nil {
+		if result := db.Delete(&shipping); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Shipping soft deleted successfully", Shipping: Shipping})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Shipping soft deleted successfully", Data: shipping})
 	}
 }
 
@@ -196,7 +194,6 @@ func SoftDeleteShipping(db *gorm.DB) gin.HandlerFunc {
 // @Summary Hard delete a Shipping
 // @Description Hard delete a Shipping
 // @Tags Shippings
-// @Accept json
 // @Produce json
 // @Param id path string true "Shipping ID"
 // @Success 200 {object} model.SuccessResponse
@@ -217,7 +214,7 @@ func HardDeleteShipping(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Shipping hard deleted successfully", Shipping: model.Shipping{}})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Shipping hard deleted successfully"})
 	}
 }
 
@@ -225,7 +222,6 @@ func HardDeleteShipping(db *gorm.DB) gin.HandlerFunc {
 // @Summary Recover a soft-deleted Shipping
 // @Description Recover a soft-deleted Shipping
 // @Tags Shippings
-// @Accept json
 // @Produce json
 // @Param id path string true "Shipping ID"
 // @Success 200 {object} model.SuccessResponse
@@ -241,20 +237,20 @@ func RecoverShipping(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		id := c.Param("id")
-		var Shipping model.Shipping
+		var shipping model.Shipping
 
 		// Find the soft-deleted Shipping
-		if result := db.Unscoped().Where("id = ? AND account_id = ?", id, accountID).First(&Shipping); result.Error != nil {
+		if result := db.Unscoped().Where("id = ? AND account_id = ?", id, accountID).First(&shipping); result.Error != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Shipping not found"})
 			return
 		}
 
 		// Recover the Shipping by setting DeletedAt to NULL
-		if result := db.Model(&Shipping).Update("DeletedAt", nil); result.Error != nil {
+		if result := db.Model(&shipping).Update("deleted_at", nil); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Shipping recovered successfully", Shipping: Shipping})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Shipping recovered successfully", Data: shipping})
 	}
 }
