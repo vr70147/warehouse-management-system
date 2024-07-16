@@ -27,26 +27,18 @@ func CreateStock(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		var stock model.Stock
-
 		if err := c.ShouldBindJSON(&stock); err != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{
-				Error: "Failed to read body",
-			})
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid request data"})
 			return
 		}
 
 		stock.AccountID = accountID.(uint)
-
 		if result := db.Create(&stock); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to create stock",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to create stock"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Stock created successfully",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Stock created successfully"})
 	}
 }
 
@@ -72,33 +64,23 @@ func UpdateStock(db *gorm.DB) gin.HandlerFunc {
 
 		stockID := c.Param("id")
 		var stock model.Stock
-
 		if result := db.Where("id = ? AND account_id = ?", stockID, accountID).First(&stock); result.Error != nil {
-			c.JSON(http.StatusNotFound, model.ErrorResponse{
-				Error: "Stock not found",
-			})
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Stock not found"})
 			return
 		}
 
 		if err := c.ShouldBindJSON(&stock); err != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{
-				Error: "Invalid request data",
-			})
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid request data"})
 			return
 		}
 
 		stock.AccountID = accountID.(uint)
-
 		if result := db.Save(&stock); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to update stock",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to update stock"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Stock updated successfully",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Stock updated successfully"})
 	}
 }
 
@@ -119,10 +101,8 @@ func GetStocks(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		var stocks []model.Stock
-		if result := db.Where("account_id = ?", accountID).Find(&stocks); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to retrieve stocks",
-			})
+		if result := db.Where("account_id = ?", accountID).Preload("Product").Find(&stocks); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to retrieve stocks"})
 			return
 		}
 
@@ -143,7 +123,7 @@ func GetStocks(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-// DeleteStock godoc
+// SoftDeleteStock godoc
 // @Summary Delete a stock item
 // @Description Delete a stock item by ID
 // @Tags stocks
@@ -162,17 +142,12 @@ func SoftDeleteStock(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		stockID := c.Param("id")
-
 		if result := db.Where("id = ? AND account_id = ?", stockID, accountID).Delete(&model.Stock{}); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to delete stock",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to delete stock"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Stock deleted successfully",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Stock deleted successfully"})
 	}
 }
 
@@ -194,17 +169,12 @@ func HardDeleteStock(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		stockID := c.Param("id")
-
 		if result := db.Unscoped().Where("id = ? AND account_id = ?", stockID, accountID).Delete(&model.Stock{}); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to delete stock",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to delete stock"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Stock deleted permanently",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Stock deleted permanently"})
 	}
 }
 
@@ -227,16 +197,11 @@ func RecoverStock(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		stockID := c.Param("id")
-
 		if result := db.Model(&model.Stock{}).Unscoped().Where("id = ? AND account_id = ?", stockID, accountID).Update("deleted_at", nil); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to recover stock",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to recover stock"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Stock recovered successfully",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Stock recovered successfully"})
 	}
 }

@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
-	"log"
 	"net/http"
 	"user-management/internal/model"
 
@@ -29,42 +27,21 @@ func CreateRole(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		var body struct {
-			Role         string `gorm:"unique;not null"`
-			Description  string
-			Permissions  []model.Permission `gorm:"many2many:role_permissions"`
-			IsActive     bool               `gorm:"default:true"`
-			Users        []model.User       `gorm:"foreignKey:RoleID"`
-			DepartmentID uint               `gorm:"not null"`
-			Department   model.Department   `gorm:"foreignKey:DepartmentID"`
-		}
+		var role model.Role
 
-		if c.Bind(&body) != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{
-				Error: "Failed to read body",
-			})
+		if err := c.ShouldBindJSON(&role); err != nil {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Failed to read body"})
 			return
 		}
 
-		role := model.Role{
-			Role:         body.Role,
-			Description:  body.Description,
-			IsActive:     body.IsActive,
-			DepartmentID: body.DepartmentID,
-			AccountID:    accountID.(uint),
-		}
-		result := db.Create(&role)
+		role.AccountID = accountID.(uint)
 
-		if result.Error != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{
-				Error: "Failed to create role",
-			})
+		if result := db.Create(&role); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to create role"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Role created successfully",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Role created successfully", Data: role})
 	}
 }
 
@@ -89,61 +66,39 @@ func UpdateRole(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		roleID := c.Param("id")
-		log.Printf("Received roleID: %s", roleID)
 
-		var body struct {
-			Role         string `gorm:"unique;not null"`
-			Description  string
-			Permission   map[string]interface{} `json:"permission"`
-			IsActive     bool                   `gorm:"default:true"`
-			Users        []model.User           `gorm:"foreignKey:RoleID"`
-			DepartmentID uint                   `gorm:"not null"`
-			Department   model.Department       `gorm:"foreignKey:DepartmentID"`
-		}
+		var body model.Role
 
 		if err := c.ShouldBindJSON(&body); err != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{
-				Error: "Invalid request data",
-			})
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid request data"})
 			return
 		}
 
 		var role model.Role
 		if result := db.Where("id = ? AND account_id = ?", roleID, accountID).First(&role); result.Error != nil {
-			c.JSON(http.StatusNotFound, model.ErrorResponse{
-				Error: "Role not found",
-			})
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Role not found"})
 			return
 		}
 
-		updateData := make(map[string]interface{})
 		if body.Role != "" {
-			updateData["role"] = body.Role
+			role.Role = body.Role
 		}
 		if body.Description != "" {
-			updateData["description"] = body.Description
+			role.Description = body.Description
 		}
-		if body.Permission != nil {
-			permissionJSON, err := json.Marshal(body.Permission)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-					Error: "Failed to encode permissions",
-				})
-				return
-			}
-			updateData["permission"] = gorm.Expr("permission || ?", string(permissionJSON))
+		if body.IsActive {
+			role.IsActive = body.IsActive
+		}
+		if body.DepartmentID != 0 {
+			role.DepartmentID = body.DepartmentID
 		}
 
-		if result := db.Model(&role).Updates(updateData); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to update role",
-			})
+		if result := db.Save(&role); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to update role"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Role updated successfully",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Role updated successfully", Data: role})
 	}
 }
 
@@ -175,29 +130,22 @@ func GetRoles(db *gorm.DB) gin.HandlerFunc {
 		var roles []model.Role
 		var result *gorm.DB
 
-		if queryExists || len(c.Params) == 0 {
+		if queryExists {
 			result = db.Where(&queryCondition).Find(&roles)
 		} else {
 			result = db.Where("account_id = ?", accountID).Find(&roles)
 		}
 
 		if result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to retrieve roles",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to retrieve roles"})
 			return
 		}
 		if result.RowsAffected == 0 {
-			c.JSON(http.StatusNotFound, model.ErrorResponse{
-				Error: "No roles found matching the criteria",
-			})
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "No roles found matching the criteria"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.RolesResponse{
-			Message: "Roles retrieved successfully",
-			Roles:   roles,
-		})
+		c.JSON(http.StatusOK, model.RolesResponse{Message: "Roles retrieved successfully", Roles: roles})
 	}
 }
 
@@ -223,22 +171,16 @@ func SoftDeleteRole(db *gorm.DB) gin.HandlerFunc {
 
 		var role model.Role
 		if result := db.Where("id = ? AND account_id = ?", roleID, accountID).First(&role); result.Error != nil {
-			c.JSON(http.StatusNotFound, model.ErrorResponse{
-				Error: "Role not found",
-			})
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Role not found"})
 			return
 		}
 
 		if result := db.Delete(&role); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to soft delete role",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to soft delete role"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Role soft deleted successfully",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Role soft deleted successfully"})
 	}
 }
 
@@ -263,15 +205,11 @@ func HardDeleteRole(db *gorm.DB) gin.HandlerFunc {
 		roleID := c.Param("id")
 
 		if result := db.Unscoped().Where("id = ? AND account_id = ?", roleID, accountID).Delete(&model.Role{}); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to hard delete role",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to hard delete role"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Role hard deleted successfully",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Role hard deleted successfully"})
 	}
 }
 
@@ -297,21 +235,15 @@ func RecoverRole(db *gorm.DB) gin.HandlerFunc {
 
 		var role model.Role
 		if result := db.Unscoped().Where("id = ? AND account_id = ?", roleID, accountID).First(&role); result.Error != nil {
-			c.JSON(http.StatusNotFound, model.ErrorResponse{
-				Error: "Role not found",
-			})
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Role not found"})
 			return
 		}
 
 		if result := db.Model(&role).Update("deleted_at", nil); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to recover role",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to recover role"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Role recovered successfully",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Role recovered successfully"})
 	}
 }

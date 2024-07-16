@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"context"
+	"encoding/json"
 	"inventory-management/internal/initializers"
 	"inventory-management/internal/model"
 	"log"
@@ -10,6 +11,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+// ConsumerOrderEvents consumes order events from Kafka and updates order status in the inventory system
 func ConsumerOrderEvents() {
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  []string{os.Getenv("KAFKA_BROKERS")},
@@ -18,16 +20,23 @@ func ConsumerOrderEvents() {
 		MinBytes: 10e3, // 10KB
 		MaxBytes: 10e6, // 10MB
 	})
+
 	for {
 		m, err := r.ReadMessage(context.Background())
 		if err != nil {
-			log.Fatal("could not read message " + err.Error())
+			log.Printf("Error reading message: %v\n", err)
+			continue
 		}
-		log.Printf("received message: %s\n", string(m.Value))
+		log.Printf("Received message: %s\n", string(m.Value))
 
 		var order model.Order
-		if results := initializers.DB.First(&order, string(m.Value)); results.Error != nil {
-			log.Printf("failed to find order: %v", results.Error)
+		if err := json.Unmarshal(m.Value, &order); err != nil {
+			log.Printf("Error unmarshalling message: %v\n", err)
+			continue
+		}
+
+		if results := initializers.DB.First(&order, order.ID); results.Error != nil {
+			log.Printf("Failed to find order: %v\n", results.Error)
 			continue
 		}
 
@@ -36,25 +45,44 @@ func ConsumerOrderEvents() {
 		} else {
 			order.Status = "Out of Stock"
 		}
-		initializers.DB.Save(&order)
 
-		PublishOrderStatus(order.ID, order.Status)
+		if err := initializers.DB.Save(&order).Error; err != nil {
+			log.Printf("Failed to update order status: %v\n", err)
+			continue
+		}
+
+		if err := PublishOrderStatus(order.ID, order.Status); err != nil {
+			log.Printf("Failed to publish order status: %v\n", err)
+		}
 	}
 }
 
-func PublishOrderStatus(orderID uint, status string) {
+// PublishOrderStatus publishes the order status to Kafka
+func PublishOrderStatus(orderID uint, status string) error {
 	w := kafka.Writer{
 		Addr:     kafka.TCP(os.Getenv("KAFKA_BROKERS")),
 		Topic:    "inventory-status",
 		Balancer: &kafka.LeastBytes{},
 	}
 
-	err := w.WriteMessages(context.Background(), kafka.Message{
+	message := map[string]interface{}{
+		"orderID": orderID,
+		"status":  status,
+	}
+
+	messageBytes, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	err = w.WriteMessages(context.Background(), kafka.Message{
 		Key:   []byte("orderID"),
-		Value: []byte(status),
+		Value: messageBytes,
 	})
 
 	if err != nil {
-		log.Fatalf("failed to write message to kafka: %v", err)
+		return err
 	}
+
+	return nil
 }

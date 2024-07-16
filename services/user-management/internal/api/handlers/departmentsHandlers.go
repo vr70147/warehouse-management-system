@@ -31,27 +31,22 @@ func CreateDepartment(db *gorm.DB) gin.HandlerFunc {
 			Roles []model.Role
 		}
 
-		if c.Bind(&body) != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{
-				Error: "Failed to read body",
-			})
+		if err := c.ShouldBindJSON(&body); err != nil {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid request data"})
 			return
 		}
+
 		department := model.Department{
 			Name:      body.Name,
 			AccountID: accountID.(uint),
 		}
 
 		if result := db.Create(&department); result.Error != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{
-				Error: "Failed to create department",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to create department"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Department created successfully",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Department created successfully", Data: department})
 	}
 }
 
@@ -64,6 +59,7 @@ func CreateDepartment(db *gorm.DB) gin.HandlerFunc {
 // @Param id path int true "Department ID"
 // @Param body body model.Department true "Department data"
 // @Success 200 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
 // @Failure 404 {object} model.ErrorResponse
 // @Failure 500 {object} model.ErrorResponse
 // @Router /departments/{id} [put]
@@ -83,17 +79,13 @@ func UpdateDepartment(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		if err := c.ShouldBindJSON(&body); err != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{
-				Error: "Invalid request data",
-			})
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid request data"})
 			return
 		}
 
 		var department model.Department
 		if result := db.Where("id = ? AND account_id = ?", departmentID, accountID).First(&department); result.Error != nil {
-			c.JSON(http.StatusNotFound, model.ErrorResponse{
-				Error: "Department not found",
-			})
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Department not found"})
 			return
 		}
 
@@ -102,19 +94,15 @@ func UpdateDepartment(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		if result := db.Save(&department); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to update department",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to update department"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Department updated successfully",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Department updated successfully", Data: department})
 	}
 }
 
-// GetDepartment godoc
+// GetDepartments godoc
 // @Summary Get all departments
 // @Description Retrieve all departments or filter by query parameters
 // @Tags departments
@@ -124,7 +112,7 @@ func UpdateDepartment(db *gorm.DB) gin.HandlerFunc {
 // @Failure 404 {object} model.ErrorResponse
 // @Failure 500 {object} model.ErrorResponse
 // @Router /departments [get]
-func GetDepartment(db *gorm.DB) gin.HandlerFunc {
+func GetDepartments(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accountID, exists := c.Get("account_id")
 		if !exists {
@@ -150,15 +138,11 @@ func GetDepartment(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		if result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to retrieve departments",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to retrieve departments"})
 			return
 		}
 		if result.RowsAffected == 0 {
-			c.JSON(http.StatusNotFound, model.ErrorResponse{
-				Error: "No departments found matching the criteria",
-			})
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "No departments found matching the criteria"})
 			return
 		}
 
@@ -168,6 +152,7 @@ func GetDepartment(db *gorm.DB) gin.HandlerFunc {
 			var roles []model.Role
 			db.Model(&model.Role{}).Where("department_id = ?", department.ID).Find(&roles)
 			departmentResponses = append(departmentResponses, model.DepartmentResponse{
+				ID:    department.ID,
 				Name:  department.Name,
 				Roles: roles,
 			})
@@ -202,22 +187,16 @@ func SoftDeleteDepartment(db *gorm.DB) gin.HandlerFunc {
 
 		var department model.Department
 		if result := db.Where("id = ? AND account_id = ?", departmentID, accountID).First(&department); result.Error != nil {
-			c.JSON(http.StatusNotFound, model.ErrorResponse{
-				Error: "Department not found",
-			})
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Department not found"})
 			return
 		}
 
 		if result := db.Delete(&department); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to soft delete department",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to soft delete department"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Department soft deleted successfully",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Department soft deleted successfully"})
 	}
 }
 
@@ -242,15 +221,11 @@ func HardDeleteDepartment(db *gorm.DB) gin.HandlerFunc {
 		departmentID := c.Param("id")
 
 		if result := db.Unscoped().Where("id = ? AND account_id = ?", departmentID, accountID).Delete(&model.Department{}); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to hard delete department",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to hard delete department"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Department hard deleted successfully",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Department hard deleted successfully"})
 	}
 }
 
@@ -276,22 +251,16 @@ func RecoverDepartment(db *gorm.DB) gin.HandlerFunc {
 
 		var department model.Department
 		if result := db.Unscoped().Where("id = ? AND account_id = ?", departmentID, accountID).First(&department); result.Error != nil {
-			c.JSON(http.StatusNotFound, model.ErrorResponse{
-				Error: "Department not found",
-			})
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Department not found"})
 			return
 		}
 
 		if result := db.Model(&department).Update("deleted_at", nil); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to recover department",
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to recover department"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{
-			Message: "Department recovered successfully",
-		})
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Department recovered successfully"})
 	}
 }
 
@@ -302,6 +271,7 @@ func RecoverDepartment(db *gorm.DB) gin.HandlerFunc {
 // @Produce json
 // @Param department query string true "Department name"
 // @Success 200 {object} model.UsersResponse
+// @Failure 400 {object} model.ErrorResponse
 // @Failure 404 {object} model.ErrorResponse
 // @Failure 500 {object} model.ErrorResponse
 // @Router /departments/users [get]
@@ -315,9 +285,7 @@ func GetUsersByDepartment(db *gorm.DB) gin.HandlerFunc {
 
 		departmentName := c.Query("department")
 		if departmentName == "" {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{
-				Error: "Department name is required",
-			})
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Department name is required"})
 			return
 		}
 
@@ -338,16 +306,12 @@ func GetUsersByDepartment(db *gorm.DB) gin.HandlerFunc {
 			Scan(&users)
 
 		if result.Error != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-				Error: "Failed to retrieve users: " + result.Error.Error(),
-			})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to retrieve users: " + result.Error.Error()})
 			return
 		}
 
 		if len(users) == 0 {
-			c.JSON(http.StatusNotFound, model.ErrorResponse{
-				Error: "No users found in the specified department",
-			})
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "No users found in the specified department"})
 			return
 		}
 
@@ -355,7 +319,7 @@ func GetUsersByDepartment(db *gorm.DB) gin.HandlerFunc {
 		for _, user := range users {
 			userResponses = append(userResponses, model.UserResponse{
 				User:       user.User,
-				RoleID:     user.Role,
+				Role:       user.Role,
 				Permission: user.Permission,
 				IsActive:   user.IsActive,
 				Department: user.DepartmentName,
