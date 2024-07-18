@@ -62,7 +62,9 @@ To set up the project locally, follow these steps:
    ```
 
 4. **Run the services**:
+
    - You can run each service individually. For example, to run the Accounts Management Service:
+
      ```sh
      cd services/accounts-management
      go run main.go
@@ -100,7 +102,7 @@ Each service exposes a set of RESTful API endpoints. You can interact with these
     Get Inventory: GET /inventory
     Update Inventory: PUT /inventory/:id
 
-Shipping Management Service
+### Shipping Management Service
 
     Create Shipping: POST /shipping
     Get Shippings: GET /shipping
@@ -117,7 +119,7 @@ Shipping Management Service
 go test ./...
 ```
 
-Run End-to-End Tests:
+## Run End-to-End Tests:
 
     Ensure Kafka and other dependencies are running.
     Run the tests:
@@ -127,7 +129,7 @@ Run End-to-End Tests:
         go test -tags=e2e ./tests
 ```
 
-Contributing
+## Contributing
 
 We welcome contributions! Please follow these steps to contribute:
 
