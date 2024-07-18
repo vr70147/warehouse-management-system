@@ -38,41 +38,43 @@ The system follows a microservices architecture with the following services:
 To set up the project locally, follow these steps:
 
 1. **Clone the repository**:
-    ```sh
-    git clone https://github.com/yourusername/warehouse-management-system.git
-    cd warehouse-management-system
-    ```
+
+   ```sh
+   git clone https://github.com/yourusername/warehouse-management-system.git
+   cd warehouse-management-system
+   ```
 
 2. **Set up environment variables**:
-    - Create a `.env` file in the root directory and add the necessary environment variables:
-        
-        ```env
-        JWT_SECRET=your-jwt-secret
-        KAFKA_BROKERS=your-kafka-brokers
 
-        ```
+   - Create a `.env` file in the root directory and add the necessary environment variables:
+
+     ```env
+     JWT_SECRET=your-jwt-secret
+     KAFKA_BROKERS=your-kafka-brokers
+
+     ```
 
 3. **Install dependencies**:
-   
-    ```sh
-    go mod tidy
 
-    ```
+   ```sh
+   go mod tidy
+
+   ```
 
 4. **Run the services**:
-    - You can run each service individually. For example, to run the Accounts Management Service:
-       
-        ```sh
-        cd services/accounts-management
-        go run main.go
-        
-        ```
+   - You can run each service individually. For example, to run the Accounts Management Service:
+     ```sh
+     cd services/accounts-management
+     go run main.go
+
+     ```
 
 ## Usage
 
 Each service exposes a set of RESTful API endpoints. You can interact with these endpoints using tools like `curl` or Postman.
 
 ## API Documentation
+
 ### Accounts Management Service
 
 - **Create Account:** POST /signup
@@ -145,6 +147,7 @@ Commit your changes.
 git commit -m "Description of your changes"
 
 ```
+
 Push to your branch.
 
 ```sh
