@@ -428,6 +428,16 @@ func HardDeleteUser(db *gorm.DB) gin.HandlerFunc {
 
 		userID := c.Param("id")
 
+		var user model.User
+
+		result := db.Where("id = ? AND account_id = ?", userID, accountID).First(&user)
+		if result.Error != nil {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{
+				Error: "User not found",
+			})
+			return
+		}
+
 		if result := db.Unscoped().Where("id = ? AND account_id = ?", userID, accountID).Delete(&model.User{}); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
 				Error: "Failed to hard delete user",
