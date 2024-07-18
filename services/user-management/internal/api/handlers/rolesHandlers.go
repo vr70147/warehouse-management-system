@@ -204,6 +204,11 @@ func HardDeleteRole(db *gorm.DB) gin.HandlerFunc {
 
 		roleID := c.Param("id")
 
+		if result := db.Where("id = ? AND account_id = ?", roleID, accountID).First(&model.Role{}); result.Error != nil {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Role not found"})
+			return
+		}
+
 		if result := db.Unscoped().Where("id = ? AND account_id = ?", roleID, accountID).Delete(&model.Role{}); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to hard delete role"})
 			return

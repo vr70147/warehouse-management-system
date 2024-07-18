@@ -2,21 +2,23 @@ package middleware
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"user-management/internal/model"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt"
 	"gorm.io/gorm"
 )
 
-// RequireAuth checks if the request contains a valid JWT token
 func RequireAuth(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := c.GetHeader("Authorization")
 		if tokenString == "" {
+			log.Println("Authorization header is missing")
 			c.JSON(http.StatusUnauthorized, model.ErrorResponse{
 				Error: "Authorization header is required",
 			})
@@ -34,6 +36,7 @@ func RequireAuth(db *gorm.DB) gin.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
+			log.Println("Invalid token:", err)
 			c.JSON(http.StatusUnauthorized, model.ErrorResponse{
 				Error: "Invalid token",
 			})
@@ -43,6 +46,7 @@ func RequireAuth(db *gorm.DB) gin.HandlerFunc {
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
+			log.Println("Invalid token claims")
 			c.JSON(http.StatusUnauthorized, model.ErrorResponse{
 				Error: "Invalid token claims",
 			})
@@ -52,6 +56,7 @@ func RequireAuth(db *gorm.DB) gin.HandlerFunc {
 
 		accountID, ok := claims["account_id"].(string)
 		if !ok {
+			log.Println("Account ID not found in token")
 			c.JSON(http.StatusUnauthorized, model.ErrorResponse{
 				Error: "Account ID not found in token",
 			})
@@ -61,6 +66,7 @@ func RequireAuth(db *gorm.DB) gin.HandlerFunc {
 
 		userID, ok := claims["sub"].(float64)
 		if !ok {
+			log.Println("User ID not found in token")
 			c.JSON(http.StatusUnauthorized, model.ErrorResponse{
 				Error: "User ID not found in token",
 			})
@@ -68,9 +74,21 @@ func RequireAuth(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		accountIDUint, err := strconv.ParseUint(accountID, 10, 32)
+		if err != nil {
+			log.Println("Invalid Account ID format:", err)
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{
+				Error: "Invalid Account ID format",
+			})
+			c.Abort()
+			return
+		}
+
 		// Retrieve user from database
 		var user model.User
+
 		if err := db.First(&user, uint(userID)).Error; err != nil {
+			log.Println("User not found:", err)
 			c.JSON(http.StatusUnauthorized, model.ErrorResponse{
 				Error: "User not found",
 			})
@@ -79,44 +97,9 @@ func RequireAuth(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		// Set accountID and user to the context
-		c.Set("account_id", accountID)
+		c.Set("account_id", uint(accountIDUint))
 		c.Set("user", user)
 
-		c.Next()
-	}
-}
-
-func RequireAdmin() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		user, exists := c.Get("user")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, model.ErrorResponse{
-				Error: "User not found in context",
-			})
-			c.Abort()
-			return
-		}
-
-		u, ok := user.(model.User)
-		if !ok || !u.IsAdmin {
-			c.JSON(http.StatusForbidden, model.ErrorResponse{
-				Error: "Admin privileges required",
-			})
-			c.Abort()
-			return
-		}
-
-		c.Next()
-	}
-}
-
-func RequirePermission(permission model.Permission) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if c.GetString("permission") != permission.String() {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
-			c.Abort()
-			return
-		}
 		c.Next()
 	}
 }

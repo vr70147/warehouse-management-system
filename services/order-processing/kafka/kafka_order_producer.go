@@ -11,7 +11,7 @@ import (
 func PublishOrderEvent(orderID string) {
 	w := kafka.Writer{
 		Addr:     kafka.TCP(os.Getenv("KAFKA_BROKERS")),
-		Topic:    "order-events",
+		Topic:    os.Getenv("ORDER_EVENTS_TOPIC"),
 		Balancer: &kafka.LeastBytes{},
 	}
 	err := w.WriteMessages(context.Background(), kafka.Message{

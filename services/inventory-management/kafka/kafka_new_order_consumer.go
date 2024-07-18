@@ -15,7 +15,7 @@ import (
 func ConsumerOrderEvents() {
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  []string{os.Getenv("KAFKA_BROKERS")},
-		Topic:    "order-events",
+		Topic:    os.Getenv("NEW_ORDER_EVENTS_TOPIC"),
 		GroupID:  "inventory-management-group",
 		MinBytes: 10e3, // 10KB
 		MaxBytes: 10e6, // 10MB

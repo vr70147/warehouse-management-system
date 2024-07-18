@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"order-processing/internal/cache"
 	"order-processing/internal/model"
+	"order-processing/kafka"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -134,6 +135,8 @@ func CreateOrder(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to commit transaction"})
 			return
 		}
+
+		kafka.PublishOrderEvent(strconv.Itoa(int(order.ID))) // Publish Kafka event
 
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order created successfully", Order: order})
 	}

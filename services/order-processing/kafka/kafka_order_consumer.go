@@ -31,14 +31,10 @@ func ConsumerOrderEvent() {
 
 		log.Printf("received message: %s\n", string(m.Value))
 
-		var order model.Order
 		if err := processOrderMessage(m.Value); err != nil {
 			log.Printf("failed to process order: %v", err)
 			continue
 		}
-
-		order.Status = "Shipped"
-		initializers.DB.Save(&order)
 
 		log.Printf("Order %s shipped successfully", string(m.Key))
 	}

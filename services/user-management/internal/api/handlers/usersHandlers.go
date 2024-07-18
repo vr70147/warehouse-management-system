@@ -25,12 +25,6 @@ import (
 // @Router /signup [post]
 func Signup(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		accountID, exists := c.Get("account_id")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
-			return
-		}
-
 		var body struct {
 			PersonalID string           `json:"personal_id" gorm:"unique;not null"`
 			Name       string           `json:"name" gorm:"unique;not null"`
@@ -38,13 +32,13 @@ func Signup(db *gorm.DB) gin.HandlerFunc {
 			Age        int              `json:"age" gorm:"not null"`
 			BirthDate  string           `json:"birthDate" gorm:"not null"`
 			RoleID     uint             `json:"role_id" gorm:"not null"`
-			Role       string           `json:"role" gorm:"foreignKey:RoleID"`
 			Permission model.Permission `json:"permission" gorm:"not null"`
 			Phone      string           `json:"phone" gorm:"unique; not null"`
 			Street     string           `json:"street"`
 			City       string           `json:"city"`
 			Password   string           `json:"password" gorm:"not null"`
 			IsAdmin    bool             `json:"is_admin" gorm:"default: false"`
+			AccountID  *uint            `json:"account_id,omitempty"` // Optional Account ID
 		}
 
 		if err := c.Bind(&body); err != nil {
@@ -70,6 +64,21 @@ func Signup(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		accountID := body.AccountID
+		if accountID == nil {
+			// Try to get account ID from the context if it exists (in case of authenticated admin creating a user)
+			if accID, exists := c.Get("account_id"); exists {
+				id := accID.(uint)
+				accountID = &id
+			} else {
+				// If no account ID is provided and not found in the context, return an error
+				c.JSON(http.StatusBadRequest, model.ErrorResponse{
+					Error: "Account ID is required",
+				})
+				return
+			}
+		}
+
 		user := model.User{
 			PersonalID: body.PersonalID,
 			Email:      body.Email,
@@ -82,7 +91,7 @@ func Signup(db *gorm.DB) gin.HandlerFunc {
 			City:       body.City,
 			Password:   string(hash),
 			IsAdmin:    body.IsAdmin,
-			AccountID:  accountID.(uint),
+			AccountID:  *accountID,
 			Permission: body.Permission,
 		}
 		if result := db.Create(&user); result.Error != nil {
@@ -117,6 +126,7 @@ func Login(db *gorm.DB) gin.HandlerFunc {
 			})
 			return
 		}
+
 		var user model.User
 		if err := db.First(&user, "email = ?", body.Email).Error; err != nil {
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{
@@ -417,6 +427,16 @@ func HardDeleteUser(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		userID := c.Param("id")
+
+		var user model.User
+
+		result := db.Where("id = ? AND account_id = ?", userID, accountID).First(&user)
+		if result.Error != nil {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{
+				Error: "User not found",
+			})
+			return
+		}
 
 		if result := db.Unscoped().Where("id = ? AND account_id = ?", userID, accountID).Delete(&model.User{}); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{

@@ -220,6 +220,11 @@ func HardDeleteDepartment(db *gorm.DB) gin.HandlerFunc {
 
 		departmentID := c.Param("id")
 
+		if result := db.Where("id = ? AND account_id = ?", departmentID, accountID).First(&model.Department{}); result.Error != nil {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Department not found"})
+			return
+		}
+
 		if result := db.Unscoped().Where("id = ? AND account_id = ?", departmentID, accountID).Delete(&model.Department{}); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to hard delete department"})
 			return
@@ -275,6 +280,17 @@ func RecoverDepartment(db *gorm.DB) gin.HandlerFunc {
 // @Failure 404 {object} model.ErrorResponse
 // @Failure 500 {object} model.ErrorResponse
 // @Router /departments/users [get]
+// GetUsersByDepartment godoc
+// @Summary Get users by department
+// @Description Retrieve users by department name
+// @Tags departments
+// @Produce json
+// @Param department query string true "Department name"
+// @Success 200 {object} model.UsersResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /departments/users [get]
 func GetUsersByDepartment(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accountID, exists := c.Get("account_id")
@@ -299,7 +315,7 @@ func GetUsersByDepartment(db *gorm.DB) gin.HandlerFunc {
 
 		// Fetch users from the database
 		result := db.Table("users").
-			Select("users.*, roles.role as role, roles.permission, roles.is_active, departments.name as department_name").
+			Select("users.*, roles.role as role, roles.is_active, departments.name as department_name").
 			Joins("left join roles on roles.id = users.role_id").
 			Joins("left join departments on departments.id = roles.department_id").
 			Where("departments.name = ? AND departments.account_id = ?", departmentName, accountID).
