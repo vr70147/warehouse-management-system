@@ -23,6 +23,10 @@ Welcome to the Warehouse Management System project. This system is designed to e
 - **Inventory Management**: Track and manage inventory levels.
 - **Shipping Management**: Handle shipping and logistics.
 - **Kafka Integration**: Use Kafka for event-driven architecture and messaging between services.
+- **Docker Integration**: Use Docker for containerization and deployment.
+- **Kubernetes Integration**: Use Kubernetes for orchestration and management.
+- **PostgreSQL Integration**: Use PostgreSQL for database management.
+- **Redis Integration**: Use Redis for caching and message queuing.
 
 ## Architecture
 
@@ -32,6 +36,226 @@ The system follows a microservices architecture with the following services:
 - **Order Processing Service**: Manages order processing and status updates.
 - **Inventory Management Service**: Keeps track of inventory levels and updates.
 - **Shipping Management Service**: Manages shipping and delivery of orders.
+
+## System Structure
+
+warehouse-management-system/
+├── docker-compose.yml
+├── get_helm.sh
+├── k8s/
+│ ├── accounts-management/
+│ │ ├── configmap.yaml
+│ │ ├── deployment.yaml
+│ │ ├── ingress.yaml
+│ │ └── service.yaml
+│ ├── ingress-nginx/
+│ │ └── ingress-nginx.yaml
+│ ├── inventory-management/
+│ │ ├── configmap.yaml
+│ │ ├── deployment.yaml
+│ │ ├── ingress.yaml
+│ │ └── service.yaml
+│ ├── order-processing/
+│ │ ├── configmap.yaml
+│ │ ├── deployment.yaml
+│ │ ├── ingress.yaml
+│ │ └── service.yaml
+│ ├── postgres/
+│ │ ├── secret.yaml
+│ │ ├── user-management.yaml
+│ │ └── values.yaml
+│ ├── reporting-analytics/
+│ │ ├── configmap.yaml
+│ │ ├── deployment.yaml
+│ │ ├── ingress.yaml
+│ │ └── service.yaml
+│ ├── shipping-receiving/
+│ │ ├── configmap.yaml
+│ │ ├── deployment.yaml
+│ │ ├── ingress.yaml
+│ │ └── service.yaml
+│ └── user-management/
+│ ├── configmap.yaml
+│ ├── deployment.yaml
+│ ├── ingress.yaml
+│ ├── secret.yaml
+│ └── service.yaml
+├── readme.md
+├── services/
+│ ├── accounts-management/
+│ │ ├── .env
+│ │ ├── Dockerfile
+│ │ ├── accounts-management
+│ │ ├── go.mod
+│ │ ├── go.sum
+│ │ ├── internal/
+│ │ │ ├── api/
+│ │ │ │ ├── handlers/
+│ │ │ │ │ └── accountHandler.go
+│ │ │ │ └── routes/
+│ │ │ │ └── routes.go
+│ │ │ ├── cache/
+│ │ │ │ └── redis_client.go
+│ │ │ ├── initializers/
+│ │ │ │ ├── db.go
+│ │ │ │ └── loadEnvVariables.go
+│ │ │ ├── middleware/
+│ │ │ │ └── middleware.go
+│ │ │ ├── model/
+│ │ │ │ └── model.go
+│ │ │ └── tests/
+│ │ │ └── routes_test.go
+│ │ └── main.go
+│ ├── inventory-management/
+│ │ ├── Dockerfile
+│ │ ├── docs/
+│ │ │ ├── docs.go
+│ │ │ ├── swagger.json
+│ │ │ └── swagger.yaml
+│ │ ├── go.mod
+│ │ ├── go.sum
+│ │ ├── handlers.go
+│ │ ├── internal/
+│ │ │ ├── api/
+│ │ │ │ ├── handlers/
+│ │ │ │ │ ├── categoriesHandler.go
+│ │ │ │ │ ├── productsHandler.go
+│ │ │ │ │ ├── stocksHandler.go
+│ │ │ │ │ └── suppliersHandler.go
+│ │ │ │ └── routes/
+│ │ │ │ └── routes.go
+│ │ │ ├── cache/
+│ │ │ │ └── redis_client.go
+│ │ │ ├── initializers/
+│ │ │ │ ├── db.go
+│ │ │ │ └── loadEnvVariables.go
+│ │ │ ├── middleware/
+│ │ │ │ └── middleware.go
+│ │ │ ├── model/
+│ │ │ │ └── model.go
+│ │ │ └── tests/
+│ │ │ └── routes_test.go
+│ │ ├── kafka/
+│ │ │ └── kafka_new_order_consumer.go
+│ │ └── main.go
+│ ├── order-processing/
+│ │ ├── Dockerfile
+│ │ ├── docs/
+│ │ │ ├── docs.go
+│ │ │ ├── swagger.json
+│ │ │ └── swagger.yaml
+│ │ ├── go.mod
+│ │ ├── go.sum
+│ │ ├── internal/
+│ │ │ ├── api/
+│ │ │ │ ├── handlers/
+│ │ │ │ │ └── OrdersHandler.go
+│ │ │ │ ├── middleware/
+│ │ │ │ │ └── middleware.go
+│ │ │ │ └── routes/
+│ │ │ │ └── routes.go
+│ │ │ ├── cache/
+│ │ │ │ └── redis_client.go
+│ │ │ ├── initializers/
+│ │ │ │ ├── db.go
+│ │ │ │ └── loadEnvVariables.go
+│ │ │ ├── kafka/
+│ │ │ │ └── kafka.go
+│ │ │ ├── model/
+│ │ │ │ └── model.go
+│ │ │ └── tests/
+│ │ │ └── orders_test.go
+│ │ └── main.go
+│ ├── reporting-analytics/
+│ │ ├── Dockerfile
+│ │ ├── go.mod
+│ │ ├── go.sum
+│ │ ├── internal/
+│ │ │ ├── api/
+│ │ │ │ ├── handlers/
+│ │ │ │ │ └── analyticsHandler.go
+│ │ │ │ ├── middleware/
+│ │ │ │ │ └── middleware.go
+│ │ │ │ └── routes/
+│ │ │ │ └── routes.go
+│ │ │ ├── cache/
+│ │ │ │ └── redis_client.go
+│ │ │ ├── initializers/
+│ │ │ │ ├── db.go
+│ │ │ │ └── loadEnvVariables.go
+│ │ │ ├── model/
+│ │ │ │ └── model.go
+│ │ │ └── tests/
+│ │ │ └── analytics_test.go
+│ │ ├── kafka/
+│ │ │ ├── consumer.go
+│ │ │ └── producer.go
+│ │ └── main.go
+│ ├── shipping-receiving/
+│ │ ├── Dockerfile
+│ │ ├── docs/
+│ │ │ ├── docs.go
+│ │ │ ├── swagger.json
+│ │ │ └── swagger.yaml
+│ │ ├── go.mod
+│ │ ├── go.sum
+│ │ ├── internal/
+│ │ │ ├── api/
+│ │ │ │ ├── handlers/
+│ │ │ │ │ ├── receivingHandler.go
+│ │ │ │ │ ├── shippingHandler.go
+│ │ │ │ │ └── test.db
+│ │ │ │ ├── middleware/
+│ │ │ │ │ └── middleware.go
+│ │ │ │ └── routes/
+│ │ │ │ └── routes.go
+│ │ │ ├── cache/
+│ │ │ │ └── redis_client.go
+│ │ │ ├── initializers/
+│ │ │ │ ├── db.go
+│ │ │ │ └── loadEnvVariables.go
+│ │ │ ├── model/
+│ │ │ │ └── model.go
+│ │ │ └── tests/
+│ │ │ └── receiving_test.go
+│ │ └── main.go
+│ └── user-management/
+│ ├── .env
+│ ├── Dockerfile
+│ ├── docs/
+│ │ ├── docs.go
+│ │ ├── swagger.json
+│ │ └── swagger.yaml
+│ ├── go.mod
+│ ├── go.sum
+│ ├── internal/
+│ │ ├── api/
+│ │ │ ├── handlers/
+│ │ │ │ ├── rolesHandler.go
+│ │ │ │ ├── userHandlers.go
+│ │ │ │ ├── userHandlers_test.go
+│ │ │ │ └── user_handlers_test.go
+│ │ │ ├── middleware/
+│ │ │ │ └── middleware.go
+│ │ │ └── routes/
+│ │ │ └── routes.go
+│ │ ├── cache/
+│ │ │ └── redis_client.go
+│ │ ├── initializers/
+│ │ │ ├── db.go
+│ │ │ └── loadEnvVariables.go
+│ │ ├── middleware/
+│ │ │ └── middleware.go
+│ │ ├── model/
+│ │ │ └── model.go
+│ │ ├── services/
+│ │ │ └── userService.go
+│ │ └── tests/
+│ │ └── routes_test.go
+│ ├── kafka/
+│ │ └── kafka.go
+│ └── main.go
+└── readme.md
 
 ## Installation
 
