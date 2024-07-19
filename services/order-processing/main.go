@@ -19,6 +19,7 @@ func init() {
 }
 
 func main() {
+
 	go kafka.ConsumerOrderEvent()
 
 	r := gin.Default()
