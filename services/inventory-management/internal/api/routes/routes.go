@@ -36,6 +36,7 @@ func Routers(r *gin.Engine, db *gorm.DB) {
 	stocks.DELETE("/:id", handlers.SoftDeleteStock(db))
 	stocks.DELETE("/hard/:id", handlers.HardDeleteStock(db))
 	stocks.POST("/:id/recover", handlers.RecoverStock(db))
+	stocks.GET("/check/:id", handlers.CheckStock(db))
 
 	suppliers := r.Group("/suppliers")
 	suppliers.POST("/", handlers.CreateSupplier(db))

@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"inventory-management/internal/model"
+	"inventory-management/internal/utils"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -203,5 +205,34 @@ func RecoverStock(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Stock recovered successfully"})
+	}
+}
+
+func CheckStock(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
+		stockID := c.Param("id")
+		var stock model.Stock
+
+		if err := db.Where("id = ? AND account_id = ?", stockID, accountID).First(&stock).Error; err != nil {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Stock not found"})
+			return
+		}
+
+		if stock.Quantity < int(stock.LowStockThreshold) {
+			// Send email notification
+			emailSubject := "Low Stock Alert"
+			emailBody := "The stock for product " + stock.Product.Name + " is low. Current stock: " + strconv.Itoa(stock.Quantity)
+			if err := utils.SendEmail("admin@example.com", emailSubject, emailBody); err != nil {
+				c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send email notification"})
+				return
+			}
+		}
+		c.JSON(http.StatusOK, model.StockResponse{Message: "Stock level checked", ID: stock.ID, ProductName: stock.Product.Name, Quantity: int(stock.Quantity), Location: stock.Location})
 	}
 }

@@ -23,15 +23,16 @@ type Product struct {
 }
 
 type Stock struct {
-	ID        uint       `gorm:"primarykey" json:"id"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
-	DeletedAt *time.Time `gorm:"index" json:"deleted_at,omitempty"`
-	ProductID uint       `json:"product_id"`
-	Product   Product    `json:"product"`
-	Quantity  uint       `json:"quantity"`
-	Location  string     `json:"location"`
-	AccountID uint       `gorm:"index"` // Foreign key to Account
+	ID                uint       `gorm:"primarykey" json:"id"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
+	DeletedAt         *time.Time `gorm:"index" json:"deleted_at,omitempty"`
+	ProductID         uint       `json:"product_id"`
+	Product           Product    `json:"product"`
+	Quantity          int        `json:"quantity"`
+	Location          string     `json:"location"`
+	AccountID         uint       `gorm:"index"` // Foreign key to Account
+	LowStockThreshold int        `json:"low_stock_threshold"`
 }
 
 type Category struct {
@@ -98,6 +99,7 @@ type SuccessResponse struct {
 }
 
 type StockResponse struct {
+	Message     string `json:"message"`
 	ID          uint   `json:"id"`
 	ProductName string `json:"product_name"`
 	Quantity    int    `json:"quantity"`
