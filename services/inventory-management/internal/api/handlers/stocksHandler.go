@@ -208,6 +208,15 @@ func RecoverStock(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
+// CheckStock godoc
+// @Summary Check stock levels
+// @Description Check the stock levels for a product
+// @Tags inventory
+// @Produce json
+// @Param id path int true "Product ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Router /inventory/check/{id} [get]
 func CheckStock(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accountID, exists := c.Get("account_id")
