@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 	"user-management/internal/model"
+	"user-management/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -96,6 +97,14 @@ func Signup(db *gorm.DB) gin.HandlerFunc {
 		}
 		if result := db.Create(&user); result.Error != nil {
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Failed to create user: " + result.Error.Error()})
+			return
+		}
+
+		// Send email to user
+		emailSubject := "Welcome to Our Service"
+		emailBody := "Hello " + user.Name + ",\n\nThank you for registering!"
+		if err := utils.SendEmail(user.Email, emailSubject, emailBody); err != nil {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Failed to send email: " + err.Error()})
 			return
 		}
 
