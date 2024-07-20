@@ -2,10 +2,12 @@ package kafka
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"order-processing/internal/initializers"
 	"order-processing/internal/model"
+	"order-processing/internal/utils"
 	"os"
 	"time"
 
@@ -41,11 +43,29 @@ func ConsumerOrderEvent() {
 }
 
 func processOrderMessage(msg []byte) error {
+	var orderEvent struct {
+		OrderID uint   `json:"order_id"`
+		Status  string `json:"status"`
+	}
+
+	if err := json.Unmarshal(msg, &orderEvent); err != nil {
+		return fmt.Errorf("failed to unmarshal order event: %v", err)
+	}
+
 	var order model.Order
 	for i := 0; i < maxRetries; i++ {
-		if results := initializers.DB.First(&order, string(msg)); results.Error == nil {
-			order.Status = "Shipped"
+		if results := initializers.DB.First(&order, orderEvent.OrderID); results.Error == nil {
+			order.Status = orderEvent.Status
 			initializers.DB.Save(&order)
+
+			if orderEvent.Status == "Cancelled" {
+				emailSubject := "Your Order Has Been Cancelled"
+				emailBody := fmt.Sprintf("Your order with Order ID %d has been cancelled.", orderEvent.OrderID)
+				if err := utils.SendEmail("customer@example.com", emailSubject, emailBody); err != nil {
+					log.Printf("Failed to send notification email: %v\n", err)
+					return err
+				}
+			}
 			return nil
 		} else {
 			log.Printf("attempt %d failed to find order: %v", i+1, results.Error)

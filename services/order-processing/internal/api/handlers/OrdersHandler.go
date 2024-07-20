@@ -290,3 +290,47 @@ func RecoverOrder(db *gorm.DB) gin.HandlerFunc {
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order recovered successfully"})
 	}
 }
+
+// CancelOrder godoc
+// @Summary Cancel an order
+// @Description Mark an order as cancelled and send a notification email
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param id path int true "Order ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Router /orders/cancel/{id} [post]
+func CancelOrder(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
+		orderID := c.Param("id")
+
+		var order model.Order
+		if err := db.Where("id = ? AND account_id = ?", orderID, accountID).First(&order).Error; err != nil {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Order not found"})
+			return
+		}
+
+		order.Status = "cancelled"
+		if result := db.Save(&order); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to update order"})
+			return
+		}
+
+		// Send email notification
+		emailSubject := "Your Order Has Been Cancelled"
+		emailBody := "Your order with Order ID " + strconv.Itoa(int(order.ID)) + " has been cancelled."
+		if err := utils.SendEmail("customer@example.com", emailSubject, emailBody); err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
+			return
+		}
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order cancelled successfully"})
+	}
+}
