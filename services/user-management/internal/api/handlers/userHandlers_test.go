@@ -10,9 +10,11 @@ import (
 	"testing"
 	"user-management/internal/api/handlers"
 	"user-management/internal/model"
+	"user-management/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -23,6 +25,15 @@ func SetupRouter() *gin.Engine {
 	return r
 }
 
+type MockEmailSender struct {
+	mock.Mock
+}
+
+func (m *MockEmailSender) SendEmail(to, subject, body string) error {
+	args := m.Called(to, subject, body)
+	return args.Error(0)
+}
+
 func TestSignup(t *testing.T) {
 	// Setup the database
 	db, err := gorm.Open(sqlite.Open("test_user.db"), &gorm.Config{})
@@ -30,8 +41,11 @@ func TestSignup(t *testing.T) {
 
 	db.AutoMigrate(&model.User{}, &model.Role{})
 
+	mockEmailSender := new(MockEmailSender)
+	ns := utils.NewNotificationService(mockEmailSender)
+
 	r := SetupRouter()
-	r.POST("/signup", handlers.Signup(db))
+	r.POST("/signup", handlers.Signup(db, ns))
 
 	// Define the test case
 	t.Run("SignupSuccess", func(t *testing.T) {
@@ -56,6 +70,9 @@ func TestSignup(t *testing.T) {
 			AccountID:  1,
 			Permission: model.PermissionWorker,
 		}
+
+		mockEmailSender.On("SendEmail", "user@example.com", "Welcome to Our Service", "Dear User, Welcome to our service!").Return(nil)
+
 		jsonValue, _ := json.Marshal(user)
 		req, _ := http.NewRequest("POST", "/signup", bytes.NewBuffer(jsonValue))
 		req.Header.Set("Content-Type", "application/json")
@@ -68,6 +85,8 @@ func TestSignup(t *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Equal(t, "User registered successfully", response["message"])
+
+		mockEmailSender.AssertExpectations(t)
 	})
 
 	// Clean up the database
@@ -110,8 +129,11 @@ func TestLogin(t *testing.T) {
 	}
 	db.Create(&testUser)
 
+	mockEmailSender := new(MockEmailSender)
+	ns := utils.NewNotificationService(mockEmailSender)
+
 	r := SetupRouter()
-	r.POST("/login", handlers.Login(db))
+	r.POST("/login", handlers.Login(db, ns))
 
 	// Define the test case
 	t.Run("LoginSuccess", func(t *testing.T) {
@@ -152,6 +174,9 @@ func TestLogin(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/login", bytes.NewBuffer(jsonValue))
 		req.Header.Set("Content-Type", "application/json")
 
+		// Set up mock expectation
+		mockEmailSender.On("SendEmail", "user@example.com", "Failed Login Attempt", "Dear User, There was a failed login attempt on your account.").Return(nil)
+
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 
@@ -160,6 +185,9 @@ func TestLogin(t *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Equal(t, "Invalid email or password", response["error"])
+
+		// Assert that the expected method was called
+		mockEmailSender.AssertExpectations(t)
 	})
 
 	// Clean up the database
