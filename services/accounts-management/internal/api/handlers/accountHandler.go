@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"accounts-management/internal/model"
+	"accounts-management/internal/utils"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -195,5 +197,38 @@ func RecoverAccount(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Account recovered successfully", Data: account})
+	}
+}
+
+// CheckSubscriptionRenewal godoc
+// @Summary Check subscription renewal
+// @Description Check if account subscriptions are nearing expiration and send reminder emails
+// @Tags accounts
+// @Produce json
+// @Success 200 {object} model.SuccessResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /accounts/check-renewal [get]
+func CheckSubscription(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var accounts []model.Account
+		now := time.Now()
+		renewalThreshold := now.AddDate(0, 0, 7)
+
+		if result := db.Where("subscription_expires_at <= ?", renewalThreshold).Find(&accounts); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to retrieve accounts"})
+			return
+		}
+
+		for _, account := range accounts {
+			// Send email notification
+			emailSubject := "Subscription Renewal Reminder"
+			emailBody := "Dear " + account.Name + ",\n\nYour subscription is set to expire on " + account.SubscriptionExpiresAt.Format("2006-01-02") + ". Please renew your subscription to avoid service interruption."
+			if err := utils.SendEmail(account.Email, emailSubject, emailBody); err != nil {
+				c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
+				return
+			}
+		}
+
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Subscription renewal reminders sent successfully"})
 	}
 }
