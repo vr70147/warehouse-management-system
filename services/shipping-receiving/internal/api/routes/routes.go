@@ -19,4 +19,5 @@ func Routers(r *gin.Engine, db *gorm.DB) {
 	shippings.DELETE("/:id", handlers.SoftDeleteShipping(db))
 	shippings.DELETE("/hard/:id", handlers.HardDeleteShipping(db))
 	shippings.POST("/:id/recover", handlers.RecoverShipping(db))
+	shippings.POST("/shippings/deliver/:id", handlers.DeliverShipping(db))
 }

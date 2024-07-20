@@ -7,6 +7,8 @@ import (
 	"os"
 	"shipping-receiving/internal/initializers"
 	"shipping-receiving/internal/model"
+	"shipping-receiving/internal/utils"
+	"strconv"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -61,6 +63,15 @@ func updateShippingStatus(orderID uint, status string) error {
 
 	if result := initializers.DB.Save(&shipping); result.Error != nil {
 		return result.Error
+	}
+
+	if shipping.Status == "Shipped" {
+		emailSubject := "Your Order Has Been Shipped"
+		emailBody := "Your order with Shipping ID " + strconv.Itoa(int(shipping.ID)) + " has been shipped successfully."
+		if err := utils.SendEmail("customer@example.com", emailSubject, emailBody); err != nil {
+			log.Printf("Failed to send notification email: %v\n", err)
+			return err
+		}
 	}
 
 	return publishShippingStatus(shipping.ID, shipping.Status)

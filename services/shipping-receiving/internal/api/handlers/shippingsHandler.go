@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"shipping-receiving/internal/model"
+	"shipping-receiving/internal/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -252,5 +253,51 @@ func RecoverShipping(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Shipping recovered successfully", Data: shipping})
+	}
+}
+
+// DeliverShipping godoc
+// @Summary Deliver a Shipping
+// @Description Mark a Shipping as delivered and send a notification email
+// @Tags Shippings
+// @Accept json
+// @Produce json
+// @Param id path string true "Shipping ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /shippings/deliver/{id} [post]
+func DeliverShipping(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
+		shippingID := c.Param("id")
+		var shipping model.Shipping
+
+		if result := db.Where("id = ? AND accound_id = ?", shippingID, accountID).First(&shipping); result.Error != nil {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Shipping not found"})
+			return
+		}
+
+		shipping.Status = "delivered"
+		if result := db.Save(&shipping); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to update shipping status"})
+			return
+		}
+
+		// Send notification email
+		emailSubject := "Your Order Has Been Delivered"
+		emailBody := "Your order with Shipping ID " + strconv.Itoa(int(shipping.ID)) + " has been delivered successfully."
+		if err := utils.SendEmail("customer@example.com", emailSubject, emailBody); err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
+			return
+		}
+
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Shipping delivered successfully"})
 	}
 }
