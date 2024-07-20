@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"order-processing/internal/cache"
 	"order-processing/internal/model"
+	"order-processing/internal/utils"
 	"order-processing/kafka"
 	"strconv"
 
@@ -133,6 +135,13 @@ func CreateOrder(db *gorm.DB) gin.HandlerFunc {
 		if err := tx.Commit().Error; err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to commit transaction"})
+			return
+		}
+
+		emailSubject := "Order Created Successfully"
+		emailBody := fmt.Sprintf("Your order with ID %d has been created successfully.", order.ID)
+		if err := utils.SendEmail("test@me.com", emailSubject, emailBody); err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send email"})
 			return
 		}
 
