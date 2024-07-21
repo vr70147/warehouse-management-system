@@ -28,12 +28,12 @@ func (ns *NotificationService) SendUserRegistrationNotification(email string) er
 	return ns.sendNotification(email, "Welcome to Our Service", "Dear User, Welcome to our service!")
 }
 
-func (ns *NotificationService) SendOrderCompletionNotification(email string) error {
-	return ns.sendNotification(email, "Your Order is Complete", "Dear User, Your order has been completed successfully.")
-}
-
 func (ns *NotificationService) SendLowStockNotification(email string) error {
 	return ns.sendNotification(email, "Low Stock Alert", "Attention: The stock for some items is running low.")
+}
+
+func (ns *NotificationService) SendOrderCompletionNotification(email string) error {
+	return ns.sendNotification(email, "Your Order is Complete", "Dear User, Your order has been completed successfully.")
 }
 
 func (ns *NotificationService) SendOrderCancellationNotification(email string) error {

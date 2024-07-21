@@ -2,12 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"order-processing/internal/cache"
 	"order-processing/internal/model"
 	"order-processing/internal/utils"
-	"order-processing/kafka"
+	message_broker "order-processing/message-broker"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -25,6 +24,7 @@ import (
 // @Param limit query int false "Limit"
 // @Param offset query int false "Offset"
 // @Success 200 {object} model.SuccessResponses
+// @Failure 401 {object} model.ErrorResponse
 // @Failure 500 {object} model.ErrorResponse
 // @Router /orders [get]
 func GetOrders(db *gorm.DB) gin.HandlerFunc {
@@ -41,7 +41,7 @@ func GetOrders(db *gorm.DB) gin.HandlerFunc {
 			if err == nil {
 				var order model.Order
 				json.Unmarshal([]byte(cachedOrder), &order)
-				c.JSON(http.StatusOK, order)
+				c.JSON(http.StatusOK, model.SuccessResponses{Message: "Orders found", Orders: []model.Order{order}})
 				return
 			}
 		}
@@ -93,7 +93,7 @@ func GetOrders(db *gorm.DB) gin.HandlerFunc {
 // @Success 200 {object} model.SuccessResponse
 // @Failure 400 {object} model.ErrorResponse
 // @Router /orders [post]
-func CreateOrder(db *gorm.DB) gin.HandlerFunc {
+func CreateOrder(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accountID, exists := c.Get("account_id")
 		if !exists {
@@ -138,14 +138,12 @@ func CreateOrder(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		emailSubject := "Order Created Successfully"
-		emailBody := fmt.Sprintf("Your order with ID %d has been created successfully.", order.ID)
-		if err := utils.SendEmail("test@me.com", emailSubject, emailBody); err != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send email"})
+		if err := ns.SendOrderCompletionNotification("customer@example.com"); err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
 			return
 		}
 
-		kafka.PublishOrderEvent(strconv.Itoa(int(order.ID))) // Publish Kafka event
+		message_broker.PublishOrderEvent(strconv.Itoa(int(order.ID))) // Publish Kafka event
 
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order created successfully", Order: order})
 	}
@@ -302,7 +300,18 @@ func RecoverOrder(db *gorm.DB) gin.HandlerFunc {
 // @Failure 400 {object} model.ErrorResponse
 // @Failure 404 {object} model.ErrorResponse
 // @Router /orders/cancel/{id} [post]
-func CancelOrder(db *gorm.DB) gin.HandlerFunc {
+// CancelOrder godoc
+// @Summary Cancel an order
+// @Description Mark an order as cancelled and send a notification email
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param id path int true "Order ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Router /orders/cancel/{id} [post]
+func CancelOrder(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accountID, exists := c.Get("account_id")
 		if !exists {
@@ -325,9 +334,7 @@ func CancelOrder(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		// Send email notification
-		emailSubject := "Your Order Has Been Cancelled"
-		emailBody := "Your order with Order ID " + strconv.Itoa(int(order.ID)) + " has been cancelled."
-		if err := utils.SendEmail("customer@example.com", emailSubject, emailBody); err != nil {
+		if err := ns.SendOrderCancellationNotification("customer@example.com", order.ID); err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
 			return
 		}
