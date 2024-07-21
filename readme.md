@@ -47,7 +47,7 @@ The system uses Kafka for event-driven architecture and messaging between servic
 - **shipping**: Shipping and delivery of orders.
 
 Example of new order messages:
-![Kafka Architecture](assets/images/kafka-architecture.png)
+![Kafka Architecture](assets/images/kafka-architecture.jpg)
 
 ## System Structure
 
