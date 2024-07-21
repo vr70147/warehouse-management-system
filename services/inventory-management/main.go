@@ -5,6 +5,7 @@ import (
 	"inventory-management/internal/api/routes"
 	"inventory-management/internal/cache"
 	"inventory-management/internal/initializers"
+	"inventory-management/internal/utils"
 	"inventory-management/kafka"
 
 	"github.com/gin-gonic/gin"
@@ -38,7 +39,7 @@ func main() {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	routes.Routers(r, initializers.DB)
+	routes.Routers(r, initializers.DB, &utils.NotificationService{})
 
 	r.Run()
 

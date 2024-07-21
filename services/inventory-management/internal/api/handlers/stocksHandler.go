@@ -4,7 +4,6 @@ import (
 	"inventory-management/internal/model"
 	"inventory-management/internal/utils"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -217,7 +216,7 @@ func RecoverStock(db *gorm.DB) gin.HandlerFunc {
 // @Success 200 {object} model.SuccessResponse
 // @Failure 404 {object} model.ErrorResponse
 // @Router /inventory/check/{id} [get]
-func CheckStock(db *gorm.DB) gin.HandlerFunc {
+func CheckStock(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accountID, exists := c.Get("account_id")
 		if !exists {
@@ -235,10 +234,8 @@ func CheckStock(db *gorm.DB) gin.HandlerFunc {
 
 		if stock.Quantity < int(stock.LowStockThreshold) {
 			// Send email notification
-			emailSubject := "Low Stock Alert"
-			emailBody := "The stock for product " + stock.Product.Name + " is low. Current stock: " + strconv.Itoa(stock.Quantity)
-			if err := utils.SendEmail("admin@example.com", emailSubject, emailBody); err != nil {
-				c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send email notification"})
+			if err := ns.SendLowStockNotification("customer@example.com"); err != nil {
+				c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
 				return
 			}
 		}

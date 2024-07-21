@@ -39,6 +39,7 @@ The system follows a microservices architecture with the following services:
 
 ## System Structure
 
+```sh
 warehouse-management-system/
 ├── docker-compose.yml
 ├── get_helm.sh
@@ -256,6 +257,7 @@ warehouse-management-system/
 │ │ └── kafka.go
 │ └── main.go
 └── readme.md
+```
 
 ## Installation
 

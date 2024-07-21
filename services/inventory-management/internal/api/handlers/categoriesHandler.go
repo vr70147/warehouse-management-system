@@ -232,12 +232,13 @@ func RecoverCategory(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		categoryID := c.Param("id")
+
 		if result := db.Unscoped().Model(&model.Category{}).Where("id = ? AND account_id = ?", categoryID, accountID).Update("deleted_at", nil); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to recover category"})
 			return
 		}
-
-		if err := db.Model(&model.Product{}).Where("category_id IS NULL AND account_id = ? AND previous_category_id = ?", accountID, categoryID).Update("category_id", categoryID).Error; err != nil {
+		var product model.Product
+		if err := db.Model(&model.Product{}).Where("category_id IS NULL AND account_id = ? AND category_id = ?", accountID, product.CategoryID).Update("category_id", categoryID).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to reassign products"})
 			return
 		}

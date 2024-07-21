@@ -6,7 +6,14 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-func SendEmail(to, subject, body string) error {
+type EmailSender interface {
+	SendEmail(to, subject, body string) error
+}
+
+// DefaultEmailSender is the default implementation of EmailSender
+type DefaultEmailSender struct{}
+
+func (s *DefaultEmailSender) SendEmail(to, subject, body string) error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", os.Getenv("EMAIL_ADDRESS"))
 	m.SetHeader("To", to)
