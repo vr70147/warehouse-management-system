@@ -37,6 +37,18 @@ The system follows a microservices architecture with the following services:
 - **Inventory Management Service**: Keeps track of inventory levels and updates.
 - **Shipping Management Service**: Manages shipping and delivery of orders.
 
+## Kafka Architecture
+
+The system uses Kafka for event-driven architecture and messaging between services. The following topics are used:
+
+- **accounts**: User accounts, roles, and permissions.
+- **orders**: Order processing and status updates.
+- **inventory**: Inventory levels and updates.
+- **shipping**: Shipping and delivery of orders.
+
+Example of new order messages:
+![Kafka Architecture](assets/images/kafka-architecture.png)
+
 ## System Structure
 
 The project is organized into multiple services, each responsible for a specific domain within the warehouse management system. Below is the directory structure of the project:
@@ -305,16 +317,28 @@ Each service exposes a set of RESTful API endpoints. You can interact with these
 
 ## API Documentation
 
-### Accounts Management Service
+### Users Management Service
 
-- **Create Account:** POST /signup
-- **Login: POST /login**
-- **Logout: POST /logout**
+- **Create User: POST /users**
 - **Get Users: GET /users**
 - **Update User: PUT /users/:id**
 - **Soft Delete User: DELETE /users/:id**
-- **Hard Delete User: DELETE /users/hard/:id**
+- **Hard Delete User: DELETE /users/:id/hard**
 - **Recover User: POST /users/:id/recover**
+
+- **Create Role: POST /roles**
+- **Get Roles: GET /roles**
+- **Update Role: PUT /roles/:id**
+- **Soft Delete Role: DELETE /roles/:id**
+- **Hard Delete Role: DELETE /roles/:id/hard**
+- **Recover Role: POST /roles/:id/recover**
+
+- **Create Department: POST /departments**
+- **Get Departments: GET /departments**
+- **Update Department: PUT /departments/:id**
+- **Soft Delete Department: DELETE /departments/:id**
+- **Hard Delete Department: DELETE /departments/:id/hard**
+- **Recover Department: POST /departments/:id/recover**
 
 ### Order Processing Service
 
@@ -327,14 +351,58 @@ Each service exposes a set of RESTful API endpoints. You can interact with these
 
 ### Inventory Management Service
 
-    Get Inventory: GET /inventory
-    Update Inventory: PUT /inventory/:id
+- **Create Product: POST /products**
+- **Get Products: GET /products**
+- **Update Product: PUT /products/:id**
+- **Soft Delete Product: DELETE /products/:id**
+- **Hard Delete Product: DELETE /products/:id/hard**
+- **Recover Product: POST /products/:id/recover**
+
+- **Create Stock: POST /stocks**
+- **Get Stocks: GET /stocks**
+- **Update Stock: PUT /stocks/:id**
+- **Soft Delete Stock: DELETE /stocks/:id**
+- **Hard Delete Stock: DELETE /stocks/:id/hard**
+- **Recover Stock: POST /stocks/:id/recover**
+
+- **Create Category: POST /categories**
+- **Get Categories: GET /categories**
+- **Update Category: PUT /categories/:id**
+- **Soft Delete Category: DELETE /categories/:id**
+- **Hard Delete Category: DELETE /categories/:id/hard**
+- **Recover Category: POST /categories/:id/recover**
+
+- **Create Supplier: POST /suppliers**
+- **Get Suppliers: GET /suppliers**
+- **Update Supplier: PUT /suppliers/:id**
+- **Soft Delete Supplier: DELETE /suppliers/:id**
+- **Hard Delete Supplier: DELETE /suppliers/:id/hard**
+- **Recover Supplier: POST /suppliers/:id/recover**
 
 ### Shipping Management Service
 
-    Create Shipping: POST /shipping
-    Get Shippings: GET /shipping
-    Update Shipping: PUT /shipping/:id
+- **Create Shipping: POST /shippings**
+- **Get Shippings: GET /shippings**
+- **Update Shipping: PUT /shippings/:id**
+- **Soft Delete Shipping: DELETE /shippings/:id**
+- **Hard Delete Shipping: DELETE /shippings/:id/hard**
+- **Recover Shipping: POST /shippings/:id/recover**
+
+### Accounts Management Service
+
+- **Create Account: POST /accounts**
+- **Get Accounts: GET /accounts**
+- **Update Account: PUT /accounts/:id**
+- **Soft Delete Account: DELETE /accounts/:id**
+- **Hard Delete Account: DELETE /accounts/:id/hard**
+- **Recover Account: POST /accounts/:id/recover**
+
+### Reporting Analytics Service
+
+- **Get Sales Report: GET /reports/sales**
+- **Get Inventory levels: GET /reports/inventory**
+- **Get Shipping Statuses: GET /reports/shipping**
+- **Get User Activities: GET /reports/user-activity**
 
 ## Testing
 
