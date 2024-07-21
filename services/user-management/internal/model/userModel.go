@@ -92,3 +92,15 @@ type Plan struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
+
+type ChangePasswordRequest struct {
+	CurrentPassword string `json:"current_password" binding:"required"`
+	NewPassword     string `json:"new_password" binding:"required"`
+}
+
+type Activity struct {
+	ID          uint      `gorm:"primarykey" json:"id"`
+	UserID      uint      `gorm:"index" json:"user_id"`
+	Description string    `json:"description" gorm:"type:text"`
+	CreatedAt   time.Time `json:"created_at"`
+}

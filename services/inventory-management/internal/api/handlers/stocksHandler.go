@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"inventory-management/internal/model"
+	"inventory-management/internal/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -203,5 +204,41 @@ func RecoverStock(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Stock recovered successfully"})
+	}
+}
+
+// CheckStock godoc
+// @Summary Check stock levels
+// @Description Check the stock levels for a product
+// @Tags inventory
+// @Produce json
+// @Param id path int true "Product ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Router /inventory/check/{id} [get]
+func CheckStock(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
+		stockID := c.Param("id")
+		var stock model.Stock
+
+		if err := db.Where("id = ? AND account_id = ?", stockID, accountID).First(&stock).Error; err != nil {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Stock not found"})
+			return
+		}
+
+		if stock.Quantity < int(stock.LowStockThreshold) {
+			// Send email notification
+			if err := ns.SendLowStockNotification("customer@example.com"); err != nil {
+				c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
+				return
+			}
+		}
+		c.JSON(http.StatusOK, model.StockResponse{Message: "Stock level checked", ID: stock.ID, ProductName: stock.Product.Name, Quantity: int(stock.Quantity), Location: stock.Location})
 	}
 }

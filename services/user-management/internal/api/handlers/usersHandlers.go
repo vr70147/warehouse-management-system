@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 	"user-management/internal/model"
+	"user-management/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -23,7 +24,7 @@ import (
 // @Success 200 {object} model.SuccessResponse
 // @Failure 400 {object} model.ErrorResponse
 // @Router /signup [post]
-func Signup(db *gorm.DB) gin.HandlerFunc {
+func Signup(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var body struct {
 			PersonalID string           `json:"personal_id" gorm:"unique;not null"`
@@ -99,6 +100,12 @@ func Signup(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		// Send email to user
+		if err := ns.SendUserRegistrationNotification(user.Email); err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
+			return
+		}
+
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "User registered successfully", Data: user})
 	}
 }
@@ -113,7 +120,7 @@ func Signup(db *gorm.DB) gin.HandlerFunc {
 // @Success 200 {object} model.SuccessResponse
 // @Failure 400 {object} model.ErrorResponse
 // @Router /login [post]
-func Login(db *gorm.DB) gin.HandlerFunc {
+func Login(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var body struct {
 			Email    string `json:"email" gorm:"unique"`
@@ -137,6 +144,12 @@ func Login(db *gorm.DB) gin.HandlerFunc {
 
 		err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
 		if err != nil {
+			// Notify user of failed login attempt
+			if err := ns.SendFailedLoginAttemptNotification(user.Email); err != nil {
+				c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
+				return
+			}
+
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{
 				Error: "Invalid email or password",
 			})
@@ -146,7 +159,7 @@ func Login(db *gorm.DB) gin.HandlerFunc {
 		// Include accountID in the JWT token claims
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 			"sub":        user.ID,
-			"account_id": user.AccountID, // Assuming AccountID is a field in the User model
+			"account_id": user.AccountID,
 			"exp":        time.Now().Add(time.Hour * 24 * 30).Unix(),
 		})
 
@@ -162,7 +175,7 @@ func Login(db *gorm.DB) gin.HandlerFunc {
 		c.SetCookie("Authorization", tokenString, 3600*24*30, "", "", false, true)
 		c.JSON(http.StatusOK, model.SuccessResponse{
 			Message: "User authenticated successfully",
-			Data:    tokenString, // Optionally return the token in the response
+			Data:    tokenString,
 		})
 	}
 }
@@ -488,6 +501,72 @@ func RecoverUser(db *gorm.DB) gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, model.SuccessResponse{
 			Message: "User recovered successfully",
+		})
+	}
+}
+
+// ChangePassword godoc
+// @Summary Change user password
+// @Description Change the password for a user and send a notification email
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path int true "User ID"
+// @Param body body model.ChangePasswordRequest true "Password data"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Router /users/change-password/{id} [post]
+func ChangePassword(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
+		userID := c.Param("id")
+		var request model.ChangePasswordRequest
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid request data"})
+			return
+		}
+
+		var user model.User
+		if result := db.Where("id = ? AND account_id = ?", userID, accountID).First(&user); result.Error != nil {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{
+				Error: "User not found",
+			})
+			return
+		}
+		// Verify the current password
+		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.CurrentPassword)); err != nil {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Current password is incorrect"})
+			return
+		}
+
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.NewPassword), bcrypt.DefaultCost)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to hash password"})
+			return
+		}
+
+		user.Password = string(hashedPassword)
+		if result := db.Save(&user); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+				Error: "Failed to change password",
+			})
+			return
+		}
+
+		// Send notification email
+		if err := ns.SendPasswordChangeNotification(user.Email); err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
+			return
+		}
+
+		c.JSON(http.StatusOK, model.SuccessResponse{
+			Message: "Password changed successfully",
 		})
 	}
 }

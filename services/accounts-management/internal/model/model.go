@@ -7,27 +7,28 @@ import (
 )
 
 type Account struct {
-	ID             uint           `gorm:"primarykey" json:"id"`
-	Email          string         `json:"email" gorm:"unique;not null"`
-	Name           string         `json:"name" gorm:"not null"`
-	Password       string         `json:"-"` // Typically hashed, not returned in JSON
-	PhoneNumber    string         `json:"phone_number"`
-	CompanyName    string         `json:"company_name"`
-	Address        string         `json:"address"`
-	City           string         `json:"city"`
-	State          string         `json:"state"`
-	PostalCode     string         `json:"postal_code"`
-	Country        string         `json:"country"`
-	BillingEmail   string         `json:"billing_email"`
-	BillingAddress string         `json:"billing_address"`
-	PlanID         uint           `json:"plan_id"` // Foreign key to a subscription plan
-	Plan           Plan           `json:"plan"`    // Associated plan
-	IsActive       bool           `json:"is_active" gorm:"default:true"`
-	Metadata       string         `json:"metadata" gorm:"type:json"`    // Additional JSON-encoded metadata
-	Preferences    string         `json:"preferences" gorm:"type:json"` // JSON-encoded user preferences
-	CreatedAt      time.Time      `json:"created_at"`
-	UpdatedAt      time.Time      `json:"updated_at"`
-	DeletedAt      gorm.DeletedAt `gorm:"index"`
+	ID                    uint           `gorm:"primarykey" json:"id"`
+	Email                 string         `json:"email" gorm:"unique;not null"`
+	Name                  string         `json:"name" gorm:"not null"`
+	Password              string         `json:"-"`
+	PhoneNumber           string         `json:"phone_number"`
+	CompanyName           string         `json:"company_name"`
+	Address               string         `json:"address"`
+	City                  string         `json:"city"`
+	State                 string         `json:"state"`
+	PostalCode            string         `json:"postal_code"`
+	Country               string         `json:"country"`
+	BillingEmail          string         `json:"billing_email"`
+	BillingAddress        string         `json:"billing_address"`
+	SubscriptionExpiresAt time.Time      `json:"subscription_expires_at"`
+	PlanID                uint           `json:"plan_id"` // Foreign key to a subscription plan
+	Plan                  Plan           `json:"plan"`    // Associated plan
+	IsActive              bool           `json:"is_active" gorm:"default:true"`
+	Metadata              string         `json:"metadata" gorm:"type:json"`    // Additional JSON-encoded metadata
+	Preferences           string         `json:"preferences" gorm:"type:json"` // JSON-encoded user preferences
+	CreatedAt             time.Time      `json:"created_at"`
+	UpdatedAt             time.Time      `json:"updated_at"`
+	DeletedAt             gorm.DeletedAt `gorm:"index"`
 }
 
 type Plan struct {

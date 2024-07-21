@@ -5,6 +5,7 @@ import (
 	"user-management/internal/api/routes"
 	"user-management/internal/cache"
 	"user-management/internal/initializers"
+	"user-management/internal/utils"
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -17,6 +18,11 @@ func init() {
 	initializers.ConnectToDB()
 	initializers.SyncDatabse()
 	cache.InitRedis()
+
+	// Initialize the default email sender
+	emailSender := &utils.DefaultEmailSender{}
+	scheduler := utils.NewScheduler(initializers.DB, emailSender)
+	scheduler.StartMonthlySummaryScheduler()
 }
 
 // @title User Management API

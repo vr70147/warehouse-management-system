@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"order-processing/internal/cache"
 	"order-processing/internal/model"
-	"order-processing/kafka"
+	"order-processing/internal/utils"
+	message_broker "order-processing/message-broker"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -23,6 +24,7 @@ import (
 // @Param limit query int false "Limit"
 // @Param offset query int false "Offset"
 // @Success 200 {object} model.SuccessResponses
+// @Failure 401 {object} model.ErrorResponse
 // @Failure 500 {object} model.ErrorResponse
 // @Router /orders [get]
 func GetOrders(db *gorm.DB) gin.HandlerFunc {
@@ -39,7 +41,7 @@ func GetOrders(db *gorm.DB) gin.HandlerFunc {
 			if err == nil {
 				var order model.Order
 				json.Unmarshal([]byte(cachedOrder), &order)
-				c.JSON(http.StatusOK, order)
+				c.JSON(http.StatusOK, model.SuccessResponses{Message: "Orders found", Orders: []model.Order{order}})
 				return
 			}
 		}
@@ -91,7 +93,7 @@ func GetOrders(db *gorm.DB) gin.HandlerFunc {
 // @Success 200 {object} model.SuccessResponse
 // @Failure 400 {object} model.ErrorResponse
 // @Router /orders [post]
-func CreateOrder(db *gorm.DB) gin.HandlerFunc {
+func CreateOrder(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accountID, exists := c.Get("account_id")
 		if !exists {
@@ -136,7 +138,12 @@ func CreateOrder(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		kafka.PublishOrderEvent(strconv.Itoa(int(order.ID))) // Publish Kafka event
+		if err := ns.SendOrderCompletionNotification("customer@example.com"); err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
+			return
+		}
+
+		message_broker.PublishOrderEvent(strconv.Itoa(int(order.ID))) // Publish Kafka event
 
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order created successfully", Order: order})
 	}
@@ -279,5 +286,58 @@ func RecoverOrder(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order recovered successfully"})
+	}
+}
+
+// CancelOrder godoc
+// @Summary Cancel an order
+// @Description Mark an order as cancelled and send a notification email
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param id path int true "Order ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Router /orders/cancel/{id} [post]
+// CancelOrder godoc
+// @Summary Cancel an order
+// @Description Mark an order as cancelled and send a notification email
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param id path int true "Order ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Router /orders/cancel/{id} [post]
+func CancelOrder(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		accountID, exists := c.Get("account_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
+			return
+		}
+
+		orderID := c.Param("id")
+
+		var order model.Order
+		if err := db.Where("id = ? AND account_id = ?", orderID, accountID).First(&order).Error; err != nil {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Order not found"})
+			return
+		}
+
+		order.Status = "cancelled"
+		if result := db.Save(&order); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to update order"})
+			return
+		}
+
+		// Send email notification
+		if err := ns.SendOrderCancellationNotification("customer@example.com", order.ID); err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
+			return
+		}
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order cancelled successfully"})
 	}
 }
