@@ -45,47 +45,47 @@ The project is organized into multiple services, each responsible for a specific
 warehouse-management-system/
 ├── docker-compose.yml
 ├── get_helm.sh
-├── k8s/
-│   ├── accounts-management/
+├── **k8s/**
+│   ├── **accounts-management/**
 │   │   ├── configmap.yaml
 │   │   ├── deployment.yaml
 │   │   ├── ingress.yaml
 │   │   └── service.yaml
-│   ├── ingress-nginx/
+│   ├── **ingress-nginx/**
 │   │   └── ingress-nginx.yaml
-│   ├── inventory-management/
+│   ├── **inventory-management/**
 │   │   ├── configmap.yaml
 │   │   ├── deployment.yaml
 │   │   ├── ingress.yaml
 │   │   └── service.yaml
-│   ├── order-processing/
+│   ├── **order-processing/**
 │   │   ├── configmap.yaml
 │   │   ├── deployment.yaml
 │   │   ├── ingress.yaml
 │   │   └── service.yaml
-│   ├── postgres/
+│   ├── **postgres/**
 │   │   ├── secret.yaml
 │   │   ├── user-management.yaml
 │   │   └── values.yaml
-│   ├── reporting-analytics/
+│   ├── **reporting-analytics/**
 │   │   ├── configmap.yaml
 │   │   ├── deployment.yaml
 │   │   ├── ingress.yaml
 │   │   └── service.yaml
-│   ├── shipping-receiving/
+│   ├── **shipping-receiving/**
 │   │   ├── configmap.yaml
 │   │   ├── deployment.yaml
 │   │   ├── ingress.yaml
 │   │   └── service.yaml
-│   └── user-management/
+│   └── **user-management/**
 │       ├── configmap.yaml
 │       ├── deployment.yaml
 │       ├── ingress.yaml
 │       ├── secret.yaml
 │       └── service.yaml
-├── readme.md
-├── services/
-│   ├── accounts-management/
+├── **readme.md**
+├── **services/**
+│   ├── **accounts-management/**
 │   │   ├── .env
 │   │   ├── Dockerfile
 │   │   ├── accounts-management
@@ -109,7 +109,7 @@ warehouse-management-system/
 │   │   │   └── tests/
 │   │   │       └── routes_test.go
 │   │   └── main.go
-│   ├── inventory-management/
+│   ├── **inventory-management/**
 │   │   ├── Dockerfile
 │   │   ├── docs/
 │   │   │   ├── docs.go
@@ -141,7 +141,7 @@ warehouse-management-system/
 │   │   ├── kafka/
 │   │   │   └── kafka_new_order_consumer.go
 │   │   └── main.go
-│   ├── order-processing/
+│   ├── **order-processing/**
 │   │   ├── Dockerfile
 │   │   ├── docs/
 │   │   │   ├── docs.go
@@ -169,7 +169,7 @@ warehouse-management-system/
 │   │   │   └── tests/
 │   │   │       └── orders_test.go
 │   │   └── main.go
-│   ├── reporting-analytics/
+│   ├── **reporting-analytics/**
 │   │   ├── Dockerfile
 │   │   ├── go.mod
 │   │   ├── go.sum
@@ -194,7 +194,7 @@ warehouse-management-system/
 │   │   │   ├── consumer.go
 │   │   │   └── producer.go
 │   │   └── main.go
-│   ├── shipping-receiving/
+│   ├── **shipping-receiving/**
 │   │   ├── Dockerfile
 │   │   ├── docs/
 │   │   │   ├── docs.go
@@ -222,7 +222,7 @@ warehouse-management-system/
 │   │   │   └── tests/
 │   │   │       └── receiving_test.go
 │   │   └── main.go
-│   └── user-management/
+│   └── **user-management/**
 │       ├── .env
 │       ├── Dockerfile
 │       ├── docs/
@@ -258,7 +258,7 @@ warehouse-management-system/
 │       ├── kafka/
 │       │   └── kafka.go
 │       └── main.go
-└── readme.md
+└── **readme.md**
 ```
 
 ## Installation
