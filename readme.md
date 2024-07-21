@@ -8,7 +8,8 @@ Welcome to the Warehouse Management System project. This system is designed to e
 
 - [Introduction](#introduction)
 - [Features](#features)
-- [Architecture](#architecture)
+- [Project Architecture](#project-architecture)
+- [Kafka Architecture](#kafka-architecture)
 - [Installation](#installation)
 - [Usage](#usage)
 - [API Documentation](#api-documentation)
@@ -28,7 +29,7 @@ Welcome to the Warehouse Management System project. This system is designed to e
 - **PostgreSQL Integration**: Use PostgreSQL for database management.
 - **Redis Integration**: Use Redis for caching and message queuing.
 
-## Architecture
+## Project Architecture
 
 The system follows a microservices architecture with the following services:
 
@@ -47,7 +48,7 @@ The system uses Kafka for event-driven architecture and messaging between servic
 - **shipping**: Shipping and delivery of orders.
 
 Example of new order messages:
-![Kafka Architecture](assets/images/kafka-architecture.jpg)
+![Kafka Architecture](assets/images/kafka-order-messages.jpg)
 
 ## System Structure
 
