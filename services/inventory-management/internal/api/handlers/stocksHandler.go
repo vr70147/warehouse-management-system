@@ -3,6 +3,7 @@ package handlers
 import (
 	"inventory-management/internal/model"
 	"inventory-management/internal/utils"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -16,7 +17,7 @@ import (
 // @Accept json
 // @Produce json
 // @Param body body model.Stock true "Stock data"
-// @Success 200 {object} model.SuccessResponse
+// @Success 200 {object} model.Stock
 // @Failure 400 {object} model.ErrorResponse
 // @Router /stocks [post]
 func CreateStock(db *gorm.DB) gin.HandlerFunc {
@@ -29,17 +30,20 @@ func CreateStock(db *gorm.DB) gin.HandlerFunc {
 
 		var stock model.Stock
 		if err := c.ShouldBindJSON(&stock); err != nil {
+			log.Printf("Invalid request data: %v", err)
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid request data"})
 			return
 		}
 
 		stock.AccountID = accountID.(uint)
 		if result := db.Create(&stock); result.Error != nil {
+			log.Printf("Failed to create stock: %v", result.Error)
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to create stock"})
 			return
 		}
 
-		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Stock created successfully"})
+		log.Printf("Stock created: %+v", stock)
+		c.JSON(http.StatusOK, stock)
 	}
 }
 

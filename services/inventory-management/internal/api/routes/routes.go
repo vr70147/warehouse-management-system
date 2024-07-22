@@ -31,8 +31,8 @@ func Routers(r *gin.Engine, db *gorm.DB, ns *utils.NotificationService) {
 	categories.PATCH("/recover/:id", handlers.RecoverCategory(db))
 
 	stocks := r.Group("/stocks")
-	stocks.POST("/", handlers.CreateStock(db))
-	stocks.GET("/", handlers.GetStocks(db))
+	stocks.POST("", handlers.CreateStock(db))
+	stocks.GET("", handlers.GetStocks(db))
 	stocks.PUT("/:id", handlers.UpdateStock(db))
 	stocks.DELETE("/:id", handlers.SoftDeleteStock(db))
 	stocks.DELETE("/hard/:id", handlers.HardDeleteStock(db))
