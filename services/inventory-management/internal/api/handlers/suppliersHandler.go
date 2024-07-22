@@ -236,7 +236,7 @@ func RecoverSupplier(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		// Reassign products back to the recovered supplier
-		if err := db.Model(&model.Product{}).Where("supplier_id IS NULL AND account_id = ? AND previous_supplier_id = ?", accountID, supplierID).Update("supplier_id", supplierID).Error; err != nil {
+		if err := db.Model(&model.Product{}).Where("supplier_id IS NULL AND account_id = ? AND supplier_id = ?", accountID, supplierID).Update("supplier_id", supplierID).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to reassign products"})
 			return
 		}
