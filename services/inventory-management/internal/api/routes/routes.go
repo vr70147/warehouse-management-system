@@ -15,8 +15,8 @@ func Routers(r *gin.Engine, db *gorm.DB, ns *utils.NotificationService) {
 	r.Use(middleware.CORSMiddleware())
 
 	products := r.Group("/products")
-	products.POST("/", handlers.CreateProduct(db))
-	products.GET("/", handlers.GetProducts(db))
+	products.POST("", handlers.CreateProduct(db))
+	products.GET("", handlers.GetProducts(db))
 	products.PUT("/:id", handlers.UpdateProduct(db))
 	products.DELETE("/:id", handlers.SoftDeleteProduct(db))
 	products.DELETE("hard/:id", handlers.HardDeleteProduct(db))
@@ -31,8 +31,8 @@ func Routers(r *gin.Engine, db *gorm.DB, ns *utils.NotificationService) {
 	categories.PATCH("/recover/:id", handlers.RecoverCategory(db))
 
 	stocks := r.Group("/stocks")
-	stocks.POST("/", handlers.CreateStock(db))
-	stocks.GET("/", handlers.GetStocks(db))
+	stocks.POST("", handlers.CreateStock(db))
+	stocks.GET("", handlers.GetStocks(db))
 	stocks.PUT("/:id", handlers.UpdateStock(db))
 	stocks.DELETE("/:id", handlers.SoftDeleteStock(db))
 	stocks.DELETE("/hard/:id", handlers.HardDeleteStock(db))
@@ -40,8 +40,8 @@ func Routers(r *gin.Engine, db *gorm.DB, ns *utils.NotificationService) {
 	stocks.GET("/check/:id", handlers.CheckStock(db, ns))
 
 	suppliers := r.Group("/suppliers")
-	suppliers.POST("/", handlers.CreateSupplier(db))
-	suppliers.GET("/", handlers.GetSuppliers(db))
+	suppliers.POST("", handlers.CreateSupplier(db))
+	suppliers.GET("", handlers.GetSuppliers(db))
 	suppliers.PUT("/:id", handlers.UpdateSupplier(db))
 	suppliers.DELETE("/:id", handlers.SoftDeleteSupplier(db))
 	suppliers.DELETE("/hard/:id", handlers.HardDeleteSupplier(db))

@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
 	_ "inventory-management/docs"
 	"inventory-management/internal/api/routes"
 	"inventory-management/internal/cache"
 	"inventory-management/internal/initializers"
+	"inventory-management/internal/kafka"
 	"inventory-management/internal/utils"
-	"inventory-management/kafka"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -34,6 +36,11 @@ func init() {
 // @host localhost:8081
 // @BasePath /
 func main() {
+	fmt.Println("Environment Variables:")
+	for _, e := range os.Environ() {
+		fmt.Println(e)
+	}
+
 	go kafka.ConsumerOrderEvents()
 	r := gin.Default()
 

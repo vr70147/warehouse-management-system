@@ -268,7 +268,7 @@ func RecoverShipping(db *gorm.DB) gin.HandlerFunc {
 // @Failure 404 {object} model.ErrorResponse
 // @Failure 500 {object} model.ErrorResponse
 // @Router /shippings/deliver/{id} [post]
-func DeliverShipping(db *gorm.DB) gin.HandlerFunc {
+func DeliverShipping(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accountID, exists := c.Get("account_id")
 		if !exists {
@@ -279,7 +279,7 @@ func DeliverShipping(db *gorm.DB) gin.HandlerFunc {
 		shippingID := c.Param("id")
 		var shipping model.Shipping
 
-		if result := db.Where("id = ? AND accound_id = ?", shippingID, accountID).First(&shipping); result.Error != nil {
+		if result := db.Where("id = ? AND account_id = ?", shippingID, accountID).First(&shipping); result.Error != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Shipping not found"})
 			return
 		}
@@ -291,9 +291,7 @@ func DeliverShipping(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		// Send notification email
-		emailSubject := "Your Order Has Been Delivered"
-		emailBody := "Your order with Shipping ID " + strconv.Itoa(int(shipping.ID)) + " has been delivered successfully."
-		if err := utils.SendEmail("customer@example.com", emailSubject, emailBody); err != nil {
+		if err := ns.SendOrderShippedNotification("customer@example.com"); err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
 			return
 		}
