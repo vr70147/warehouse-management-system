@@ -5,6 +5,7 @@ import (
 	"shipping-receiving/internal/api/routes"
 	"shipping-receiving/internal/cache"
 	"shipping-receiving/internal/initializers"
+	"shipping-receiving/internal/utils"
 	"shipping-receiving/kafka"
 
 	"github.com/gin-gonic/gin"
@@ -25,7 +26,7 @@ func main() {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	routes.Routers(r, initializers.DB)
+	routes.Routers(r, initializers.DB, &utils.NotificationService{})
 
 	r.Run()
 
