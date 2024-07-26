@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -137,8 +136,6 @@ func Login(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 			return
 		}
 
-		log.Println(body)
-
 		var user model.User
 		if err := db.First(&user, "email = ?", body.Email).Error; err != nil {
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{
@@ -146,9 +143,6 @@ func Login(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 			})
 			return
 		}
-
-		fmt.Printf("Hashed password: %s\n", user.Password)
-		fmt.Printf("Input password: %s\n", body.Password)
 
 		err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
 		if err != nil {
@@ -346,13 +340,13 @@ func GetUsers(db *gorm.DB) gin.HandlerFunc {
 
 		if queryExists || len(c.Params) == 0 {
 			result = db.Model(&model.User{}).
-				Select("users.*, roles.role as role, roles.permission, roles.is_active, departments.name as department").
+				Select("users.*, roles.role as role, roles.is_active, departments.name as department").
 				Joins("left join roles on roles.id = users.role_id").
 				Joins("left join departments on departments.id = roles.department_id").
 				Where(&queryCondition).Scan(&users)
 		} else {
 			result = db.Model(&model.User{}).
-				Select("users.*, roles.role as role, roles.permission, roles.is_active, departments.name as department").
+				Select("users.*, roles.role as role, roles.is_active, departments.name as department").
 				Joins("left join roles on roles.id = users.role_id").
 				Joins("left join departments on departments.id = roles.department_id").Scan(&users)
 		}
