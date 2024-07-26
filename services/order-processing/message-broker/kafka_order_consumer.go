@@ -7,7 +7,6 @@ import (
 	"log"
 	"order-processing/internal/initializers"
 	"order-processing/internal/model"
-	"order-processing/internal/utils"
 	"os"
 	"time"
 
@@ -47,8 +46,6 @@ const maxRetries = 3
 
 var KafkaWriterInstance KafkaWriterInterface
 
-var notificationService *utils.NotificationService
-
 func ConsumerOrderEvent() {
 	topic := os.Getenv("ORDER_EVENT_TOPIC")
 	if topic == "" {
@@ -85,20 +82,22 @@ func processOrderMessage(msg []byte) error {
 		Status  string `json:"status"`
 	}
 
+	// Log the received message for debugging
+	log.Printf("Processing order message: %s\n", string(msg))
+
 	if err := json.Unmarshal(msg, &orderEvent); err != nil {
 		return fmt.Errorf("failed to unmarshal order event: %v", err)
 	}
+
+	// Log the unmarshalled data for debugging
+	log.Printf("Unmarshalled order event: %+v\n", orderEvent)
 
 	var order model.Order
 	for i := 0; i < maxRetries; i++ {
 		if results := initializers.DB.First(&order, orderEvent.OrderID); results.Error == nil {
 			order.Status = orderEvent.Status
-			initializers.DB.Save(&order)
-
-			if orderEvent.Status == "Cancelled" {
-				if err := notificationService.SendOrderCancellationNotification("test@example.com", order.ID); err != nil {
-					return fmt.Errorf("failed to send order cancellation notification: %v", err)
-				}
+			if saveErr := initializers.DB.Save(&order).Error; saveErr != nil {
+				return fmt.Errorf("failed to save order status: %v", saveErr)
 			}
 			return nil
 		} else {

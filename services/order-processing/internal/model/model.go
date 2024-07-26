@@ -12,13 +12,13 @@ type Order struct {
 	ID         uint           `gorm:"primarykey" json:"id"`
 	CreatedAt  time.Time      `json:"created_at"`
 	UpdatedAt  time.Time      `json:"updated_at"`
-	DeletedAt  gorm.DeletedAt `gorm:"index"`
-	AccountID  uint           `gorm:"index"`
-	ProductID  uint
-	Quantity   uint
-	CustomerID uint
-	Status     string
-	Version    int
+	DeletedAt  gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+	AccountID  uint           `gorm:"index" json:"account_id"`
+	ProductID  uint           `json:"product_id"`
+	Quantity   uint           `json:"quantity"`
+	CustomerID uint           `json:"customer_id"`
+	Status     string         `json:"status"`
+	Version    int            `json:"version"`
 }
 
 type User struct {

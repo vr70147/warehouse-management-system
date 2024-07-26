@@ -138,12 +138,8 @@ func CreateOrder(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 			return
 		}
 
-		if err := ns.SendOrderCompletionNotification("customer@example.com"); err != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
-			return
-		}
-
-		message_broker.PublishOrderEvent(strconv.Itoa(int(order.ID))) // Publish Kafka event
+		// Publish Kafka event
+		message_broker.PublishOrderEvent(order.ID, order.Status)
 
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order created successfully", Order: order})
 	}

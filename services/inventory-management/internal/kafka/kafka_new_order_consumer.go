@@ -1,13 +1,14 @@
 package kafka
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"inventory-management/internal/initializers"
 	"inventory-management/internal/model"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/segmentio/kafka-go"
@@ -34,20 +35,21 @@ func (kc *KafkaClient) WriteMessages(ctx context.Context, msgs ...kafka.Message)
 }
 
 func NewKafkaClient() *KafkaClient {
+	topic := os.Getenv("ORDER_EVENT_TOPIC")
+	if topic == "" {
+		log.Fatalf("ORDER_EVENT_TOPIC environment variable not set")
+	}
 	kafkaBrokers := os.Getenv("KAFKA_BROKERS")
-	fmt.Println(kafkaBrokers)
-	newOrderEventsTopic := os.Getenv("NEW_ORDER_EVENTS_TOPIC")
-
-	if kafkaBrokers == "" || newOrderEventsTopic == "" {
-		log.Fatalf("Environment variables KAFKA_BROKERS and NEW_ORDER_EVENTS_TOPIC must be set")
+	if kafkaBrokers == "" {
+		log.Fatalf("KAFKA_BROKERS environment variable not set")
 	}
 
-	log.Printf("Initializing Kafka client with brokers: %s and topic: %s", kafkaBrokers, newOrderEventsTopic)
+	log.Printf("Initializing Kafka client with brokers: %s and topic: %s", kafkaBrokers, topic)
 
 	return &KafkaClient{
 		Reader: kafka.NewReader(kafka.ReaderConfig{
 			Brokers:  []string{kafkaBrokers},
-			Topic:    newOrderEventsTopic,
+			Topic:    topic,
 			GroupID:  "inventory-management-group",
 			MinBytes: 10e3, // 10KB
 			MaxBytes: 10e6, // 10MB
@@ -76,48 +78,106 @@ func ConsumerOrderEvents() {
 		}
 		log.Printf("Received message: %s\n", string(m.Value))
 
-		var order model.Order
-		if err := json.Unmarshal(m.Value, &order); err != nil {
+		var orderEvent struct {
+			OrderID uint   `json:"order_id"`
+			Status  string `json:"status"`
+		}
+
+		if err := json.Unmarshal(m.Value, &orderEvent); err != nil {
 			log.Printf("Error unmarshalling message: %v\n", err)
 			continue
 		}
 
-		log.Printf("Processing order ID: %d", order.ID)
+		log.Printf("Processing order ID: %d", orderEvent.OrderID)
 
-		if results := initializers.DB.First(&order, order.ID); results.Error != nil {
-			log.Printf("Failed to find order: %v\n", results.Error)
+		orderDetails, err := fetchOrderDetails(orderEvent.OrderID)
+		if err != nil {
+			log.Printf("Failed to fetch order details: %v\n", err)
 			continue
 		}
 
-		log.Printf("Found order in DB: %+v", order)
+		log.Printf("Fetched order details: %+v", orderDetails)
 
-		if order.Quantity <= 10 {
-			order.Status = "Ready"
+		if orderDetails.Quantity <= 10 {
+			orderDetails.Status = "Ready"
 		} else {
-			order.Status = "Out of Stock"
+			orderDetails.Status = "Out of Stock"
 		}
 
-		log.Printf("Updating order status to: %s", order.Status)
-
-		if err := initializers.DB.Save(&order).Error; err != nil {
+		if err := updateOrderStatus(orderDetails.ID, orderDetails.Status); err != nil {
 			log.Printf("Failed to update order status: %v\n", err)
 			continue
 		}
 
-		log.Printf("Order status updated: %+v", order)
+		log.Printf("Order status updated: %+v", orderDetails)
 
-		if err := PublishOrderStatus(order.ID, order.Status); err != nil {
+		if err := PublishOrderStatus(orderDetails.ID, orderDetails.Status); err != nil {
 			log.Printf("Failed to publish order status: %v\n", err)
 		} else {
-			log.Printf("Order status published: OrderID=%d, Status=%s", order.ID, order.Status)
+			log.Printf("Order status published: OrderID=%d, Status=%s", orderDetails.ID, orderDetails.Status)
 		}
 	}
 }
 
+func fetchOrderDetails(orderID uint) (model.Order, error) {
+	orderServiceURL := os.Getenv("ORDER_SERVICE_URL")
+	url := fmt.Sprintf("%s/orders/%d", orderServiceURL, orderID)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return model.Order{}, fmt.Errorf("failed to fetch order details: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return model.Order{}, fmt.Errorf("failed to fetch order details: received status code %d", resp.StatusCode)
+	}
+
+	var order model.Order
+	if err := json.NewDecoder(resp.Body).Decode(&order); err != nil {
+		return model.Order{}, fmt.Errorf("failed to decode order details: %w", err)
+	}
+
+	return order, nil
+}
+
+func updateOrderStatus(orderID uint, status string) error {
+	orderServiceURL := os.Getenv("ORDER_SERVICE_URL")
+	url := fmt.Sprintf("%s/orders/%d", orderServiceURL, orderID)
+
+	orderUpdate := map[string]string{
+		"status": status,
+	}
+
+	orderUpdateBytes, err := json.Marshal(orderUpdate)
+	if err != nil {
+		return fmt.Errorf("failed to marshal order update: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(orderUpdateBytes))
+	if err != nil {
+		return fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to update order status: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to update order status: received status code %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
 func PublishOrderStatus(orderID uint, status string) error {
 	message := map[string]interface{}{
-		"orderID": orderID,
-		"status":  status,
+		"order_id": orderID,
+		"status":   status,
 	}
 
 	messageBytes, err := json.Marshal(message)
@@ -128,7 +188,7 @@ func PublishOrderStatus(orderID uint, status string) error {
 	log.Printf("Publishing message to Kafka: %s", string(messageBytes))
 
 	err = KafkaSvc.WriteMessages(context.Background(), kafka.Message{
-		Key:   []byte("orderID"),
+		Key:   []byte("order_id"),
 		Value: messageBytes,
 	})
 
