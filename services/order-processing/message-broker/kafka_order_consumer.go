@@ -50,9 +50,13 @@ var KafkaWriterInstance KafkaWriterInterface
 var notificationService *utils.NotificationService
 
 func ConsumerOrderEvent() {
+	topic := os.Getenv("ORDER_EVENT_TOPIC")
+	if topic == "" {
+		log.Fatalf("ORDER_EVENT_TOPIC environment variable not set")
+	}
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  []string{os.Getenv("KAFKA_BROKERS")},
-		Topic:    os.Getenv("ORDER_EVENTS_TOPIC"),
+		Topic:    topic,
 		GroupID:  "order-processing-group",
 		MinBytes: 10e3, // 10KB
 		MaxBytes: 10e6, // 10MB
