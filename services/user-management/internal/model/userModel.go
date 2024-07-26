@@ -11,8 +11,9 @@ import (
 type Permission string
 
 const (
-	PermissionWorker  Permission = "worker"
-	PermissionManager Permission = "manager"
+	PermissionWorker     Permission = "worker"
+	PermissionManager    Permission = "manager"
+	PermissionSuperAdmin Permission = "super-admin"
 )
 
 func (p *Permission) Scan(value interface{}) error {
@@ -29,7 +30,7 @@ func (p *Permission) Scan(value interface{}) error {
 
 func (p Permission) Value() (driver.Value, error) {
 	switch p {
-	case PermissionWorker, PermissionManager:
+	case PermissionWorker, PermissionManager, PermissionSuperAdmin:
 		return string(p), nil
 	}
 	return nil, errors.New("invalid permission value")
@@ -49,7 +50,7 @@ type User struct {
 	Email      string         `json:"email" gorm:"unique;not null"`
 	Age        int            `json:"age" gorm:"not null"`
 	BirthDate  string         `json:"birthDate" gorm:"not null"`
-	RoleID     uint           `json:"role_id" gorm:"not null"`
+	RoleID     uint           `json:"role_id"`
 	Role       string         `json:"role" gorm:"foreignKey:RoleID"`
 	Permission Permission     `json:"permission" gorm:"not null"`
 	Phone      string         `json:"phone" gorm:"unique; not null"`
@@ -74,23 +75,12 @@ type Account struct {
 	Country        string         `json:"country"`
 	BillingEmail   string         `json:"billing_email"`
 	BillingAddress string         `json:"billing_address"`
-	PlanID         uint           `json:"plan_id"` // Foreign key to a subscription plan
-	Plan           Plan           `json:"plan"`    // Associated plan
 	IsActive       bool           `json:"is_active" gorm:"default:true"`
 	Metadata       string         `json:"metadata" gorm:"type:json"`    // Additional JSON-encoded metadata
 	Preferences    string         `json:"preferences" gorm:"type:json"` // JSON-encoded user preferences
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
 	DeletedAt      gorm.DeletedAt `gorm:"index"`
-}
-
-type Plan struct {
-	ID          uint      `gorm:"primarykey" json:"id"`
-	Name        string    `json:"name" gorm:"not null"`
-	Description string    `json:"description"`
-	Price       float64   `json:"price"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type ChangePasswordRequest struct {

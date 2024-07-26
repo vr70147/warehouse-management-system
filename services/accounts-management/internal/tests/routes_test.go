@@ -22,7 +22,7 @@ import (
 func setupRoutes() (*gin.Engine, *gorm.DB) {
 	r := gin.Default()
 	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	db.AutoMigrate(&model.Account{}, &model.Plan{}, &model.User{})
+	db.AutoMigrate(&model.Account{}, &model.User{})
 	accounts := r.Group("/accounts")
 	accounts.POST("/", handlers.CreateAccount(db))
 	accounts.GET("/", handlers.GetAccounts(db))

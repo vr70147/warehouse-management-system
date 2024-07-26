@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	_ "user-management/docs"
 	"user-management/internal/api/routes"
 	"user-management/internal/cache"
@@ -18,6 +19,7 @@ func init() {
 	initializers.ConnectToDB()
 	initializers.SyncDatabse()
 	cache.InitRedis()
+	utils.InitDefaultData(initializers.DB)
 
 	// Initialize the default email sender
 	emailSender := &utils.DefaultEmailSender{}
@@ -41,6 +43,10 @@ func init() {
 // @BasePath /
 func main() {
 	r := gin.Default()
+
+	if err := r.SetTrustedProxies([]string{"127.0.0.1", "192.168.1.1"}); err != nil {
+		log.Fatalf("Failed to set trusted proxies: %v", err)
+	}
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
