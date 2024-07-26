@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -17,7 +18,7 @@ import (
 // @Tags accounts
 // @Accept json
 // @Produce json
-// @Param body body model.Account true "Account data"
+// @Param account body model.Account true "Account data"
 // @Success 200 {object} model.SuccessResponse
 // @Failure 400 {object} model.ErrorResponse
 // @Failure 500 {object} model.ErrorResponse
@@ -26,16 +27,20 @@ func CreateAccount(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var account model.Account
 		if err := c.ShouldBindJSON(&account); err != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: err.Error()})
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid request data"})
 			return
 		}
 
+		// Hash the password
+		passwordHash, _ := bcrypt.GenerateFromPassword([]byte(account.Password), bcrypt.DefaultCost)
+		account.Password = string(passwordHash)
+
+		// Create the account
 		if err := db.Create(&account).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: err.Error()})
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to create account"})
 			return
 		}
 
-		// Log the created account ID
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Account created successfully", Data: account})
 	}
 }
@@ -51,7 +56,7 @@ func CreateAccount(db *gorm.DB) gin.HandlerFunc {
 func GetAccounts(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var accounts []model.Account
-		if err := db.Preload("Plan").Find(&accounts).Error; err != nil {
+		if err := db.Find(&accounts).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: err.Error()})
 			return
 		}
@@ -97,7 +102,6 @@ func UpdateAccount(db *gorm.DB) gin.HandlerFunc {
 		account.Country = updateData.Country
 		account.BillingEmail = updateData.BillingEmail
 		account.BillingAddress = updateData.BillingAddress
-		account.PlanID = updateData.PlanID
 		account.IsActive = updateData.IsActive
 		account.Metadata = updateData.Metadata
 		account.Preferences = updateData.Preferences

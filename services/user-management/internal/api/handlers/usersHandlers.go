@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -32,14 +34,15 @@ func Signup(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 			Email      string           `json:"email" gorm:"unique;not null"`
 			Age        int              `json:"age" gorm:"not null"`
 			BirthDate  string           `json:"birthDate" gorm:"not null"`
-			RoleID     uint             `json:"role_id" gorm:"not null"`
+			RoleID     uint             `json:"role_id"`
+			Role       model.Role       `json:"role" gorm:"foreignKey:RoleID"`
 			Permission model.Permission `json:"permission" gorm:"not null"`
 			Phone      string           `json:"phone" gorm:"unique; not null"`
 			Street     string           `json:"street"`
 			City       string           `json:"city"`
 			Password   string           `json:"password" gorm:"not null"`
 			IsAdmin    bool             `json:"is_admin" gorm:"default: false"`
-			AccountID  *uint            `json:"account_id,omitempty"` // Optional Account ID
+			AccountID  *uint            `json:"account_id,omitempty"`
 		}
 
 		if err := c.Bind(&body); err != nil {
@@ -101,10 +104,10 @@ func Signup(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 		}
 
 		// Send email to user
-		if err := ns.SendUserRegistrationNotification(user.Email); err != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
-			return
-		}
+		// if err := ns.SendUserRegistrationNotification(user.Email); err != nil {
+		// 	c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
+		// 	return
+		// }
 
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "User registered successfully", Data: user})
 	}
@@ -134,6 +137,8 @@ func Login(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 			return
 		}
 
+		log.Println(body)
+
 		var user model.User
 		if err := db.First(&user, "email = ?", body.Email).Error; err != nil {
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{
@@ -142,14 +147,17 @@ func Login(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 			return
 		}
 
+		fmt.Printf("Hashed password: %s\n", user.Password)
+		fmt.Printf("Input password: %s\n", body.Password)
+
 		err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
 		if err != nil {
 			// Notify user of failed login attempt
-			if err := ns.SendFailedLoginAttemptNotification(user.Email); err != nil {
-				c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
-				return
-			}
-
+			// if err := ns.SendFailedLoginAttemptNotification(user.Email); err != nil {
+			// 	c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
+			// 	return
+			// }
+			fmt.Printf("Password comparison failed: %v\n", err)
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{
 				Error: "Invalid email or password",
 			})

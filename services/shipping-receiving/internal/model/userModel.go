@@ -74,23 +74,12 @@ type Account struct {
 	Country        string         `json:"country"`
 	BillingEmail   string         `json:"billing_email"`
 	BillingAddress string         `json:"billing_address"`
-	PlanID         uint           `json:"plan_id"` // Foreign key to a subscription plan
-	Plan           Plan           `json:"plan"`    // Associated plan
 	IsActive       bool           `json:"is_active" gorm:"default:true"`
 	Metadata       string         `json:"metadata" gorm:"type:json"`    // Additional JSON-encoded metadata
 	Preferences    string         `json:"preferences" gorm:"type:json"` // JSON-encoded user preferences
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
 	DeletedAt      gorm.DeletedAt `gorm:"index"`
-}
-
-type Plan struct {
-	ID          uint      `gorm:"primarykey" json:"id"`
-	Name        string    `json:"name" gorm:"not null"`
-	Description string    `json:"description"`
-	Price       float64   `json:"price"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type ChangePasswordRequest struct {
