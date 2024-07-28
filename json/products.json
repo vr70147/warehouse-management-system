@@ -1,0 +1,402 @@
+[
+  {
+    "name": "Product 1",
+    "description": "Description of Product 1",
+    "price": 10.99,
+    "category_id": 1,
+    "supplier_id": 1,
+    "account_id": 1
+  },
+  {
+    "name": "Product 2",
+    "description": "Description of Product 2",
+    "price": 15.99,
+    "category_id": 1,
+    "supplier_id": 2,
+    "account_id": 1
+  },
+  {
+    "name": "Product 3",
+    "description": "Description of Product 3",
+    "price": 12.49,
+    "category_id": 2,
+    "supplier_id": 1,
+    "account_id": 1
+  },
+  {
+    "name": "Product 4",
+    "description": "Description of Product 4",
+    "price": 22.99,
+    "category_id": 3,
+    "supplier_id": 3,
+    "account_id": 1
+  },
+  {
+    "name": "Product 5",
+    "description": "Description of Product 5",
+    "price": 8.99,
+    "category_id": 2,
+    "supplier_id": 2,
+    "account_id": 1
+  },
+  {
+    "name": "Product 6",
+    "description": "Description of Product 6",
+    "price": 19.99,
+    "category_id": 4,
+    "supplier_id": 4,
+    "account_id": 1
+  },
+  {
+    "name": "Product 7",
+    "description": "Description of Product 7",
+    "price": 14.99,
+    "category_id": 1,
+    "supplier_id": 3,
+    "account_id": 1
+  },
+  {
+    "name": "Product 8",
+    "description": "Description of Product 8",
+    "price": 11.49,
+    "category_id": 5,
+    "supplier_id": 1,
+    "account_id": 1
+  },
+  {
+    "name": "Product 9",
+    "description": "Description of Product 9",
+    "price": 29.99,
+    "category_id": 3,
+    "supplier_id": 5,
+    "account_id": 1
+  },
+  {
+    "name": "Product 10",
+    "description": "Description of Product 10",
+    "price": 7.99,
+    "category_id": 2,
+    "supplier_id": 4,
+    "account_id": 1
+  },
+  {
+    "name": "Product 11",
+    "description": "Description of Product 11",
+    "price": 23.99,
+    "category_id": 1,
+    "supplier_id": 3,
+    "account_id": 1
+  },
+  {
+    "name": "Product 12",
+    "description": "Description of Product 12",
+    "price": 16.99,
+    "category_id": 4,
+    "supplier_id": 2,
+    "account_id": 1
+  },
+  {
+    "name": "Product 13",
+    "description": "Description of Product 13",
+    "price": 18.49,
+    "category_id": 2,
+    "supplier_id": 5,
+    "account_id": 1
+  },
+  {
+    "name": "Product 14",
+    "description": "Description of Product 14",
+    "price": 20.99,
+    "category_id": 5,
+    "supplier_id": 4,
+    "account_id": 1
+  },
+  {
+    "name": "Product 15",
+    "description": "Description of Product 15",
+    "price": 13.99,
+    "category_id": 1,
+    "supplier_id": 2,
+    "account_id": 1
+  },
+  {
+    "name": "Product 16",
+    "description": "Description of Product 16",
+    "price": 9.99,
+    "category_id": 3,
+    "supplier_id": 1,
+    "account_id": 1
+  },
+  {
+    "name": "Product 17",
+    "description": "Description of Product 17",
+    "price": 25.49,
+    "category_id": 4,
+    "supplier_id": 3,
+    "account_id": 1
+  },
+  {
+    "name": "Product 18",
+    "description": "Description of Product 18",
+    "price": 21.99,
+    "category_id": 5,
+    "supplier_id": 5,
+    "account_id": 1
+  },
+  {
+    "name": "Product 19",
+    "description": "Description of Product 19",
+    "price": 17.99,
+    "category_id": 2,
+    "supplier_id": 4,
+    "account_id": 1
+  },
+  {
+    "name": "Product 20",
+    "description": "Description of Product 20",
+    "price": 14.49,
+    "category_id": 1,
+    "supplier_id": 1,
+    "account_id": 1
+  },
+  {
+    "name": "Product 21",
+    "description": "Description of Product 21",
+    "price": 11.99,
+    "category_id": 3,
+    "supplier_id": 2,
+    "account_id": 1
+  },
+  {
+    "name": "Product 22",
+    "description": "Description of Product 22",
+    "price": 18.99,
+    "category_id": 5,
+    "supplier_id": 3,
+    "account_id": 1
+  },
+  {
+    "name": "Product 23",
+    "description": "Description of Product 23",
+    "price": 19.49,
+    "category_id": 4,
+    "supplier_id": 1,
+    "account_id": 1
+  },
+  {
+    "name": "Product 24",
+    "description": "Description of Product 24",
+    "price": 10.49,
+    "category_id": 2,
+    "supplier_id": 5,
+    "account_id": 1
+  },
+  {
+    "name": "Product 25",
+    "description": "Description of Product 25",
+    "price": 22.49,
+    "category_id": 1,
+    "supplier_id": 4,
+    "account_id": 1
+  },
+  {
+    "name": "Product 26",
+    "description": "Description of Product 26",
+    "price": 23.99,
+    "category_id": 3,
+    "supplier_id": 2,
+    "account_id": 1
+  },
+  {
+    "name": "Product 27",
+    "description": "Description of Product 27",
+    "price": 13.49,
+    "category_id": 5,
+    "supplier_id": 3,
+    "account_id": 1
+  },
+  {
+    "name": "Product 28",
+    "description": "Description of Product 28",
+    "price": 24.99,
+    "category_id": 4,
+    "supplier_id": 1,
+    "account_id": 1
+  },
+  {
+    "name": "Product 29",
+    "description": "Description of Product 29",
+    "price": 15.49,
+    "category_id": 2,
+    "supplier_id": 5,
+    "account_id": 1
+  },
+  {
+    "name": "Product 30",
+    "description": "Description of Product 30",
+    "price": 26.99,
+    "category_id": 1,
+    "supplier_id": 4,
+    "account_id": 1
+  },
+  {
+    "name": "Product 31",
+    "description": "Description of Product 31",
+    "price": 27.99,
+    "category_id": 3,
+    "supplier_id": 2,
+    "account_id": 1
+  },
+  {
+    "name": "Product 32",
+    "description": "Description of Product 32",
+    "price": 12.49,
+    "category_id": 5,
+    "supplier_id": 1,
+    "account_id": 1
+  },
+  {
+    "name": "Product 33",
+    "description": "Description of Product 33",
+    "price": 28.49,
+    "category_id": 4,
+    "supplier_id": 3,
+    "account_id": 1
+  },
+  {
+    "name": "Product 34",
+    "description": "Description of Product 34",
+    "price": 29.99,
+    "category_id": 2,
+    "supplier_id": 5,
+    "account_id": 1
+  },
+  {
+    "name": "Product 35",
+    "description": "Description of Product 35",
+    "price": 11.49,
+    "category_id": 1,
+    "supplier_id": 4,
+    "account_id": 1
+  },
+  {
+    "name": "Product 36",
+    "description": "Description of Product 36",
+    "price": 31.99,
+    "category_id": 3,
+    "supplier_id": 2,
+    "account_id": 1
+  },
+  {
+    "name": "Product 37",
+    "description": "Description of Product 37",
+    "price": 32.99,
+    "category_id": 5,
+    "supplier_id": 3,
+    "account_id": 1
+  },
+  {
+    "name": "Product 38",
+    "description": "Description of Product 38",
+    "price": 33.49,
+    "category_id": 4,
+    "supplier_id": 1,
+    "account_id": 1
+  },
+  {
+    "name": "Product 39",
+    "description": "Description of Product 39",
+    "price": 14.49,
+    "category_id": 2,
+    "supplier_id": 5,
+    "account_id": 1
+  },
+  {
+    "name": "Product 40",
+    "description": "Description of Product 40",
+    "price": 34.99,
+    "category_id": 1,
+    "supplier_id": 4,
+    "account_id": 1
+  },
+  {
+    "name": "Product 41",
+    "description": "Description of Product 41",
+    "price": 35.99,
+    "category_id": 3,
+    "supplier_id": 2,
+    "account_id": 1
+  },
+  {
+    "name": "Product 42",
+    "description": "Description of Product 42",
+    "price": 13.49,
+    "category_id": 5,
+    "supplier_id": 1,
+    "account_id": 1
+  },
+  {
+    "name": "Product 43",
+    "description": "Description of Product 43",
+    "price": 36.49,
+    "category_id": 4,
+    "supplier_id": 3,
+    "account_id": 1
+  },
+  {
+    "name": "Product 44",
+    "description": "Description of Product 44",
+    "price": 37.99,
+    "category_id": 2,
+    "supplier_id": 5,
+    "account_id": 1
+  },
+  {
+    "name": "Product 45",
+    "description": "Description of Product 45",
+    "price": 38.49,
+    "category_id": 1,
+    "supplier_id": 4,
+    "account_id": 1
+  },
+  {
+    "name": "Product 46",
+    "description": "Description of Product 46",
+    "price": 39.99,
+    "category_id": 3,
+    "supplier_id": 2,
+    "account_id": 1
+  },
+  {
+    "name": "Product 47",
+    "description": "Description of Product 47",
+    "price": 12.49,
+    "category_id": 5,
+    "supplier_id": 1,
+    "account_id": 1
+  },
+  {
+    "name": "Product 48",
+    "description": "Description of Product 48",
+    "price": 40.49,
+    "category_id": 4,
+    "supplier_id": 3,
+    "account_id": 1
+  },
+  {
+    "name": "Product 49",
+    "description": "Description of Product 49",
+    "price": 41.99,
+    "category_id": 2,
+    "supplier_id": 5,
+    "account_id": 1
+  },
+  {
+    "name": "Product 50",
+    "description": "Description of Product 50",
+    "price": 42.49,
+    "category_id": 1,
+    "supplier_id": 4,
+    "account_id": 1
+  }
+]
