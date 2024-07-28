@@ -5,8 +5,8 @@ import (
 	"shipping-receiving/internal/api/routes"
 	"shipping-receiving/internal/cache"
 	"shipping-receiving/internal/initializers"
+	"shipping-receiving/internal/kafka"
 	"shipping-receiving/internal/utils"
-	"shipping-receiving/kafka"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -20,7 +20,7 @@ func init() {
 }
 
 func main() {
-	go kafka.ConsumeInventoryStatus()
+	go kafka.ConsumerShippingEvents()
 
 	r := gin.Default()
 
