@@ -9,16 +9,32 @@ import (
 )
 
 type Order struct {
-	ID         uint           `gorm:"primarykey" json:"id"`
-	CreatedAt  time.Time      `json:"created_at"`
-	UpdatedAt  time.Time      `json:"updated_at"`
-	DeletedAt  gorm.DeletedAt `gorm:"index"`
-	AccountID  uint           `gorm:"index"`
-	ProductID  uint
-	Quantity   uint
-	CustomerID uint
-	Status     string
-	Version    int
+	ID           uint           `gorm:"primarykey" json:"id"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	DeletedAt    gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+	AccountID    uint           `gorm:"index" json:"account_id"`
+	ProductID    uint           `json:"product_id"`
+	Quantity     uint           `json:"quantity"`
+	CustomerID   uint           `json:"customer_id"`
+	Status       string         `json:"status"`
+	Version      int            `json:"version"`
+	ShippingDate time.Time      `json:"shipping_date"`
+}
+
+type Customer struct {
+	ID         uint      `json:"id"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	Name       string    `json:"name"`
+	Email      string    `json:"email"`
+	Phone      string    `json:"phone"`
+	Address    string    `json:"address"`
+	City       string    `json:"city"`
+	State      string    `json:"state"`
+	PostalCode string    `json:"postal_code"`
+	Country    string    `json:"country"`
+	AccountID  uint      `json:"account_id"`
 }
 
 type User struct {
@@ -98,6 +114,28 @@ type Department struct {
 	AccountID uint           `json:"account_id"`
 }
 
+// OrderStatusUpdateRequest godoc
+// @Summary Request payload to update the status of an order
+// @Description This model is used to capture the new status for updating an order
+// @Tags orders
+// @Accept json
+// @Produce json
+type OrderStatusUpdateRequest struct {
+	Status string `json:"status" binding:"required"`
+}
+
+type OrderEvent struct {
+	OrderID   uint   `json:"order_id"`
+	ProductID uint   `json:"product_id"`
+	Quantity  uint   `json:"quantity"`
+	Action    string `json:"action"`
+}
+
+type InventoryStatusEvent struct {
+	OrderID uint   `json:"order_id"`
+	Status  string `json:"status"`
+}
+
 type ErrorResponse struct {
 	Error string `json:"message"`
 }
@@ -105,6 +143,11 @@ type ErrorResponse struct {
 type SuccessResponse struct {
 	Message string `json:"message"`
 	Order   Order  `json:"order"`
+}
+type SuccessCustomerResponse struct {
+	Message  string   `json:"message"`
+	Order    Order    `json:"order"`
+	Customer Customer `json:"customer"`
 }
 
 type SuccessResponses struct {

@@ -1,0 +1,352 @@
+[
+  {
+    "product_id": 1,
+    "quantity": 100,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 10
+  },
+  {
+    "product_id": 2,
+    "quantity": 150,
+    "location": "Warehouse B",
+    "account_id": 1,
+    "low_stock_threshold": 15
+  },
+  {
+    "product_id": 3,
+    "quantity": 200,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 20
+  },
+  {
+    "product_id": 4,
+    "quantity": 50,
+    "location": "Warehouse C",
+    "account_id": 1,
+    "low_stock_threshold": 5
+  },
+  {
+    "product_id": 5,
+    "quantity": 300,
+    "location": "Warehouse B",
+    "account_id": 1,
+    "low_stock_threshold": 30
+  },
+  {
+    "product_id": 6,
+    "quantity": 250,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 25
+  },
+  {
+    "product_id": 7,
+    "quantity": 100,
+    "location": "Warehouse C",
+    "account_id": 1,
+    "low_stock_threshold": 10
+  },
+  {
+    "product_id": 8,
+    "quantity": 75,
+    "location": "Warehouse B",
+    "account_id": 1,
+    "low_stock_threshold": 7
+  },
+  {
+    "product_id": 9,
+    "quantity": 90,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 9
+  },
+  {
+    "product_id": 10,
+    "quantity": 110,
+    "location": "Warehouse C",
+    "account_id": 1,
+    "low_stock_threshold": 11
+  },
+  {
+    "product_id": 11,
+    "quantity": 130,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 13
+  },
+  {
+    "product_id": 12,
+    "quantity": 160,
+    "location": "Warehouse B",
+    "account_id": 1,
+    "low_stock_threshold": 16
+  },
+  {
+    "product_id": 13,
+    "quantity": 180,
+    "location": "Warehouse C",
+    "account_id": 1,
+    "low_stock_threshold": 18
+  },
+  {
+    "product_id": 14,
+    "quantity": 140,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 14
+  },
+  {
+    "product_id": 15,
+    "quantity": 170,
+    "location": "Warehouse B",
+    "account_id": 1,
+    "low_stock_threshold": 17
+  },
+  {
+    "product_id": 16,
+    "quantity": 190,
+    "location": "Warehouse C",
+    "account_id": 1,
+    "low_stock_threshold": 19
+  },
+  {
+    "product_id": 17,
+    "quantity": 80,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 8
+  },
+  {
+    "product_id": 18,
+    "quantity": 120,
+    "location": "Warehouse B",
+    "account_id": 1,
+    "low_stock_threshold": 12
+  },
+  {
+    "product_id": 19,
+    "quantity": 210,
+    "location": "Warehouse C",
+    "account_id": 1,
+    "low_stock_threshold": 21
+  },
+  {
+    "product_id": 20,
+    "quantity": 230,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 23
+  },
+  {
+    "product_id": 21,
+    "quantity": 240,
+    "location": "Warehouse B",
+    "account_id": 1,
+    "low_stock_threshold": 24
+  },
+  {
+    "product_id": 22,
+    "quantity": 260,
+    "location": "Warehouse C",
+    "account_id": 1,
+    "low_stock_threshold": 26
+  },
+  {
+    "product_id": 23,
+    "quantity": 270,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 27
+  },
+  {
+    "product_id": 24,
+    "quantity": 280,
+    "location": "Warehouse B",
+    "account_id": 1,
+    "low_stock_threshold": 28
+  },
+  {
+    "product_id": 25,
+    "quantity": 290,
+    "location": "Warehouse C",
+    "account_id": 1,
+    "low_stock_threshold": 29
+  },
+  {
+    "product_id": 26,
+    "quantity": 100,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 10
+  },
+  {
+    "product_id": 27,
+    "quantity": 110,
+    "location": "Warehouse B",
+    "account_id": 1,
+    "low_stock_threshold": 11
+  },
+  {
+    "product_id": 28,
+    "quantity": 120,
+    "location": "Warehouse C",
+    "account_id": 1,
+    "low_stock_threshold": 12
+  },
+  {
+    "product_id": 29,
+    "quantity": 130,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 13
+  },
+  {
+    "product_id": 30,
+    "quantity": 140,
+    "location": "Warehouse B",
+    "account_id": 1,
+    "low_stock_threshold": 14
+  },
+  {
+    "product_id": 31,
+    "quantity": 150,
+    "location": "Warehouse C",
+    "account_id": 1,
+    "low_stock_threshold": 15
+  },
+  {
+    "product_id": 32,
+    "quantity": 160,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 16
+  },
+  {
+    "product_id": 33,
+    "quantity": 170,
+    "location": "Warehouse B",
+    "account_id": 1,
+    "low_stock_threshold": 17
+  },
+  {
+    "product_id": 34,
+    "quantity": 180,
+    "location": "Warehouse C",
+    "account_id": 1,
+    "low_stock_threshold": 18
+  },
+  {
+    "product_id": 35,
+    "quantity": 190,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 19
+  },
+  {
+    "product_id": 36,
+    "quantity": 200,
+    "location": "Warehouse B",
+    "account_id": 1,
+    "low_stock_threshold": 20
+  },
+  {
+    "product_id": 37,
+    "quantity": 210,
+    "location": "Warehouse C",
+    "account_id": 1,
+    "low_stock_threshold": 21
+  },
+  {
+    "product_id": 38,
+    "quantity": 220,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 22
+  },
+  {
+    "product_id": 39,
+    "quantity": 230,
+    "location": "Warehouse B",
+    "account_id": 1,
+    "low_stock_threshold": 23
+  },
+  {
+    "product_id": 40,
+    "quantity": 240,
+    "location": "Warehouse C",
+    "account_id": 1,
+    "low_stock_threshold": 24
+  },
+  {
+    "product_id": 41,
+    "quantity": 250,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 25
+  },
+  {
+    "product_id": 42,
+    "quantity": 260,
+    "location": "Warehouse B",
+    "account_id": 1,
+    "low_stock_threshold": 26
+  },
+  {
+    "product_id": 43,
+    "quantity": 270,
+    "location": "Warehouse C",
+    "account_id": 1,
+    "low_stock_threshold": 27
+  },
+  {
+    "product_id": 44,
+    "quantity": 280,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 28
+  },
+  {
+    "product_id": 45,
+    "quantity": 290,
+    "location": "Warehouse B",
+    "account_id": 1,
+    "low_stock_threshold": 29
+  },
+  {
+    "product_id": 46,
+    "quantity": 300,
+    "location": "Warehouse C",
+    "account_id": 1,
+    "low_stock_threshold": 30
+  },
+  {
+    "product_id": 47,
+    "quantity": 310,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 31
+  },
+  {
+    "product_id": 48,
+    "quantity": 320,
+    "location": "Warehouse B",
+    "account_id": 1,
+    "low_stock_threshold": 32
+  },
+  {
+    "product_id": 49,
+    "quantity": 330,
+    "location": "Warehouse C",
+    "account_id": 1,
+    "low_stock_threshold": 33
+  },
+  {
+    "product_id": 50,
+    "quantity": 340,
+    "location": "Warehouse A",
+    "account_id": 1,
+    "low_stock_threshold": 34
+  }
+]

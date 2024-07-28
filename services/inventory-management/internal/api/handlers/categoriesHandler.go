@@ -110,9 +110,8 @@ func GetCategories(db *gorm.DB) gin.HandlerFunc {
 		var categoryResponses []model.CategoryResponse
 		for _, category := range categories {
 			categoryResponses = append(categoryResponses, model.CategoryResponse{
-				ID:       category.ID,
-				Name:     category.Name,
-				ParentID: category.ParentID,
+				ID:   category.ID,
+				Name: category.Name,
 			})
 		}
 

@@ -1,10 +1,15 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 	"shipping-receiving/internal/model"
 	"shipping-receiving/internal/utils"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -41,9 +46,46 @@ func CreateShipping(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
 			return
 		}
+		if err := updateOrderStatusAndShippingDate(shipping.OrderID, "Shipped", shipping.ShippingDate); err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: fmt.Sprintf("Failed to update order status: %v", err)})
+			return
+		}
 
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Shipping created successfully", Data: shipping})
 	}
+}
+
+// updateOrderStatusAndShippingDate updates the order status and shipping date in the order service
+func updateOrderStatusAndShippingDate(orderID uint, status string, shippingDate time.Time) error {
+	orderServiceURL := fmt.Sprintf("%s/orders/%d/status", os.Getenv("ORDER_SERVICE_URL"), orderID)
+
+	payload := map[string]interface{}{
+		"status":        status,
+		"shipping_date": shippingDate,
+	}
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("PUT", orderServiceURL, bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to update order status, status code: %d", resp.StatusCode)
+	}
+
+	return nil
 }
 
 // GetShippings godoc

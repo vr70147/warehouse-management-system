@@ -6,27 +6,23 @@ import (
 	"gorm.io/gorm"
 )
 
-type Order struct {
-	ID         uint           `gorm:"primarykey" json:"id"`
-	CreatedAt  time.Time      `json:"created_at"`
-	UpdatedAt  time.Time      `json:"updated_at"`
-	DeletedAt  gorm.DeletedAt `gorm:"index"`
-	ProductID  uint
-	Quantity   uint
-	CustomerID uint
-	Status     string
-	AccountID  uint
+type Shipping struct {
+	ID           uint           `gorm:"primarykey" json:"id"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
+	OrderID      uint           `json:"order_id"`
+	ReceiverID   uint           `json:"receiver_id"`
+	Status       string         `json:"status"`
+	AccountID    uint           `json:"account_id"`
+	ShippingDate time.Time      `json:"shipping_date"`
 }
 
-type Shipping struct {
-	ID         uint           `gorm:"primarykey" json:"id"`
-	CreatedAt  time.Time      `json:"created_at"`
-	UpdatedAt  time.Time      `json:"updated_at"`
-	DeletedAt  gorm.DeletedAt `gorm:"index"`
-	OrderID    uint
-	ReceiverID uint
-	Status     string
-	AccountID  uint
+type OrderEvent struct {
+	OrderID   uint   `json:"order_id"`
+	ProductID uint   `json:"product_id"`
+	Quantity  uint   `json:"quantity"`
+	Action    string `json:"action"` // can be "create", "cancel", "ship"
 }
 
 type ErrorResponse struct {

@@ -236,7 +236,7 @@ func CheckStock(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 			return
 		}
 
-		if stock.Quantity < int(stock.LowStockThreshold) {
+		if stock.Quantity < uint(stock.LowStockThreshold) {
 			// Send email notification
 			if err := ns.SendLowStockNotification("customer@example.com"); err != nil {
 				c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})

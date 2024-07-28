@@ -19,6 +19,7 @@ func init() {
 	initializers.LoadEnvVariables()
 	initializers.ConnectToDB()
 	cache.InitRedis()
+	kafka.InitKafkaWriters()
 }
 
 // @title Inventory API
@@ -42,6 +43,7 @@ func main() {
 	}
 
 	go kafka.ConsumerOrderEvents()
+
 	r := gin.Default()
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

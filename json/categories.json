@@ -1,0 +1,102 @@
+[
+  {
+    "name": "Electronics",
+    "description": "Electronic items",
+    "account_id": 1
+  },
+  {
+    "name": "Mobile Phones",
+    "description": "All kinds of mobile phones",
+    "account_id": 1
+  },
+  {
+    "name": "Laptops",
+    "description": "All kinds of laptops",
+    "account_id": 1
+  },
+  {
+    "name": "Home Appliances",
+    "description": "Appliances for home use",
+    "account_id": 1
+  },
+  {
+    "name": "Android Phones",
+    "description": "Mobile phones with Android OS",
+    "account_id": 1
+  },
+  {
+    "name": "iPhones",
+    "description": "Apple mobile phones",
+    "account_id": 1
+  },
+  {
+    "name": "Gaming Laptops",
+    "description": "Laptops for gaming",
+    "account_id": 1
+  },
+  {
+    "name": "Business Laptops",
+    "description": "Laptops for business use",
+    "account_id": 1
+  },
+  {
+    "name": "Refrigerators",
+    "description": "Various types of refrigerators",
+    "account_id": 1
+  },
+  {
+    "name": "Washing Machines",
+    "description": "Different models of washing machines",
+    "account_id": 1
+  },
+  {
+    "name": "Clothing",
+    "description": "Clothing items",
+    "account_id": 1
+  },
+  {
+    "name": "Men's Clothing",
+    "description": "Clothing for men",
+    "account_id": 1
+  },
+  {
+    "name": "Women's Clothing",
+    "description": "Clothing for women",
+    "account_id": 1
+  },
+  {
+    "name": "Kid's Clothing",
+    "description": "Clothing for kids",
+    "account_id": 1
+  },
+  {
+    "name": "Footwear",
+    "description": "Different types of footwear",
+    "account_id": 1
+  },
+  {
+    "name": "Men's Footwear",
+    "description": "Footwear for men",
+    "account_id": 1
+  },
+  {
+    "name": "Women's Footwear",
+    "description": "Footwear for women",
+    "account_id": 1
+  },
+  {
+    "name": "Kid's Footwear",
+    "description": "Footwear for kids",
+    "account_id": 1
+  },
+  {
+    "name": "Books",
+    "description": "Different genres of books",
+    "account_id": 1
+  },
+  {
+    "name": "Fiction",
+    "description": "Fiction books",
+    "account_id": 1
+  }
+]

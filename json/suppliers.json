@@ -1,0 +1,142 @@
+[
+  {
+    "name": "Supplier 1",
+    "description": "High-quality electronics supplier",
+    "email": "supplier1@example.com",
+    "contact": "+1234567890",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 2",
+    "description": "Wholesale clothing supplier",
+    "email": "supplier2@example.com",
+    "contact": "+1234567891",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 3",
+    "description": "Organic food supplier",
+    "email": "supplier3@example.com",
+    "contact": "+1234567892",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 4",
+    "description": "Automotive parts supplier",
+    "email": "supplier4@example.com",
+    "contact": "+1234567893",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 5",
+    "description": "Office supplies wholesaler",
+    "email": "supplier5@example.com",
+    "contact": "+1234567894",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 6",
+    "description": "Beauty products supplier",
+    "email": "supplier6@example.com",
+    "contact": "+1234567895",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 7",
+    "description": "Home appliances supplier",
+    "email": "supplier7@example.com",
+    "contact": "+1234567896",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 8",
+    "description": "Sporting goods supplier",
+    "email": "supplier8@example.com",
+    "contact": "+1234567897",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 9",
+    "description": "Pet supplies wholesaler",
+    "email": "supplier9@example.com",
+    "contact": "+1234567898",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 10",
+    "description": "Toys and games supplier",
+    "email": "supplier10@example.com",
+    "contact": "+1234567899",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 11",
+    "description": "Kitchenware supplier",
+    "email": "supplier11@example.com",
+    "contact": "+1234567890",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 12",
+    "description": "Furniture supplier",
+    "email": "supplier12@example.com",
+    "contact": "+1234567891",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 13",
+    "description": "Health supplements supplier",
+    "email": "supplier13@example.com",
+    "contact": "+1234567892",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 14",
+    "description": "Footwear supplier",
+    "email": "supplier14@example.com",
+    "contact": "+1234567893",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 15",
+    "description": "Jewelry supplier",
+    "email": "supplier15@example.com",
+    "contact": "+1234567894",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 16",
+    "description": "Stationery supplier",
+    "email": "supplier16@example.com",
+    "contact": "+1234567895",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 17",
+    "description": "Bedding and linens supplier",
+    "email": "supplier17@example.com",
+    "contact": "+1234567896",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 18",
+    "description": "Gardening supplies supplier",
+    "email": "supplier18@example.com",
+    "contact": "+1234567897",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 19",
+    "description": "Hardware tools supplier",
+    "email": "supplier19@example.com",
+    "contact": "+1234567898",
+    "account_id": 1
+  },
+  {
+    "name": "Supplier 20",
+    "description": "Outdoor equipment supplier",
+    "email": "supplier20@example.com",
+    "contact": "+1234567899",
+    "account_id": 1
+  }
+]
