@@ -1,0 +1,227 @@
+definitions:
+  model.Customer:
+    properties:
+      account_id:
+        type: integer
+      address:
+        type: string
+      city:
+        type: string
+      country:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      phone:
+        type: string
+      postal_code:
+        type: string
+      state:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  model.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  model.SuccessResponse:
+    properties:
+      customer:
+        $ref: '#/definitions/model.Customer'
+      message:
+        type: string
+    type: object
+  model.SuccessResponses:
+    properties:
+      customer:
+        items:
+          $ref: '#/definitions/model.Customer'
+        type: array
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /customers:
+    get:
+      description: Retrieve a list of customers with optional query parameters
+      parameters:
+      - description: Customer Name
+        in: query
+        name: name
+        type: string
+      - description: Customer Email
+        in: query
+        name: email
+        type: string
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponses'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Get customers
+      tags:
+      - customers
+    post:
+      consumes:
+      - application/json
+      description: Create a new customer in the system
+      parameters:
+      - description: Customer data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Customer'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Create a new customer
+      tags:
+      - customers
+  /customers/{id}:
+    delete:
+      description: Soft delete a customer by ID
+      parameters:
+      - description: Customer ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Soft delete a customer
+      tags:
+      - customers
+    put:
+      consumes:
+      - application/json
+      description: Update a customer by ID
+      parameters:
+      - description: Customer ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Customer data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.Customer'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Update a customer
+      tags:
+      - customers
+  /customers/{id}/hard:
+    delete:
+      description: Permanently delete a customer by ID
+      parameters:
+      - description: Customer ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Hard delete a customer
+      tags:
+      - customers
+  /customers/{id}/recover:
+    post:
+      description: Recover a soft-deleted customer by ID
+      parameters:
+      - description: Customer ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Recover a deleted customer
+      tags:
+      - customers
+swagger: "2.0"
