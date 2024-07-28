@@ -31,7 +31,7 @@ type Stock struct {
 	DeletedAt         gorm.DeletedAt `gorm:"index"`
 	ProductID         uint           `json:"product_id"`
 	Product           Product        `json:"product"`
-	Quantity          int            `json:"quantity"`
+	Quantity          uint           `json:"quantity"`
 	Location          string         `json:"location"`
 	AccountID         uint           `gorm:"index"` // Foreign key to Account
 	LowStockThreshold int            `json:"low_stock_threshold"`
@@ -45,7 +45,6 @@ type Category struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	AccountID   uint           `gorm:"index"`
-	ParentID    *uint          `gorm:"index" json:"parent_id,omitempty"`
 }
 
 type Supplier struct {
@@ -147,6 +146,18 @@ type Department struct {
 	Roles     []Role         `json:"roles"`
 	IsActive  bool           `gorm:"default:true"`
 	AccountID uint           `json:"account_id"`
+}
+
+type OrderEvent struct {
+	OrderID   uint   `json:"order_id"`
+	ProductID uint   `json:"product_id"`
+	Quantity  uint   `json:"quantity"`
+	Action    string `json:"action"`
+}
+
+type InventoryStatusEvent struct {
+	OrderID uint   `json:"order_id"`
+	Status  string `json:"status"`
 }
 
 type ErrorResponse struct {

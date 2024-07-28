@@ -1,200 +1,187 @@
 package kafka
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
+	"inventory-management/internal/initializers"
 	"inventory-management/internal/model"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/segmentio/kafka-go"
 )
 
-var ErrEmptyQueue = errors.New("kafka: empty queue")
-
-type KafkaService interface {
-	ReadMessage(ctx context.Context) (kafka.Message, error)
-	WriteMessages(ctx context.Context, msgs ...kafka.Message) error
-}
-
-type KafkaClient struct {
-	Reader *kafka.Reader
-	Writer *kafka.Writer
-}
-
-func (kc *KafkaClient) ReadMessage(ctx context.Context) (kafka.Message, error) {
-	return kc.Reader.ReadMessage(ctx)
-}
-
-func (kc *KafkaClient) WriteMessages(ctx context.Context, msgs ...kafka.Message) error {
-	return kc.Writer.WriteMessages(ctx, msgs...)
-}
-
-func NewKafkaClient() *KafkaClient {
-	topic := os.Getenv("ORDER_EVENT_TOPIC")
-	if topic == "" {
-		log.Fatalf("ORDER_EVENT_TOPIC environment variable not set")
-	}
-	kafkaBrokers := os.Getenv("KAFKA_BROKERS")
-	if kafkaBrokers == "" {
-		log.Fatalf("KAFKA_BROKERS environment variable not set")
-	}
-
-	log.Printf("Initializing Kafka client with brokers: %s and topic: %s", kafkaBrokers, topic)
-
-	return &KafkaClient{
-		Reader: kafka.NewReader(kafka.ReaderConfig{
-			Brokers:  []string{kafkaBrokers},
-			Topic:    topic,
-			GroupID:  "inventory-management-group",
-			MinBytes: 10e3, // 10KB
-			MaxBytes: 10e6, // 10MB
-		}),
-		Writer: &kafka.Writer{
-			Addr:     kafka.TCP(kafkaBrokers),
-			Topic:    "inventory-status",
-			Balancer: &kafka.LeastBytes{},
-		},
-	}
-}
-
-var KafkaSvc KafkaService = NewKafkaClient()
-
 func ConsumerOrderEvents() {
-	log.Println("Starting Kafka consumer for order events")
+	r := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:  []string{os.Getenv("KAFKA_BROKERS")},
+		Topic:    os.Getenv("ORDER_EVENT_TOPIC"),
+		GroupID:  "inventory-management-group",
+		MinBytes: 10e3, // 10KB
+		MaxBytes: 10e6, // 10MB
+	})
+
 	for {
-		m, err := KafkaSvc.ReadMessage(context.Background())
+		m, err := r.ReadMessage(context.Background())
 		if err != nil {
-			if err == ErrEmptyQueue {
-				log.Println("No messages in the queue")
-				continue
-			}
 			log.Printf("Error reading message: %v\n", err)
 			continue
 		}
 		log.Printf("Received message: %s\n", string(m.Value))
 
-		var orderEvent struct {
-			OrderID uint   `json:"order_id"`
-			Status  string `json:"status"`
-		}
-
-		if err := json.Unmarshal(m.Value, &orderEvent); err != nil {
+		var event model.OrderEvent
+		if err := json.Unmarshal(m.Value, &event); err != nil {
 			log.Printf("Error unmarshalling message: %v\n", err)
 			continue
 		}
 
-		log.Printf("Processing order ID: %d", orderEvent.OrderID)
-
-		orderDetails, err := fetchOrderDetails(orderEvent.OrderID)
-		if err != nil {
-			log.Printf("Failed to fetch order details: %v\n", err)
-			continue
+		if event.Action == "create" {
+			processOrderCreation(event)
+		} else if event.Action == "cancel" {
+			processOrderCancellation(event)
 		}
+	}
+}
 
-		log.Printf("Fetched order details: %+v", orderDetails)
+func processOrderCreation(event model.OrderEvent) {
+	tx := initializers.DB.Begin()
+	if tx.Error != nil {
+		log.Printf("Database transaction error: %v\n", tx.Error)
+		return
+	}
 
-		if orderDetails.Quantity <= 10 {
-			orderDetails.Status = "Ready"
+	var stock model.Stock
+	if err := tx.Set("gorm:query_option", "FOR UPDATE").Where("product_id = ?", event.ProductID).First(&stock).Error; err != nil {
+		log.Printf("Error finding stock: %v\n", err)
+		tx.Rollback()
+		return
+	}
+
+	log.Printf("Processing order creation for OrderID: %d, ProductID: %d, Requested Quantity: %d, Available Stock: %d\n", event.OrderID, event.ProductID, event.Quantity, stock.Quantity)
+
+	if stock.Quantity >= event.Quantity {
+		stock.Quantity -= event.Quantity
+		if err := tx.Save(&stock).Error; err != nil {
+			log.Printf("Error updating stock: %v\n", err)
+			tx.Rollback()
 		} else {
-			orderDetails.Status = "Out of Stock"
+			log.Printf("Stock updated successfully: %+v\n", stock)
+			if err := tx.Commit().Error; err != nil {
+				log.Printf("Error committing transaction: %v\n", err)
+				tx.Rollback()
+			} else {
+				publishInventoryStatus(event.OrderID, event.ProductID, event.Quantity, "Ready for Shipping")
+				if stock.Quantity <= uint(stock.LowStockThreshold) {
+					publishLowStockNotification(stock.ProductID, stock.Quantity, stock.LowStockThreshold)
+				}
+			}
 		}
+	} else {
+		log.Printf("Not enough stock for product_id %d\n", event.ProductID)
+		tx.Rollback()
+		publishInventoryStatus(event.OrderID, event.ProductID, event.Quantity, "Out of Stock")
+	}
+}
 
-		if err := updateOrderStatus(orderDetails.ID, orderDetails.Status); err != nil {
-			log.Printf("Failed to update order status: %v\n", err)
-			continue
-		}
+func processOrderCancellation(event model.OrderEvent) {
+	tx := initializers.DB.Begin()
+	if tx.Error != nil {
+		log.Printf("Database transaction error: %v\n", tx.Error)
+		return
+	}
 
-		log.Printf("Order status updated: %+v", orderDetails)
+	var stock model.Stock
+	if err := tx.Set("gorm:query_option", "FOR UPDATE").Where("product_id = ?", event.ProductID).First(&stock).Error; err != nil {
+		log.Printf("Error finding stock: %v\n", err)
+		tx.Rollback()
+		return
+	}
 
-		if err := PublishOrderStatus(orderDetails.ID, orderDetails.Status); err != nil {
-			log.Printf("Failed to publish order status: %v\n", err)
+	stock.Quantity += event.Quantity
+	if err := tx.Save(&stock).Error; err != nil {
+		log.Printf("Error updating stock: %v\n", err)
+		tx.Rollback()
+	} else {
+		log.Printf("Stock updated successfully after cancellation: %+v\n", stock)
+		if err := tx.Commit().Error; err != nil {
+			log.Printf("Error committing transaction: %v\n", err)
+			tx.Rollback()
 		} else {
-			log.Printf("Order status published: OrderID=%d, Status=%s", orderDetails.ID, orderDetails.Status)
+			publishInventoryStatus(event.OrderID, event.ProductID, event.Quantity, "Cancelled")
 		}
 	}
 }
 
-func fetchOrderDetails(orderID uint) (model.Order, error) {
-	orderServiceURL := os.Getenv("ORDER_SERVICE_URL")
-	url := fmt.Sprintf("%s/orders/%d", orderServiceURL, orderID)
+func publishInventoryStatus(orderID uint, productID uint, quantity uint, status string) {
+	brokers := os.Getenv("KAFKA_BROKERS")
+	topic := os.Getenv("INVENTORY_STATUS_TOPIC")
 
-	resp, err := http.Get(url)
+	if brokers == "" || topic == "" {
+		log.Fatalf("KAFKA_BROKERS or INVENTORY_STATUS_TOPIC environment variable not set")
+	}
+
+	writer := kafka.Writer{
+		Addr:     kafka.TCP(brokers),
+		Topic:    topic,
+		Balancer: &kafka.LeastBytes{},
+	}
+
+	event := model.OrderEvent{
+		OrderID:   orderID,
+		ProductID: productID,
+		Quantity:  quantity,
+		Action:    status,
+	}
+
+	messageBytes, err := json.Marshal(event)
 	if err != nil {
-		return model.Order{}, fmt.Errorf("failed to fetch order details: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return model.Order{}, fmt.Errorf("failed to fetch order details: received status code %d", resp.StatusCode)
+		log.Fatalf("failed to marshal message: %v", err)
 	}
 
-	var order model.Order
-	if err := json.NewDecoder(resp.Body).Decode(&order); err != nil {
-		return model.Order{}, fmt.Errorf("failed to decode order details: %w", err)
-	}
+	log.Printf("Sending message: %s\n", string(messageBytes))
 
-	return order, nil
-}
-
-func updateOrderStatus(orderID uint, status string) error {
-	orderServiceURL := os.Getenv("ORDER_SERVICE_URL")
-	url := fmt.Sprintf("%s/orders/%d", orderServiceURL, orderID)
-
-	orderUpdate := map[string]string{
-		"status": status,
-	}
-
-	orderUpdateBytes, err := json.Marshal(orderUpdate)
-	if err != nil {
-		return fmt.Errorf("failed to marshal order update: %w", err)
-	}
-
-	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(orderUpdateBytes))
-	if err != nil {
-		return fmt.Errorf("failed to create HTTP request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to update order status: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to update order status: received status code %d", resp.StatusCode)
-	}
-
-	return nil
-}
-
-func PublishOrderStatus(orderID uint, status string) error {
-	message := map[string]interface{}{
-		"order_id": orderID,
-		"status":   status,
-	}
-
-	messageBytes, err := json.Marshal(message)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("Publishing message to Kafka: %s", string(messageBytes))
-
-	err = KafkaSvc.WriteMessages(context.Background(), kafka.Message{
+	err = writer.WriteMessages(context.Background(), kafka.Message{
 		Key:   []byte("order_id"),
 		Value: messageBytes,
 	})
 
 	if err != nil {
-		return err
+		log.Fatalf("failed to write message to kafka: %v", err)
+	}
+}
+
+func publishLowStockNotification(productID uint, quantity uint, lowStockThreshold int) {
+	brokers := os.Getenv("KAFKA_BROKERS")
+	topic := os.Getenv("LOW_STOCK_TOPIC")
+
+	if brokers == "" || topic == "" {
+		log.Fatalf("KAFKA_BROKERS or LOW_STOCK_TOPIC environment variable not set")
 	}
 
-	return nil
+	writer := kafka.Writer{
+		Addr:     kafka.TCP(brokers),
+		Topic:    topic,
+		Balancer: &kafka.LeastBytes{},
+	}
+
+	message := map[string]interface{}{
+		"product_id":          productID,
+		"quantity":            quantity,
+		"low_stock_threshold": lowStockThreshold,
+	}
+
+	messageBytes, err := json.Marshal(message)
+	if err != nil {
+		log.Fatalf("failed to marshal message: %v", err)
+	}
+
+	err = writer.WriteMessages(context.Background(), kafka.Message{
+		Key:   []byte("product_id"),
+		Value: messageBytes,
+	})
+
+	if err != nil {
+		log.Fatalf("failed to write message to kafka: %v", err)
+	}
+
+	log.Printf("Low stock notification published for ProductID: %d\n", productID)
 }
