@@ -7,11 +7,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"order-processing/internal/api/middleware"
 	"order-processing/internal/api/routes"
+	"order-processing/internal/middleware"
 	"order-processing/internal/model"
 	"order-processing/internal/utils"
-	message_broker "order-processing/message-broker"
 	"os"
 	"strconv"
 	"testing"
@@ -19,7 +18,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
-	"github.com/segmentio/kafka-go"
+	kafka_go "github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
@@ -57,7 +56,7 @@ type MockKafkaWriter struct {
 	mock.Mock
 }
 
-func (m *MockKafkaWriter) WriteMessages(ctx context.Context, msgs ...kafka.Message) error {
+func (m *MockKafkaWriter) WriteMessages(ctx context.Context, msgs ...kafka_go.Message) error {
 	args := m.Called(ctx, msgs)
 	return args.Error(0)
 }
@@ -217,7 +216,7 @@ func TestCreateOrder(t *testing.T) {
 	mockKafkaWriter := new(MockKafkaWriter)
 	mockKafkaWriter.On("WriteMessages", mock.Anything, mock.AnythingOfType("kafka.Message")).Return(nil)
 	mockKafkaWriter.On("Close").Return(nil)
-	message_broker.KafkaWriterInstance = mockKafkaWriter
+	// kafka.KafkaWriterInstance = mockKafkaWriter
 
 	routes.Routers(r, db, ns)
 

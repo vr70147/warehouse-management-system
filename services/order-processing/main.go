@@ -5,9 +5,8 @@ import (
 	"order-processing/internal/api/routes"
 	"order-processing/internal/cache"
 	"order-processing/internal/initializers"
+	"order-processing/internal/kafka"
 	"order-processing/internal/utils"
-	message_broker "order-processing/message-broker"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -19,15 +18,14 @@ func init() {
 	initializers.ConnectToDB()
 	cache.InitRedis()
 
-	message_broker.KafkaWriterInstance = message_broker.NewKafkaWriter(
-		[]string{os.Getenv("KAFKA_BROKERS")},
-		os.Getenv("ORDER_EVENTS_TOPIC"),
-	)
+	kafka.InitKafkaWriters()
 }
 
 func main() {
 
-	go message_broker.ConsumerOrderEvent()
+	go kafka.ConsumerOrderEvent()
+	go kafka.ConsumerInventoryStatus()
+	go kafka.ConsumerShippingStatus()
 
 	r := gin.Default()
 

@@ -2,7 +2,7 @@ package routes
 
 import (
 	"order-processing/internal/api/handlers"
-	"order-processing/internal/api/middleware"
+	"order-processing/internal/middleware"
 	"order-processing/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -22,4 +22,5 @@ func Routers(r *gin.Engine, db *gorm.DB, ns *utils.NotificationService) {
 	orders.DELETE("/hard/:id", handlers.HardDeleteOrder(db))
 	orders.POST("/recover/:id", handlers.RecoverOrder(db))
 	orders.POST("/cancel/:id", handlers.CancelOrder(db, ns))
+	orders.PUT("/:id/status", handlers.UpdateOrderStatus(db))
 }

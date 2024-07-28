@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"order-processing/internal/cache"
+	"order-processing/internal/kafka"
 	"order-processing/internal/model"
 	"order-processing/internal/utils"
-	message_broker "order-processing/message-broker"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -95,29 +96,34 @@ func GetOrders(db *gorm.DB) gin.HandlerFunc {
 // @Router /orders [post]
 func CreateOrder(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Context and Authorization Check
 		accountID, exists := c.Get("account_id")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
 			return
 		}
 
+		// Binding JSON to Order Request
 		var orderRequest model.Order
 		if err := c.ShouldBindJSON(&orderRequest); err != nil {
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid order data"})
 			return
 		}
 
+		// Validating Order Fields
 		if orderRequest.CustomerID == 0 || orderRequest.Quantity <= 0 || orderRequest.ProductID == 0 {
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Missing or invalid fields"})
 			return
 		}
 
+		// Database Transaction
 		tx := db.Begin()
 		if tx.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Database transaction error"})
 			return
 		}
 
+		// Create the order with status "Pending"
 		order := model.Order{
 			AccountID:  accountID.(uint),
 			CustomerID: orderRequest.CustomerID,
@@ -132,15 +138,17 @@ func CreateOrder(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 			return
 		}
 
+		// Commit the transaction
 		if err := tx.Commit().Error; err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to commit transaction"})
 			return
 		}
 
-		// Publish Kafka event
-		message_broker.PublishOrderEvent(order.ID, order.Status)
+		// Publishing Kafka Event
+		kafka.PublishOrderEvent(order.ID, order.ProductID, order.Quantity, "create")
 
+		// Returning Success Response
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order created successfully", Order: order})
 	}
 }
@@ -296,17 +304,6 @@ func RecoverOrder(db *gorm.DB) gin.HandlerFunc {
 // @Failure 400 {object} model.ErrorResponse
 // @Failure 404 {object} model.ErrorResponse
 // @Router /orders/cancel/{id} [post]
-// CancelOrder godoc
-// @Summary Cancel an order
-// @Description Mark an order as cancelled and send a notification email
-// @Tags orders
-// @Accept json
-// @Produce json
-// @Param id path int true "Order ID"
-// @Success 200 {object} model.SuccessResponse
-// @Failure 400 {object} model.ErrorResponse
-// @Failure 404 {object} model.ErrorResponse
-// @Router /orders/cancel/{id} [post]
 func CancelOrder(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accountID, exists := c.Get("account_id")
@@ -330,10 +327,61 @@ func CancelOrder(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 		}
 
 		// Send email notification
-		if err := ns.SendOrderCancellationNotification("customer@example.com", order.ID); err != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
+		// go func(email string, orderID uint) {
+		// 	err := ns.SendOrderCancellationNotification(email, orderID)
+		// 	if err != nil {
+		// 		// Log the error if the email fails to send
+		// 		log.Printf("Failed to send order cancellation notification: %v", err)
+		// 	}
+		// }(order.CustomerEmail, order.ID)
+
+		// Publish order cancellation event to Kafka
+		kafka.PublishOrderEvent(order.ID, order.ProductID, order.Quantity, "cancelled")
+
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order cancelled successfully"})
+	}
+}
+
+// UpdateOrderStatus godoc
+// @Summary Update the status and shipping date of an order
+// @Description Update the status and shipping date of an order
+// @Tags Orders
+// @Accept json
+// @Produce json
+// @Param id path int true "Order ID"
+// @Param status body model.OrderStatusUpdate true "Order Status Update"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Router /orders/{id}/status [put]
+func UpdateOrderStatus(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var input struct {
+			Status       string    `json:"status"`
+			ShippingDate time.Time `json:"shipping_date"`
+		}
+
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid request data"})
 			return
 		}
-		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order cancelled successfully"})
+
+		orderID := c.Param("id")
+		var order model.Order
+
+		if err := db.First(&order, orderID).Error; err != nil {
+			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Order not found"})
+			return
+		}
+
+		order.Status = input.Status
+		order.ShippingDate = input.ShippingDate
+
+		if err := db.Save(&order).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to update order"})
+			return
+		}
+
+		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order updated successfully", Order: order})
 	}
 }
