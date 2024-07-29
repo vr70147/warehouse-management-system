@@ -15,11 +15,13 @@ import (
 
 const maxRetries = 3
 
+// ConsumerOrderEvent reads messages from the ORDER_EVENT_TOPIC and processes them.
 func ConsumerOrderEvent() {
 	topic := os.Getenv("ORDER_EVENT_TOPIC")
 	if topic == "" {
 		log.Fatalf("ORDER_EVENT_TOPIC environment variable not set")
 	}
+
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  []string{os.Getenv("KAFKA_BROKERS")},
 		Topic:    topic,
@@ -27,6 +29,7 @@ func ConsumerOrderEvent() {
 		MinBytes: 10e3, // 10KB
 		MaxBytes: 10e6, // 10MB
 	})
+
 	for {
 		m, err := r.ReadMessage(context.Background())
 		if err != nil {
@@ -45,6 +48,7 @@ func ConsumerOrderEvent() {
 	}
 }
 
+// processOrderMessage processes the received order message.
 func processOrderMessage(msg []byte) error {
 	var orderEvent struct {
 		OrderID   uint   `json:"order_id"`
@@ -71,12 +75,13 @@ func processOrderMessage(msg []byte) error {
 			return nil
 		} else {
 			log.Printf("attempt %d failed to find order: %v", i+1, results.Error)
-			time.Sleep(2 * time.Second)
+			time.Sleep(2 * time.Second) // Retry after a delay
 		}
 	}
 	return fmt.Errorf("failed to process order after %d retries", maxRetries)
 }
 
+// ConsumerInventoryStatus reads messages from the INVENTORY_STATUS_TOPIC and updates order status accordingly.
 func ConsumerInventoryStatus() {
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  []string{os.Getenv("KAFKA_BROKERS")},
@@ -121,6 +126,7 @@ func ConsumerInventoryStatus() {
 	}
 }
 
+// ConsumerShippingStatus reads messages from the SHIPPING_STATUS_TOPIC and updates order status accordingly.
 func ConsumerShippingStatus() {
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  []string{os.Getenv("KAFKA_BROKERS")},
@@ -154,6 +160,8 @@ func ConsumerShippingStatus() {
 			if err := initializers.DB.Save(&order).Error; err != nil {
 				log.Printf("Error updating order status: %v\n", err)
 			}
+		} else {
+			log.Printf("Order not found: %v\n", result.Error)
 		}
 	}
 }
