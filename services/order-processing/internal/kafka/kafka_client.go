@@ -15,16 +15,20 @@ var (
 	LowStockWriter  *kafka.Writer
 )
 
+// InitKafkaWriters initializes Kafka writers for order, inventory, and low stock notifications.
 func InitKafkaWriters() {
+	// Get broker addresses and topic names from environment variables.
 	brokers := os.Getenv("KAFKA_BROKERS")
 	orderTopic := os.Getenv("ORDER_EVENT_TOPIC")
 	inventoryTopic := os.Getenv("INVENTORY_STATUS_TOPIC")
 	lowStockTopic := os.Getenv("LOW_STOCK_NOTIFICATION_TOPIC")
 
+	// Check if any of the required environment variables are not set.
 	if brokers == "" || orderTopic == "" || inventoryTopic == "" || lowStockTopic == "" {
 		log.Fatalf("KAFKA_BROKERS, ORDER_EVENT_TOPIC, INVENTORY_STATUS_TOPIC or LOW_STOCK_NOTIFICATION_TOPIC environment variable not set")
 	}
 
+	// Create a new Kafka admin client.
 	config := sarama.NewConfig()
 	config.Version = sarama.V2_1_0_0 // Adjust this based on your Kafka version
 
@@ -34,6 +38,7 @@ func InitKafkaWriters() {
 	}
 	defer admin.Close()
 
+	// Create topics if they do not exist.
 	topics := []string{orderTopic, inventoryTopic, lowStockTopic}
 	for _, topic := range topics {
 		err = createTopicIfNotExists(admin, topic)
@@ -42,47 +47,27 @@ func InitKafkaWriters() {
 		}
 	}
 
-	OrderWriter = &kafka.Writer{
+	// Initialize Kafka writers for each topic.
+	OrderWriter = createKafkaWriter(brokers, orderTopic)
+	InventoryWriter = createKafkaWriter(brokers, inventoryTopic)
+	LowStockWriter = createKafkaWriter(brokers, lowStockTopic)
+
+	// Test connection and topic availability by sending a test message.
+	testKafkaWriter(OrderWriter, "order events")
+	testKafkaWriter(InventoryWriter, "inventory events")
+	testKafkaWriter(LowStockWriter, "low stock notifications")
+}
+
+// createKafkaWriter creates and returns a Kafka writer for a given topic.
+func createKafkaWriter(brokers, topic string) *kafka.Writer {
+	return &kafka.Writer{
 		Addr:     kafka.TCP(brokers),
-		Topic:    orderTopic,
+		Topic:    topic,
 		Balancer: &kafka.LeastBytes{},
-	}
-
-	InventoryWriter = &kafka.Writer{
-		Addr:     kafka.TCP(brokers),
-		Topic:    inventoryTopic,
-		Balancer: &kafka.LeastBytes{},
-	}
-
-	LowStockWriter = &kafka.Writer{
-		Addr:     kafka.TCP(brokers),
-		Topic:    lowStockTopic,
-		Balancer: &kafka.LeastBytes{},
-	}
-
-	// Test connection and topic availability
-	err = OrderWriter.WriteMessages(context.Background(), kafka.Message{
-		Value: []byte("test message"),
-	})
-	if err != nil {
-		log.Fatalf("failed to initialize Kafka writer for order events: %v", err)
-	}
-
-	err = InventoryWriter.WriteMessages(context.Background(), kafka.Message{
-		Value: []byte("test message"),
-	})
-	if err != nil {
-		log.Fatalf("failed to initialize Kafka writer for inventory events: %v", err)
-	}
-
-	err = LowStockWriter.WriteMessages(context.Background(), kafka.Message{
-		Value: []byte("test message"),
-	})
-	if err != nil {
-		log.Fatalf("failed to initialize Kafka writer for low stock notifications: %v", err)
 	}
 }
 
+// createTopicIfNotExists creates a Kafka topic if it does not already exist.
 func createTopicIfNotExists(admin sarama.ClusterAdmin, topic string) error {
 	topics, err := admin.ListTopics()
 	if err != nil {
@@ -104,4 +89,14 @@ func createTopicIfNotExists(admin sarama.ClusterAdmin, topic string) error {
 
 	log.Printf("topic %s created", topic)
 	return nil
+}
+
+// testKafkaWriter sends a test message to the Kafka writer to ensure it is properly initialized.
+func testKafkaWriter(writer *kafka.Writer, description string) {
+	err := writer.WriteMessages(context.Background(), kafka.Message{
+		Value: []byte("test message"),
+	})
+	if err != nil {
+		log.Fatalf("failed to initialize Kafka writer for %s: %v", description, err)
+	}
 }

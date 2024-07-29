@@ -13,26 +13,30 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+// Initialize environment variables, database connection, Redis cache, and Kafka writers.
 func init() {
-	initializers.LoadEnvVariables()
-	initializers.ConnectToDB()
-	cache.InitRedis()
+	initializers.LoadEnvVariables() // Load environment variables from .env file
+	initializers.ConnectToDB()      // Establish database connection
+	cache.InitRedis()               // Initialize Redis cache
 
-	kafka.InitKafkaWriters()
+	kafka.InitKafkaWriters() // Initialize Kafka writers for various topics
 }
 
 func main() {
+	// Start Kafka consumers in separate goroutines
+	go kafka.ConsumerOrderEvent()      // Consume order events
+	go kafka.ConsumerInventoryStatus() // Consume inventory status updates
+	go kafka.ConsumerShippingStatus()  // Consume shipping status updates
 
-	go kafka.ConsumerOrderEvent()
-	go kafka.ConsumerInventoryStatus()
-	go kafka.ConsumerShippingStatus()
-
+	// Initialize Gin router
 	r := gin.Default()
 
+	// Setup Swagger documentation route
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+	// Setup API routes
 	routes.Routers(r, initializers.DB, &utils.NotificationService{})
 
-	r.Run()
-
+	// Run the Gin server
+	r.Run() // Default listens on :8083
 }
