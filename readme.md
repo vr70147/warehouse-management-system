@@ -1,458 +1,438 @@
 # Warehouse Management System
 
-## Introduction
-
-Welcome to the Warehouse Management System project. This system is designed to efficiently manage warehouse operations including accounts, orders, inventory, and shipping. The system is built using Go with a microservices architecture and integrates Kafka for messaging.
+The Warehouse Management System is a microservice-based application designed to manage orders, inventory, shipping processes, customer management, user management, reporting, and account management. The system leverages Kafka for event-driven communication and uses various technologies to ensure scalability and maintainability.
 
 ## Table of Contents
 
-- [Introduction](#introduction)
-- [Features](#features)
-- [Project Architecture](#project-architecture)
-- [Kafka Architecture](#kafka-architecture)
 - [Installation](#installation)
-- [Usage](#usage)
+- [Environment Variables](#environment-variables)
+- [Running the Application](#running-the-application)
 - [API Documentation](#api-documentation)
-- [Testing](#testing)
+- [Project Structure](#project-structure)
+- [Services](#services)
+  - [Order Service](#order-service)
+  - [Inventory Service](#inventory-service)
+  - [Shipping Service](#shipping-service)
+  - [Customer Service](#customer-service)
+  - [User Management Service](#user-management-service)
+  - [Reporting and Analytics Service](#reporting-and-analytics-service)
+  - [Account Management Service](#account-management-service)
+- [Models](#models)
+- [Handlers](#handlers)
+- [Middleware](#middleware)
+- [Kafka Integration](#kafka-integration)
 - [Contributing](#contributing)
 - [License](#license)
 
-## Features
-
-- **Accounts Management**: Manage user accounts, roles, and permissions.
-- **Orders Management**: Process and track orders.
-- **Inventory Management**: Track and manage inventory levels.
-- **Shipping Management**: Handle shipping and logistics.
-- **Kafka Integration**: Use Kafka for event-driven architecture and messaging between services.
-- **Docker Integration**: Use Docker for containerization and deployment.
-- **Kubernetes Integration**: Use Kubernetes for orchestration and management.
-- **PostgreSQL Integration**: Use PostgreSQL for database management.
-- **Redis Integration**: Use Redis for caching and message queuing.
-
-## Project Architecture
-
-The system follows a microservices architecture with the following services:
-
-- **Accounts Management Service**: Handles user accounts, roles, and permissions.
-- **Order Processing Service**: Manages order processing and status updates.
-- **Inventory Management Service**: Keeps track of inventory levels and updates.
-- **Shipping Management Service**: Manages shipping and delivery of orders.
-
-## Kafka Architecture
-
-The system uses Kafka for event-driven architecture and messaging between services. The following topics are used:
-
-- **accounts**: User accounts, roles, and permissions.
-- **orders**: Order processing and status updates.
-- **inventory**: Inventory levels and updates.
-- **shipping**: Shipping and delivery of orders.
-
-Example of new order messages:
-![Kafka Architecture](assets/images/kafka-order-messages.jpg)
-
-## System Structure
-
-The project is organized into multiple services, each responsible for a specific domain within the warehouse management system. Below is the directory structure of the project:
-
-```sh
-warehouse-management-system/
-├── docker-compose.yml
-├── get_helm.sh
-├── **k8s/**
-│   ├── **accounts-management/**
-│   │   ├── configmap.yaml
-│   │   ├── deployment.yaml
-│   │   ├── ingress.yaml
-│   │   └── service.yaml
-│   ├── **ingress-nginx/**
-│   │   └── ingress-nginx.yaml
-│   ├── **inventory-management/**
-│   │   ├── configmap.yaml
-│   │   ├── deployment.yaml
-│   │   ├── ingress.yaml
-│   │   └── service.yaml
-│   ├── **order-processing/**
-│   │   ├── configmap.yaml
-│   │   ├── deployment.yaml
-│   │   ├── ingress.yaml
-│   │   └── service.yaml
-│   ├── **postgres/**
-│   │   ├── secret.yaml
-│   │   ├── user-management.yaml
-│   │   └── values.yaml
-│   ├── **reporting-analytics/**
-│   │   ├── configmap.yaml
-│   │   ├── deployment.yaml
-│   │   ├── ingress.yaml
-│   │   └── service.yaml
-│   ├── **shipping-receiving/**
-│   │   ├── configmap.yaml
-│   │   ├── deployment.yaml
-│   │   ├── ingress.yaml
-│   │   └── service.yaml
-│   └── **user-management/**
-│       ├── configmap.yaml
-│       ├── deployment.yaml
-│       ├── ingress.yaml
-│       ├── secret.yaml
-│       └── service.yaml
-├── **readme.md**
-├── **services/**
-│   ├── **accounts-management/**
-│   │   ├── .env
-│   │   ├── Dockerfile
-│   │   ├── accounts-management
-│   │   ├── go.mod
-│   │   ├── go.sum
-│   │   ├── internal/
-│   │   │   ├── api/
-│   │   │   │   ├── handlers/
-│   │   │   │   │   └── accountHandler.go
-│   │   │   │   └── routes/
-│   │   │   │       └── routes.go
-│   │   │   ├── cache/
-│   │   │   │   └── redis_client.go
-│   │   │   ├── initializers/
-│   │   │   │   ├── db.go
-│   │   │   │   └── loadEnvVariables.go
-│   │   │   ├── middleware/
-│   │   │   │   └── middleware.go
-│   │   │   ├── model/
-│   │   │   │   └── model.go
-│   │   │   └── tests/
-│   │   │       └── routes_test.go
-│   │   └── main.go
-│   ├── **inventory-management/**
-│   │   ├── Dockerfile
-│   │   ├── docs/
-│   │   │   ├── docs.go
-│   │   │   ├── swagger.json
-│   │   │   └── swagger.yaml
-│   │   ├── go.mod
-│   │   ├── go.sum
-│   │   ├── handlers.go
-│   │   ├── internal/
-│   │   │   ├── api/
-│   │   │   │   ├── handlers/
-│   │   │   │   │   ├── categoriesHandler.go
-│   │   │   │   │   ├── productsHandler.go
-│   │   │   │   │   ├── stocksHandler.go
-│   │   │   │   │   └── suppliersHandler.go
-│   │   │   │   └── routes/
-│   │   │   │       └── routes.go
-│   │   │   ├── cache/
-│   │   │   │   └── redis_client.go
-│   │   │   ├── initializers/
-│   │   │   │   ├── db.go
-│   │   │   │   └── loadEnvVariables.go
-│   │   │   ├── middleware/
-│   │   │   │   └── middleware.go
-│   │   │   ├── model/
-│   │   │   │   └── model.go
-│   │   │   └── tests/
-│   │   │       └── routes_test.go
-│   │   ├── kafka/
-│   │   │   └── kafka_new_order_consumer.go
-│   │   └── main.go
-│   ├── **order-processing/**
-│   │   ├── Dockerfile
-│   │   ├── docs/
-│   │   │   ├── docs.go
-│   │   │   ├── swagger.json
-│   │   │   └── swagger.yaml
-│   │   ├── go.mod
-│   │   ├── go.sum
-│   │   ├── internal/
-│   │   │   ├── api/
-│   │   │   │   ├── handlers/
-│   │   │   │   │   └── OrdersHandler.go
-│   │   │   │   ├── middleware/
-│   │   │   │   │   └── middleware.go
-│   │   │   │   └── routes/
-│   │   │   │       └── routes.go
-│   │   │   ├── cache/
-│   │   │   │   └── redis_client.go
-│   │   │   ├── initializers/
-│   │   │   │   ├── db.go
-│   │   │   │   └── loadEnvVariables.go
-│   │   │   ├── kafka/
-│   │   │   │   └── kafka.go
-│   │   │   ├── model/
-│   │   │   │   └── model.go
-│   │   │   └── tests/
-│   │   │       └── orders_test.go
-│   │   └── main.go
-│   ├── **reporting-analytics/**
-│   │   ├── Dockerfile
-│   │   ├── go.mod
-│   │   ├── go.sum
-│   │   ├── internal/
-│   │   │   ├── api/
-│   │   │   │   ├── handlers/
-│   │   │   │   │   └── analyticsHandler.go
-│   │   │   │   ├── middleware/
-│   │   │   │   │   └── middleware.go
-│   │   │   │   └── routes/
-│   │   │   │       └── routes.go
-│   │   │   ├── cache/
-│   │   │   │   └── redis_client.go
-│   │   │   ├── initializers/
-│   │   │   │   ├── db.go
-│   │   │   │   └── loadEnvVariables.go
-│   │   │   ├── model/
-│   │   │   │   └── model.go
-│   │   │   └── tests/
-│   │   │       └── analytics_test.go
-│   │   ├── kafka/
-│   │   │   ├── consumer.go
-│   │   │   └── producer.go
-│   │   └── main.go
-│   ├── **shipping-receiving/**
-│   │   ├── Dockerfile
-│   │   ├── docs/
-│   │   │   ├── docs.go
-│   │   │   ├── swagger.json
-│   │   │   └── swagger.yaml
-│   │   ├── go.mod
-│   │   ├── go.sum
-│   │   ├── internal/
-│   │   │   ├── api/
-│   │   │   │   ├── handlers/
-│   │   │   │   │   ├── receivingHandler.go
-│   │   │   │   │   ├── shippingHandler.go
-│   │   │   │   │   └── test.db
-│   │   │   │   ├── middleware/
-│   │   │   │   └── middleware.go
-│   │   │   └── routes/
-│   │   │       └── routes.go
-│   │   ├── cache/
-│   │   │   └── redis_client.go
-│   │   │   ├── initializers/
-│   │   │   │   ├── db.go
-│   │   │   │   └── loadEnvVariables.go
-│   │   │   ├── model/
-│   │   │   │   └── model.go
-│   │   │   └── tests/
-│   │   │       └── receiving_test.go
-│   │   └── main.go
-│   └── **user-management/**
-│       ├── .env
-│       ├── Dockerfile
-│       ├── docs/
-│       │   ├── docs.go
-│       │   ├── swagger.json
-│       │   └── swagger.yaml
-│       ├── go.mod
-│       ├── go.sum
-│       ├── internal/
-│       │   ├── api/
-│       │   │   ├── handlers/
-│       │   │   │   ├── rolesHandler.go
-│       │   │   │   ├── userHandlers.go
-│       │   │   │   ├── userHandlers_test.go
-│       │   │   │   └── user_handlers_test.go
-│       │   │   ├── middleware/
-│       │   │   │   └── middleware.go
-│       │   │   └── routes/
-│       │   │       └── routes.go
-│       │   ├── cache/
-│       │   │   └── redis_client.go
-│       │   ├── initializers/
-│       │   │   ├── db.go
-│       │   │   └── loadEnvVariables.go
-│       │   ├── middleware/
-│       │   │   └── middleware.go
-│       │   ├── model/
-│       │   │   └── model.go
-│       │   ├── services/
-│       │   │   └── userService.go
-│       │   └── tests/
-│       │       └── routes_test.go
-│       ├── kafka/
-│       │   └── kafka.go
-│       └── main.go
-└── **readme.md**
-```
-
 ## Installation
 
-To set up the project locally, follow these steps:
+### Clone the repository:
 
-1. **Clone the repository**:
+    git clone https://github.com/vr70147/warehouse-management-system.git
+    cd warehouse-management-system
 
-   ```sh
-   git clone https://github.com/yourusername/warehouse-management-system.git
-   cd warehouse-management-system
-   ```
+### Install dependencies for each service:
 
-2. **Set up environment variables**:
+```bash
+cd services/order-processing
+go mod tidy
 
-   - Create a `.env` file in the root directory and add the necessary environment variables:
+cd ../inventory-service
+go mod tidy
 
-     ```env
-     JWT_SECRET=your-jwt-secret
-     KAFKA_BROKERS=your-kafka-brokers
+cd ../shipping-service
+go mod tidy
 
-     ```
+cd ../customer-service
+go mod tidy
 
-3. **Install dependencies**:
+cd ../user-management-service
+go mod tidy
 
-   ```sh
-   go mod tidy
+cd ../reporting-analytics-service
+go mod tidy
 
-   ```
-
-4. **Run the services**:
-
-   - You can run each service individually. For example, to run the Accounts Management Service:
-
-     ```sh
-     cd services/accounts-management
-     go run main.go
-
-     ```
-
-## Usage
-
-Each service exposes a set of RESTful API endpoints. You can interact with these endpoints using tools like `curl` or Postman.
-
-## API Documentation
-
-### Users Management Service
-
-- **Create User: POST /users**
-- **Get Users: GET /users**
-- **Update User: PUT /users/:id**
-- **Soft Delete User: DELETE /users/:id**
-- **Hard Delete User: DELETE /users/:id/hard**
-- **Recover User: POST /users/:id/recover**
-
-- **Create Role: POST /roles**
-- **Get Roles: GET /roles**
-- **Update Role: PUT /roles/:id**
-- **Soft Delete Role: DELETE /roles/:id**
-- **Hard Delete Role: DELETE /roles/:id/hard**
-- **Recover Role: POST /roles/:id/recover**
-
-- **Create Department: POST /departments**
-- **Get Departments: GET /departments**
-- **Update Department: PUT /departments/:id**
-- **Soft Delete Department: DELETE /departments/:id**
-- **Hard Delete Department: DELETE /departments/:id/hard**
-- **Recover Department: POST /departments/:id/recover**
-
-### Order Processing Service
-
-- **Create Order: POST /orders**
-- **Get Orders: GET /orders**
-- **Update Order: PUT /orders/:id**
-- **Soft Delete Order: DELETE /orders/:id**
-- **Hard Delete Order: DELETE /orders/:id/hard**
-- **Recover Order: POST /orders/:id/recover**
-
-### Inventory Management Service
-
-- **Create Product: POST /products**
-- **Get Products: GET /products**
-- **Update Product: PUT /products/:id**
-- **Soft Delete Product: DELETE /products/:id**
-- **Hard Delete Product: DELETE /products/:id/hard**
-- **Recover Product: POST /products/:id/recover**
-
-- **Create Stock: POST /stocks**
-- **Get Stocks: GET /stocks**
-- **Update Stock: PUT /stocks/:id**
-- **Soft Delete Stock: DELETE /stocks/:id**
-- **Hard Delete Stock: DELETE /stocks/:id/hard**
-- **Recover Stock: POST /stocks/:id/recover**
-
-- **Create Category: POST /categories**
-- **Get Categories: GET /categories**
-- **Update Category: PUT /categories/:id**
-- **Soft Delete Category: DELETE /categories/:id**
-- **Hard Delete Category: DELETE /categories/:id/hard**
-- **Recover Category: POST /categories/:id/recover**
-
-- **Create Supplier: POST /suppliers**
-- **Get Suppliers: GET /suppliers**
-- **Update Supplier: PUT /suppliers/:id**
-- **Soft Delete Supplier: DELETE /suppliers/:id**
-- **Hard Delete Supplier: DELETE /suppliers/:id/hard**
-- **Recover Supplier: POST /suppliers/:id/recover**
-
-### Shipping Management Service
-
-- **Create Shipping: POST /shippings**
-- **Get Shippings: GET /shippings**
-- **Update Shipping: PUT /shippings/:id**
-- **Soft Delete Shipping: DELETE /shippings/:id**
-- **Hard Delete Shipping: DELETE /shippings/:id/hard**
-- **Recover Shipping: POST /shippings/:id/recover**
-
-### Accounts Management Service
-
-- **Create Account: POST /accounts**
-- **Get Accounts: GET /accounts**
-- **Update Account: PUT /accounts/:id**
-- **Soft Delete Account: DELETE /accounts/:id**
-- **Hard Delete Account: DELETE /accounts/:id/hard**
-- **Recover Account: POST /accounts/:id/recover**
-
-### Reporting Analytics Service
-
-- **Get Sales Report: GET /reports/sales**
-- **Get Inventory levels: GET /reports/inventory**
-- **Get Shipping Statuses: GET /reports/shipping**
-- **Get User Activities: GET /reports/user-activity**
-
-## Testing
-
-### To run the tests for the project:
-
-    Run Unit Tests:
-
-```sh
-
-go test ./...
+cd ../account-management-service
+go mod tidy
 ```
 
-## Run End-to-End Tests:
+## Ensure you have running instances of Kafka and Redis.
 
-    Ensure Kafka and other dependencies are running.
-    Run the tests:
+### Environment Variables
 
-```sh
+Create a .env file in the root directory of each service and add the following environment variables:
 
-        go test -tags=e2e ./tests
+### Order Service
+
+```bash
+KAFKA_BROKERS=localhost:9092
+ORDER_EVENT_TOPIC=order-events
+INVENTORY_STATUS_TOPIC=inventory-status
+LOW_STOCK_NOTIFICATION_TOPIC=low-stock-notification
+SHIPPING_STATUS_TOPIC=shipping-status
+REDIS_ADDR=localhost:6379
+JWT_SECRET=your_jwt_secret
 ```
 
-## Contributing
+### Inventory Service
 
-We welcome contributions! Please follow these steps to contribute:
-
-    Fork the repository.
-    Create a new branch for your feature or bugfix.
-
-```sh
-
-git checkout -b feature/your-feature-name
-
+```bash
+KAFKA_BROKERS=localhost:9092
+INVENTORY_EVENT_TOPIC=inventory-events
+ORDER_STATUS_TOPIC=order-status
+REDIS_ADDR=localhost:6379
 ```
 
-Commit your changes.
+### Shipping Service
 
-```sh
-
-git commit -m "Description of your changes"
-
+```bash
+KAFKA_BROKERS=localhost:9092
+SHIPPING_EVENT_TOPIC=shipping-events
+ORDER_STATUS_TOPIC=order-status
+REDIS_ADDR=localhost:6379
 ```
 
-Push to your branch.
+### Customer Service
 
-```sh
-
-git push origin feature/your-feature-name
-
+```bash
+KAFKA_BROKERS=localhost:9092
+CUSTOMER_EVENT_TOPIC=customer-events
+REDIS_ADDR=localhost:6379
 ```
 
-Create a Pull Request.
+### User Management Service
+
+```bash
+KAFKA_BROKERS=localhost:9092
+USER_EVENT_TOPIC=user-events
+REDIS_ADDR=localhost:6379
+JWT_SECRET=your_jwt_secret
+```
+
+### Reporting and Analytics Service
+
+```bash
+KAFKA_BROKERS=localhost:9092
+REPORTING_EVENT_TOPIC=reporting-events
+REDIS_ADDR=localhost:6379
+```
+
+### Account Management Service
+
+```bash
+KAFKA_BROKERS=localhost:9092
+ACCOUNT_EVENT_TOPIC=account-events
+REDIS_ADDR=localhost:6379
+```
+
+## Running the Application
+
+Initialize the environment variables and database connections for each service:
+
+```bash
+source .env
+```
+
+## Run each service:
+
+### Order Service
+
+```bash
+cd services/order-processing
+go run main.go
+```
+
+### Inventory Service
+
+```bash
+cd services/inventory-service
+go run main.go
+```
+
+### Shipping Service
+
+```bash
+cd services/shipping-service
+go run main.go
+```
+
+### Customer Service
+
+```bash
+cd services/customer-service
+go run main.go
+```
+
+### User Management Service
+
+```bash
+cd services/user-management-service
+go run main.go
+```
+
+### Reporting and Analytics Service
+
+```bash
+cd services/reporting-analytics-service
+go run main.go
+```
+
+### Account Management Service
+
+```bash
+cd services/account-management-service
+go run main.go
+```
+
+### API Documentation
+
+Swagger is used to generate API documentation. Access the documentation for each service at:
+
+- **Order Service:** http://localhost:8080/swagger/index.html
+- **Inventory Service:** http://localhost:8081/swagger/index.html
+- **Shipping Service:** http://localhost:8082/swagger/index.html
+- **Customer Service:** http://localhost:8083/swagger/index.html
+- **User Management Service:** http://localhost:8084/swagger/index.html
+- **Reporting and Analytics Service:** http://localhost:8085/swagger/index.html
+- **Account Management Service:** http://localhost:8086/swagger/index.html
+
+## Project Structure
+
+├── services
+│ ├── order-processing
+│ │ ├── internal
+│ │ │ ├── api
+│ │ │ │ └── handlers
+│ │ │ │ └── OrdersHandler.go
+│ │ │ ├── cache
+│ │ │ │ └── redis.go
+│ │ │ ├── initializers
+│ │ │ │ ├── db.go
+│ │ │ │ └── env.go
+│ │ │ ├── kafka
+│ │ │ │ ├── consumer.go
+│ │ │ │ ├── producer.go
+│ │ │ │ └── kafka.go
+│ │ │ ├── model
+│ │ │ │ ├── order.go
+│ │ │ │ ├── customer.go
+│ │ │ │ ├── user.go
+│ │ │ │ ├── role.go
+│ │ │ │ ├── department.go
+│ │ │ │ └── event.go
+│ │ │ ├── routes
+│ │ │ │ └── routes.go
+│ │ │ └── utils
+│ │ │ └── notifications.go
+│ │ ├── middleware
+│ │ │ └── auth.go
+│ │ ├── docs
+│ │ │ └── swagger documentation files
+│ │ ├── .env
+│ │ ├── go.mod
+│ │ ├── go.sum
+│ │ └── main.go
+│ ├── inventory-service
+│ │ ├── internal
+│ │ │ ├── api
+│ │ │ │ └── handlers
+│ │ │ ├── cache
+│ │ │ ├── initializers
+│ │ │ ├── kafka
+│ │ │ ├── model
+│ │ │ ├── routes
+│ │ │ └── utils
+│ │ ├── middleware
+│ │ ├── docs
+│ │ ├── .env
+│ │ ├── go.mod
+│ │ ├── go.sum
+│ │ └── main.go
+│ ├── shipping-service
+│ │ ├── internal
+│ │ │ ├── api
+│ │ │ │ └── handlers
+│ │ │ ├── cache
+│ │ │ ├── initializers
+│ │ │ ├── kafka
+│ │ │ ├── model
+│ │ │ ├── routes
+│ │ │ └── utils
+│ │ ├── middleware
+│ │ ├── docs
+│ │ ├── .env
+│ │ ├── go.mod
+│ │ ├── go.sum
+│ │ └── main.go
+│ ├── customer-service
+│ │ ├── internal
+│ │ │ ├── api
+│ │ │ │ └── handlers
+│ │ │ ├── cache
+│ │ │ ├── initializers
+│ │ │ ├── kafka
+│ │ │ ├── model
+│ │ │ ├── routes
+│ │ │ └── utils
+│ │ ├── middleware
+│ │ ├── docs
+│ │ ├── .env
+│ │ ├── go.mod
+│ │ ├── go.sum
+│ │ └── main.go
+│ ├── user-management-service
+│ │ ├── internal
+│ │ │ ├── api
+│ │ │ │ └── handlers
+│ │ │ ├── cache
+│ │ │ ├── initializers
+│ │ │ ├── kafka
+│ │ │ ├── model
+│ │ │ ├── routes
+│ │ │ └── utils
+│ │ ├── middleware
+│ │ ├── docs
+│ │ ├── .env
+│ │ ├── go.mod
+│ │ ├── go.sum
+│ │ └── main.go
+│ ├── reporting-analytics-service
+│ │ ├── internal
+│ │ │ ├── api
+│ │ │ │ └── handlers
+│ │ │ ├── cache
+│ │ │ ├── initializers
+│ │ │ ├── kafka
+│ │ │ ├── model
+│ │ │ ├── routes
+│ │ │ └── utils
+│ │ ├── middleware
+│ │ ├── docs
+│ │ ├── .env
+│ │ ├── go.mod
+│ │ ├── go.sum
+│ │ └── main.go
+│ ├── account-management-service
+│ │ ├── internal
+│ │ │ ├── api
+│ │ │ │ └── handlers
+│ │ │ ├── cache
+│ │ │ ├── initializers
+│ │ │ ├── kafka
+│ │ │ ├── model
+│ │ │ ├── routes
+│ │ │ └── utils
+│ │ ├── middleware
+│ │ ├── docs
+│ │ ├── .env
+│ │ ├── go.mod
+│ │ ├── go.sum
+│ │ └── main.go
+└── docker-compose.yml
+
+## Services
+
+### Order Service
+
+Handles order processing, creation, updates, and status changes.
+
+### Inventory Service
+
+Manages inventory levels, updates, and low stock notifications.
+
+### Shipping Service
+
+Handles shipping status updates and notifications.
+
+### Customer Service
+
+Manages customer information and handles customer-related events.
+
+### User Management Service
+
+Handles user authentication, authorization, and management.
+
+### Reporting and Analytics Service
+
+Generates reports and analytics based on order, inventory, and shipping data.
+
+### Account Management Service
+
+Manages account information and handles account-related events.
+
+## Models
+
+Each service has its own set of models representing the data structures used within the service. Refer to the internal/model directory in each service for detailed definitions.
+
+## Handlers
+
+Handlers manage the API endpoints for each service. They include functionalities like:
+
+- Creating, updating, and retrieving orders.
+- Managing inventory levels and statuses.
+- Handling shipping updates and notifications.
+- Managing customer and user data.
+- Generating reports and handling account management.
+
+Refer to the internal/api/handlers directory in each service for detailed implementations.
+
+## Middleware
+
+Middleware functions include:
+
+- CORS settings.
+- JWT authentication and authorization.
+
+Refer to the middleware directory in each service for detailed implementations.
+
+## Kafka Integration
+
+Kafka is used for event-driven communication between services. Each service has Kafka producers and consumers to handle relevant events.
+
+### Order Service Kafka Activity
+
+- **Producers:**
+  - PublishOrderEvent: Publishes order events.
+- **Consumers:**
+  - ConsumerOrderEvent: Consumes order events.
+  - ConsumerInventoryStatus: Consumes inventory status updates.
+  - ConsumerShippingStatus: Consumes shipping status updates.
+
+### Inventory Service Kafka Activity
+
+- **Consumers:**
+  - ConsumerOrderStatus: Consumes order status updates.
+
+### Shipping Service Kafka Activity
+
+- **Consumers:**
+  - ConsumerOrderStatus: Consumes order status updates.
+
+### Customer Service Kafka Activity
+
+- **Producers:**
+  - PublishCustomerEvent: Publishes customer events.
+- **Consumers:**
+  - ConsumerCustomerEvent: Consumes customer events.
+
+### Reporting and Analytics Service Kafka Activity
+
+- **Producers:**
+  - PublishReportingEvent: Publishes reporting events.
+- **Consumers:**
+  - ConsumerReportingEvent: Consumes reporting events.
+
+### Account Management Service Kafka Activity
+
+- **Producers:**
+  - PublishAccountEvent: Publishes account events.
+- **Consumers:**
+  - ConsumerAccountEvent: Consumes account events.
+
+### Contributing
+
+Contributions are welcome! Please submit a pull request or open an issue to discuss any changes.
+
+### License
+
+This project is licensed under the MIT License.
