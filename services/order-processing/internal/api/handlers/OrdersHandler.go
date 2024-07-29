@@ -30,12 +30,14 @@ import (
 // @Router /orders [get]
 func GetOrders(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Retrieve account ID from context
 		accountID, exists := c.Get("account_id")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
 			return
 		}
 
+		// Check for cached order by ID
 		id := c.Query("id")
 		if id != "" {
 			cachedOrder, err := cache.GetCache(id)
@@ -50,6 +52,7 @@ func GetOrders(db *gorm.DB) gin.HandlerFunc {
 		var orders []model.Order
 		query := db.Where("account_id = ?", accountID)
 
+		// Apply filters based on query parameters
 		if status := c.Query("status"); status != "" {
 			query = query.Where("status = ?", status)
 		}
@@ -70,16 +73,19 @@ func GetOrders(db *gorm.DB) gin.HandlerFunc {
 			}
 		}
 
+		// Retrieve orders from the database
 		if result := query.Find(&orders); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: result.Error.Error()})
 			return
 		}
 
+		// Cache the retrieved order by ID
 		if id != "" {
 			orderJSON, _ := json.Marshal(orders)
 			cache.SetCache(id, string(orderJSON))
 		}
 
+		// Respond with the retrieved orders
 		c.JSON(http.StatusOK, model.SuccessResponses{Message: "Orders found", Orders: orders})
 	}
 }
@@ -96,27 +102,27 @@ func GetOrders(db *gorm.DB) gin.HandlerFunc {
 // @Router /orders [post]
 func CreateOrder(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Context and Authorization Check
+		// Retrieve account ID from context
 		accountID, exists := c.Get("account_id")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
 			return
 		}
 
-		// Binding JSON to Order Request
+		// Bind JSON to Order Request
 		var orderRequest model.Order
 		if err := c.ShouldBindJSON(&orderRequest); err != nil {
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid order data"})
 			return
 		}
 
-		// Validating Order Fields
+		// Validate Order Fields
 		if orderRequest.CustomerID == 0 || orderRequest.Quantity <= 0 || orderRequest.ProductID == 0 {
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Missing or invalid fields"})
 			return
 		}
 
-		// Database Transaction
+		// Begin Database Transaction
 		tx := db.Begin()
 		if tx.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Database transaction error"})
@@ -132,6 +138,7 @@ func CreateOrder(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 			Status:     "Pending",
 		}
 
+		// Save the new order to the database
 		if err := tx.Create(&order).Error; err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to create order"})
@@ -145,10 +152,10 @@ func CreateOrder(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 			return
 		}
 
-		// Publishing Kafka Event
+		// Publish Kafka Event
 		kafka.PublishOrderEvent(order.ID, order.ProductID, order.Quantity, "create")
 
-		// Returning Success Response
+		// Respond with success message
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order created successfully", Order: order})
 	}
 }
@@ -169,29 +176,34 @@ func CreateOrder(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 // @Router /orders/{id} [put]
 func UpdateOrder(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Retrieve account ID from context
 		accountID, exists := c.Get("account_id")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
 			return
 		}
 
+		// Bind JSON to Order Update Request
 		var orderUpdate model.Order
 		if err := c.ShouldBindJSON(&orderUpdate); err != nil {
 			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: "Invalid order data"})
 			return
 		}
 
+		// Retrieve the current order from the database
 		var currentOrder model.Order
 		if err := db.Where("id = ? AND account_id = ?", orderUpdate.ID, accountID).First(&currentOrder).Error; err != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Order not found"})
 			return
 		}
 
+		// Check for version mismatch
 		if orderUpdate.Version != currentOrder.Version {
 			c.JSON(http.StatusConflict, model.ErrorResponse{Error: "Order version mismatch"})
 			return
 		}
 
+		// Update the order status and version
 		orderUpdate.Version++
 		if err := db.Model(&model.Order{}).Where("id = ? AND account_id = ? AND version = ?", orderUpdate.ID, accountID, currentOrder.Version).Updates(map[string]interface{}{
 			"status":  orderUpdate.Status,
@@ -201,6 +213,7 @@ func UpdateOrder(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		// Respond with success message
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order updated successfully", Order: orderUpdate})
 	}
 }
@@ -217,17 +230,21 @@ func UpdateOrder(db *gorm.DB) gin.HandlerFunc {
 // @Router /orders/{id} [delete]
 func SoftDeleteOrder(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Retrieve account ID from context
 		accountID, exists := c.Get("account_id")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
 			return
 		}
 
+		// Retrieve the order ID from the path
 		id := c.Param("id")
 		if result := db.Where("id = ? AND account_id = ?", id, accountID).Delete(&model.Order{}); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to delete order"})
 			return
 		}
+
+		// Respond with success message
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order deleted successfully"})
 	}
 }
@@ -243,17 +260,21 @@ func SoftDeleteOrder(db *gorm.DB) gin.HandlerFunc {
 // @Router /orders/{id}/hard [delete]
 func HardDeleteOrder(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Retrieve account ID from context
 		accountID, exists := c.Get("account_id")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
 			return
 		}
 
+		// Retrieve the order ID from the path
 		id := c.Param("id")
 		if result := db.Unscoped().Where("id = ? AND account_id = ?", id, accountID).Delete(&model.Order{}); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to delete order"})
 			return
 		}
+
+		// Respond with success message
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order deleted permanently"})
 	}
 }
@@ -270,25 +291,30 @@ func HardDeleteOrder(db *gorm.DB) gin.HandlerFunc {
 // @Router /orders/{id}/recover [post]
 func RecoverOrder(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Retrieve account ID from context
 		accountID, exists := c.Get("account_id")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
 			return
 		}
 
+		// Retrieve the order ID from the path
 		id := c.Param("id")
 		var order model.Order
 
+		// Retrieve the soft-deleted order
 		if result := db.Unscoped().Where("id = ? AND account_id = ?", id, accountID).First(&order); result.Error != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Order not found"})
 			return
 		}
 
+		// Recover the order by updating the DeletedAt field to nil
 		if result := db.Model(&order).Update("DeletedAt", nil); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to recover order"})
 			return
 		}
 
+		// Respond with success message
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order recovered successfully"})
 	}
 }
@@ -306,27 +332,31 @@ func RecoverOrder(db *gorm.DB) gin.HandlerFunc {
 // @Router /orders/cancel/{id} [post]
 func CancelOrder(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Retrieve account ID from context
 		accountID, exists := c.Get("account_id")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Account ID not found"})
 			return
 		}
 
+		// Retrieve the order ID from the path
 		orderID := c.Param("id")
 
+		// Retrieve the order from the database
 		var order model.Order
 		if err := db.Where("id = ? AND account_id = ?", orderID, accountID).First(&order).Error; err != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Order not found"})
 			return
 		}
 
+		// Update the order status to "cancelled"
 		order.Status = "cancelled"
 		if result := db.Save(&order); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to update order"})
 			return
 		}
 
-		// Send email notification
+		// Send email notification (commented out for now)
 		// go func(email string, orderID uint) {
 		// 	err := ns.SendOrderCancellationNotification(email, orderID)
 		// 	if err != nil {
@@ -338,6 +368,7 @@ func CancelOrder(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 		// Publish order cancellation event to Kafka
 		kafka.PublishOrderEvent(order.ID, order.ProductID, order.Quantity, "cancelled")
 
+		// Respond with success message
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order cancelled successfully"})
 	}
 }
@@ -345,7 +376,7 @@ func CancelOrder(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 // UpdateOrderStatus godoc
 // @Summary Update the status and shipping date of an order
 // @Description Update the status and shipping date of an order
-// @Tags Orders
+// @Tags orders
 // @Accept json
 // @Produce json
 // @Param id path int true "Order ID"
@@ -356,6 +387,7 @@ func CancelOrder(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc {
 // @Router /orders/{id}/status [put]
 func UpdateOrderStatus(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Bind JSON to status update request
 		var input struct {
 			Status       string    `json:"status"`
 			ShippingDate time.Time `json:"shipping_date"`
@@ -366,22 +398,27 @@ func UpdateOrderStatus(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		// Retrieve the order ID from the path
 		orderID := c.Param("id")
 		var order model.Order
 
+		// Retrieve the order from the database
 		if err := db.First(&order, orderID).Error; err != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{Error: "Order not found"})
 			return
 		}
 
+		// Update the order status and shipping date
 		order.Status = input.Status
 		order.ShippingDate = input.ShippingDate
 
+		// Save the updated order to the database
 		if err := db.Save(&order).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to update order"})
 			return
 		}
 
+		// Respond with success message
 		c.JSON(http.StatusOK, model.SuccessResponse{Message: "Order updated successfully", Order: order})
 	}
 }
