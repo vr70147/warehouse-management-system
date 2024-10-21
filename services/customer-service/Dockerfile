@@ -2,23 +2,16 @@ FROM golang:1.22.2 as builder
 
 WORKDIR /app
 
-COPY go.mod ./
-COPY go.sum ./
+COPY . .
 
 RUN go mod download
 
-COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o order-processing .
-
-FROM alpine:latest  
-
-LABEL maintainer="Raanan Adut radesigner84@gmail.com"
+FROM alpine:3.19.1
 
 WORKDIR /root/
 
-COPY --from=builder /app/order-processing .
-
-EXPOSE 8082
+COPY --from=builder /app/main .
 
 CMD ["./main"]

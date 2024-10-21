@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-service
+spec:
+  selector:
+    matchLabels:
+      app: customer-service
+  template:
+    metadata:
+      labels:
+        app: customer-service
+    spec:
+      containers:
+        - name: customer-service
+          image: raanan7784/warehouse-customer-service:v1.0.0
+          envFrom:
+            - configMapRef:
+                name: customer-service
+            - secretRef:
+                name: customer-service
+          resources:
+            limits:
+              memory: '128Mi'
+              cpu: '500m'
+            requests:
+              memory: '64Mi'
+              cpu: '250m'
+          ports:
+            - containerPort: 8087
+              name: web
