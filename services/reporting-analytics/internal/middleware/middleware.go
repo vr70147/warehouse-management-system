@@ -1,7 +1,10 @@
 package middleware
 
 import (
+	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -27,19 +30,25 @@ func CORSMiddleware() gin.HandlerFunc {
 
 func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
+		tokenString := c.GetHeader("Authorization")
+		if tokenString == "" {
+			fmt.Println("Authorization header required")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
 			c.Abort()
 			return
 		}
 
-		tokenString := strings.TrimSpace(strings.Replace(authHeader, "Bearer", "", 1))
+		tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			return []byte("test_secret"), nil
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte(os.Getenv("JWT_SECRET")), nil
 		})
 
 		if err != nil || !token.Valid {
+			log.Println("Invalid token:", err)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			c.Abort()
 			return
@@ -47,6 +56,7 @@ func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
+			log.Println("Invalid token claims")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
 			c.Abort()
 			return
@@ -54,12 +64,14 @@ func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 
 		accountID, ok := claims["account_id"].(float64)
 		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid account ID in token"})
+			log.Println("Account ID not found in token")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Account ID not found in token"})
 			c.Abort()
 			return
 		}
 
 		c.Set("account_id", uint(accountID))
+
 		c.Next()
 	}
 }

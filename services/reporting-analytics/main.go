@@ -5,7 +5,7 @@ import (
 	"reporting-analytics/internal/api/routes"
 	"reporting-analytics/internal/cache"
 	"reporting-analytics/internal/initializers"
-	"reporting-analytics/kafka"
+	"reporting-analytics/internal/kafka"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -16,6 +16,7 @@ func init() {
 	initializers.LoadEnvVariables()
 	initializers.ConnectToDB()
 	cache.InitRedis()
+	kafka.InitKafkaWriters()
 }
 
 // @title Reporting Analytics Service API
@@ -31,6 +32,9 @@ func init() {
 // @BasePath /
 func main() {
 	go kafka.ConsumerSalesEvent()
+	go kafka.ConsumerInventoryLevel()
+	go kafka.ConsumerShippingStatus()
+	go kafka.ConsumerUserActivity()
 
 	r := gin.Default()
 
