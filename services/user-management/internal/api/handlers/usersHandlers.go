@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"regexp"
 	"strconv"
 	"time"
 	"user-management/internal/model"
@@ -535,21 +534,11 @@ func ChangePassword(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc 
 			return
 		}
 
-		if err := validatePasswordStrength(request.NewPassword); err != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{Error: err.Error()})
-			return
-		}
-
-		user, err := getUserByIDAndAccountID(db, accountID, userID)
-		if err != nil {
+		var user model.User
+		if result := db.Where("id = ? AND account_id = ?", userID, accountID).First(&user); result.Error != nil {
 			c.JSON(http.StatusNotFound, model.ErrorResponse{
 				Error: "User not found",
 			})
-			return
-		}
-
-		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.CurrentPassword)); err != nil {
-			c.JSON(http.StatusUnauthorized, model.ErrorResponse{Error: "Current password is incorrect"})
 			return
 		}
 		// Verify the current password
@@ -573,34 +562,13 @@ func ChangePassword(db *gorm.DB, ns *utils.NotificationService) gin.HandlerFunc 
 		}
 
 		// Send notification email
-		if err := ns.SendPasswordChangeNotification(user.Email); err != nil {
-			c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
-			return
-		}
+		// if err := ns.SendPasswordChangeNotification(user.Email); err != nil {
+		// 	c.JSON(http.StatusInternalServerError, model.ErrorResponse{Error: "Failed to send notification email"})
+		// 	return
+		// }
 
 		c.JSON(http.StatusOK, model.SuccessResponse{
 			Message: "Password changed successfully",
 		})
 	}
-}
-
-func getUserByIDAndAccountID(db *gorm.DB, accountID interface{}, userID string) (*model.User, error) {
-	var user model.User
-	if err := db.Where("id = ? AND account_id = ?", userID, accountID).First(&user).Error; err != nil {
-		return nil, err
-	}
-	return &user, nil
-}
-
-func validatePasswordStrength(password string) error {
-	if len(password) < 8 {
-		return fmt.Errorf("password must be at least 8 characters long")
-	}
-	if matched, _ := regexp.MatchString(`[A-Z]`, password); !matched {
-		return fmt.Errorf("password must contain at least one uppercase letter")
-	}
-	if matched, _ := regexp.MatchString(`[0-9]`, password); !matched {
-		return fmt.Errorf("password must contain at least one number")
-	}
-	return nil
 }

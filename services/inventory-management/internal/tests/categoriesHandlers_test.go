@@ -48,7 +48,7 @@ func createTestToken(userID uint, accountID uint) string {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, _ := token.SignedString([]byte("test_secret"))
+	tokenString, _ := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	return tokenString
 }
 

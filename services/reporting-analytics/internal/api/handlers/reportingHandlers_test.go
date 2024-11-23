@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"fmt"
 	"os"
 	"reporting-analytics/internal/api/routes"
 	"reporting-analytics/internal/middleware"
@@ -85,7 +86,7 @@ func createTestToken(userID uint, accountID uint) string {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, _ := token.SignedString([]byte("test_secret"))
+	tokenString, _ := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	return tokenString
 }
 
@@ -101,6 +102,12 @@ func TestGetSalesReports(t *testing.T) {
 	db, err := setupTestDB()
 	assert.NoError(t, err)
 	defer os.Remove("test_reporting.db")
+
+	// Clean up the database before the test
+	db.Exec("DELETE FROM sales_reports")
+	db.Exec("DELETE FROM accounts")
+	db.Exec("DELETE FROM users")
+	db.Exec("DELETE FROM roles")
 
 	// Create test data
 	salesReport := model.SalesReport{
@@ -122,19 +129,21 @@ func TestGetSalesReports(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
+
 		var response []model.SalesReport
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
+
+		fmt.Println("Number of sales reports returned:", len(response)) // Log the number of reports for debugging
+
 		assert.Equal(t, 1, len(response))
 		assert.Equal(t, 100.0, response[0].TotalSales)
 	})
+
 	db.Exec("DELETE FROM sales_reports")
 	db.Exec("DELETE FROM accounts")
 	db.Exec("DELETE FROM users")
 	db.Exec("DELETE FROM roles")
-	db.Exec("DELETE FROM inventory_levels")
-	db.Exec("DELETE FROM shipping_statuses")
-	db.Exec("DELETE FROM user_activities")
 }
 
 func TestGetInventoryLevels(t *testing.T) {
