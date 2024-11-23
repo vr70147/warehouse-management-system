@@ -57,7 +57,7 @@ func CreateShipping(db *gorm.DB) gin.HandlerFunc {
 
 // updateOrderStatusAndShippingDate updates the order status and shipping date in the order service
 func updateOrderStatusAndShippingDate(orderID uint, status string, shippingDate time.Time) error {
-	orderServiceURL := fmt.Sprintf("%s/orders/%d/status", os.Getenv("ORDER_SERVICE_URL"), orderID)
+	orderServiceURL := fmt.Sprintf("%s/orders/%d", os.Getenv("ORDER_SERVICE_URL"), orderID)
 
 	payload := map[string]interface{}{
 		"status":        status,

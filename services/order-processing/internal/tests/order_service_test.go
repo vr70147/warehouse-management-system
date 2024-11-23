@@ -48,7 +48,7 @@ func createTestToken(userID uint, accountID uint) string {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, _ := token.SignedString([]byte("test_secret"))
+	tokenString, _ := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	return tokenString
 }
 
@@ -67,9 +67,8 @@ func (m *MockKafkaWriter) Close() error {
 }
 
 func TestGetOrders(t *testing.T) {
-	os.Setenv("USER_SERVICE_URL", "http://localhost:8081") // Set the USER_SERVICE_URL environment variable
-	os.Setenv("TOKEN_SECRET", "test_secret")               // Set the TOKEN_SECRET environment variable
-
+	os.Setenv("USER_SERVICE_URL", "http://localhost:8080") // Set the USER_SERVICE_URL environment variable
+	os.Getenv("JWT_SECRET")
 	db, err := gorm.Open(sqlite.Open("test_order.db"), &gorm.Config{})
 	assert.NoError(t, err)
 

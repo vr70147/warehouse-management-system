@@ -50,13 +50,13 @@ func createTestToken(userID uint, accountID uint) string {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, _ := token.SignedString([]byte("test_secret"))
+	tokenString, _ := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	return tokenString
 }
 
 func setupTestDB() (*gorm.DB, error) {
-	os.Setenv("USER_SERVICE_URL", "http://localhost:8080")
-	os.Setenv("TOKEN_SECRET", "test_secret")
+	os.Getenv("JWT_SECRET")
+	os.Getenv("USER_SERVICE_URL")
 
 	db, err := gorm.Open(sqlite.Open("test_shipping.db"), &gorm.Config{})
 	if err != nil {
@@ -112,6 +112,9 @@ func TestCreateShipping(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.Remove("test_shipping.db")
 
+	// Mock the order service URL
+	os.Getenv("ORDER_SERVICE_URL")
+
 	r := SetupRouter(db)
 
 	t.Run("CreateShippingSuccess", func(t *testing.T) {
@@ -129,7 +132,7 @@ func TestCreateShipping(t *testing.T) {
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, http.StatusOK, w.Code) // Expecting 200 OK here
 		var response model.SuccessResponse
 		err = json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
