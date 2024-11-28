@@ -1,9 +1,9 @@
-import ModeToggle from '@/components/nav/mode-toggle';
+import TopNav from '@/components/nav/top-nav';
 
 export default function Home() {
   return (
     <div>
-      <ModeToggle />
+      <TopNav />
     </div>
   );
 }
