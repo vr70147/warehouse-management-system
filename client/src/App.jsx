@@ -1,28 +1,44 @@
 import './index.css';
 import TopBar from './components/top-bar/TopBar';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import SideBar from './components/sidebar/SideBar';
-import Dashboard from './components/features/dashboard/Dashboard';
-import Inventory from './components/features/inventory/Inventory';
+import DashboardPage from './pages/DashboardPage';
+import { useState } from 'react';
+import { Provider } from 'react-redux';
+import { store } from './redux/store';
+import InventoryPage from './pages/InventoryPage';
 
 function App() {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   return (
-    <div className="h-screen overflow-hidden">
-      <header className="fixed top-0 left-0 right-0 z-50 opacity-90">
-        <TopBar />
-      </header>
+    <Provider store={store}>
       <BrowserRouter>
-        <aside className="fixed left-0 top-16 bottom-0 w-64">
-          <SideBar />
-        </aside>
-        <main className="ml-64 flex-1 overflow-auto p-4 bg-gray-100 dark:bg-gray-900">
-          <Routes>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/inventory" element={<Inventory />} />
-          </Routes>
-        </main>
+        <div className="h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
+          <header className="fixed top-0 left-0 right-0 z-50">
+            <TopBar />
+          </header>
+
+          <div className="flex flex-grow pt-16">
+            {/* Sidebar */}
+            <SideBar
+              isCollapsed={isCollapsed}
+              setIsCollapsed={setIsCollapsed}
+            />
+
+            {/* Main Content */}
+            <main
+              className={`flex-grow overflow-y-auto transition-all duration-300 `}
+            >
+              <Routes>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/inventory" element={<InventoryPage />} />
+              </Routes>
+            </main>
+          </div>
+        </div>
       </BrowserRouter>
-    </div>
+    </Provider>
   );
 }
 
