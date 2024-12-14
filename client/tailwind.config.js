@@ -14,6 +14,10 @@ export default {
 				border: "hsl(var(--border))",
 				background: "hsl(var(--background))",
 				foreground: "hsl(var(--foreground))",
+				destructive: {
+					DEFAULT: '#DC2626',
+					foreground: '#FFFFFF',
+				},
 			},
 		},
 	},
