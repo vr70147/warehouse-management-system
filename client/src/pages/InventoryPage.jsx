@@ -2,30 +2,17 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import InventoryTable from '@/components/features/inventory/InventoryTable';
-import InventoryFilters from '@/components/features/inventory/InventoryFilters';
-import AddItemModal from '@/components/features/inventory/AddItemModal';
-import {
-  filterItems,
-  searchItems,
-  sortItem,
-} from '@/redux/slices/inventorySlice';
+import UnifiedItemModal from '@/components/features/inventory/UnifiedItemModal';
+import { addItem } from '@/redux/slices/inventorySlice';
 
 export default function InventoryPage() {
   const dispatch = useDispatch();
-  const allItems = useSelector((state) => state.inventory.items);
-  const visibleItems = useSelector((state) => state.inventory.filteredItems);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const filteredItems = useSelector((state) => state.inventory.filteredItems);
 
-  const handleFilter = (filter) => {
-    dispatch(filterItems(filter));
-  };
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const handleSearch = (searchTerm) => {
-    dispatch(searchItems(searchTerm));
-  };
-
-  const handleSort = (order) => {
-    dispatch(sortItem(order));
+  const handleAddItem = (newItem) => {
+    dispatch(addItem({ ...newItem, id: Date.now() })); // מוסיף פריט חדש עם ID ייחודי
   };
 
   return (
@@ -34,21 +21,16 @@ export default function InventoryPage() {
         <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
           Inventory Management
         </h1>
-        <Button variant="outline" onClick={() => setIsModalOpen(true)}>
+        <Button variant="blue" onClick={() => setIsAddModalOpen(true)}>
           Add New Item
         </Button>
       </div>
-      <div className="flex justify-end">
-        <InventoryFilters
-          onFilter={handleFilter}
-          onSearch={handleSearch}
-          onSort={handleSort}
-        />
-      </div>
-      <InventoryTable items={visibleItems} />
-      <AddItemModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+      <InventoryTable items={filteredItems} />
+      <UnifiedItemModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        mode="add"
+        onSubmit={handleAddItem}
       />
     </div>
   );

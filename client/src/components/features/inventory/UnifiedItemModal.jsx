@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { addItem } from '@/redux/slices/inventorySlice';
 import { Button } from '@/components/ui/button';
 
-export default function AddItemModal({ isOpen, onClose }) {
-  const dispatch = useDispatch();
+export default function UnifiedItemModal({
+  isOpen,
+  onClose,
+  mode,
+  item = {},
+  onSubmit,
+}) {
   const [formData, setFormData] = useState({
     name: '',
     category: '',
@@ -14,6 +18,20 @@ export default function AddItemModal({ isOpen, onClose }) {
     lastUpdated: new Date().toISOString(),
   });
 
+  useEffect(() => {
+    if (mode === 'edit' && item) {
+      setFormData(item);
+    } else if (mode === 'add') {
+      setFormData({
+        name: '',
+        category: '',
+        quantity: 0,
+        unitPrice: 0.0,
+        supplier: '',
+      });
+    }
+  }, [mode, item?.id]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -21,38 +39,23 @@ export default function AddItemModal({ isOpen, onClose }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const newItem = {
-      id: Date.now(),
-      ...formData,
-      quantity: parseInt(formData.quantity, 10),
-      unitPrice: parseFloat(formData.unitPrice),
-    };
-    dispatch(addItem(newItem));
+    onSubmit(formData);
     onClose();
-    setFormData({
-      name: '',
-      category: '',
-      quantity: 0,
-      unitPrice: 0.0,
-      supplier: '',
-      lastUpdated: new Date().toISOString(),
-    });
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black bg-opacity-50"></div>
-
-      {/* Modal Content */}
+      <div
+        className="absolute inset-0 bg-black bg-opacity-50"
+        onClick={onClose}
+      ></div>
       <div className="relative bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-1/3 z-10">
         <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
-          Add New Item
+          {mode === 'add' ? 'Add New Item' : 'Edit Item'}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name Field */}
           <div>
             <label className="block font-medium text-gray-700 dark:text-gray-300">
               Name
@@ -66,7 +69,6 @@ export default function AddItemModal({ isOpen, onClose }) {
               required
             />
           </div>
-          {/* Category Field */}
           <div>
             <label className="block font-medium text-gray-700 dark:text-gray-300">
               Category
@@ -80,7 +82,6 @@ export default function AddItemModal({ isOpen, onClose }) {
               required
             />
           </div>
-          {/* Supplier Field */}
           <div>
             <label className="block font-medium text-gray-700 dark:text-gray-300">
               Supplier
@@ -94,7 +95,6 @@ export default function AddItemModal({ isOpen, onClose }) {
               required
             />
           </div>
-          {/* Quantity Field */}
           <div>
             <label className="block font-medium text-gray-700 dark:text-gray-300">
               Quantity
@@ -108,7 +108,6 @@ export default function AddItemModal({ isOpen, onClose }) {
               required
             />
           </div>
-          {/* Unit Price Field */}
           <div>
             <label className="block font-medium text-gray-700 dark:text-gray-300">
               Unit Price
@@ -122,13 +121,12 @@ export default function AddItemModal({ isOpen, onClose }) {
               required
             />
           </div>
-          {/* Buttons */}
           <div className="flex justify-end space-x-2">
             <Button variant="secondary" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" variant="default">
-              Add Item
+            <Button type="submit" variant="blue">
+              {mode === 'add' ? 'Add Item' : 'Save Changes'}
             </Button>
           </div>
         </form>

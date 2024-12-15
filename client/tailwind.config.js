@@ -18,6 +18,10 @@ export default {
 					DEFAULT: '#DC2626',
 					foreground: '#FFFFFF',
 				},
+				primaryBlue: {
+					DEFAULT: "#2563eb",
+					foreground: "#ffffff",
+				},
 			},
 			scale: {
 				102: '1.02',

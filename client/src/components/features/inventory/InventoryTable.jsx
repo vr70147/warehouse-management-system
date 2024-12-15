@@ -1,10 +1,22 @@
 import { Button } from '@/components/ui/button';
-import React from 'react';
+import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { deleteItem } from '@/redux/slices/inventorySlice';
+import { deleteItem, updateItem } from '@/redux/slices/inventorySlice';
+import UnifiedItemModal from '@/components/features/inventory/UnifiedItemModal';
 
 export default function InventoryTable({ items }) {
   const dispatch = useDispatch();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentItem, setCurrentItem] = useState(null);
+
+  const handleEdit = (item) => {
+    setCurrentItem(item);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateItem = (updatedItem) => {
+    dispatch(updateItem(updatedItem));
+  };
 
   const handleDelete = (id) => {
     dispatch(deleteItem(id));
@@ -37,13 +49,17 @@ export default function InventoryTable({ items }) {
                 {item.quantity}
               </td>
               <td className="py-3 px-4 border-b dark:border-gray-700">
-                {item.unitPrice.toFixed(2)}
+                $
+                {isNaN(item.unitPrice)
+                  ? '0.00'
+                  : parseFloat(item.unitPrice).toFixed(2)}
               </td>
               <td className="py-3 px-4 border-b dark:border-gray-700 flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   className="hover:scale-105 transition-transform duration-200"
+                  onClick={() => handleEdit(item)}
                 >
                   Edit
                 </Button>
@@ -60,6 +76,13 @@ export default function InventoryTable({ items }) {
           ))}
         </tbody>
       </table>
+      <UnifiedItemModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        mode="edit"
+        item={currentItem}
+        onSubmit={handleUpdateItem}
+      />
     </div>
   );
 }
