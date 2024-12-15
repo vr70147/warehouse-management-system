@@ -3,8 +3,23 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { deleteItem, updateItem } from '@/redux/slices/inventorySlice';
 import UnifiedItemModal from '@/components/features/inventory/UnifiedItemModal';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
 
 export default function InventoryTable({ items }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
+
+  const totalPages = Math.ceil(items.length / pageSize);
+  const PaginatedItems = paginate(items, currentPage, pageSize);
+
   const dispatch = useDispatch();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
@@ -34,27 +49,25 @@ export default function InventoryTable({ items }) {
           </tr>
         </thead>
         <tbody>
-          {items.map((item) => (
+          {PaginatedItems.map((item) => (
             <tr
               key={item.id}
               className="even:bg-gray-50 odd:bg-white dark:even:bg-gray-700 dark:odd:bg-gray-800 hover:scale-102 hover:shadow transition-transform duration-300 ease-out"
             >
-              <td className="py-3 px-4 border-b dark:border-gray-700">
-                {item.name}
-              </td>
-              <td className="py-3 px-4 border-b dark:border-gray-700">
+              <td className="py-3 px-4 dark:border-gray-700">{item.name}</td>
+              <td className="py-3 px-4 dark:border-gray-700">
                 {item.category}
               </td>
-              <td className="py-3 px-4 border-b dark:border-gray-700">
+              <td className="py-3 px-4 dark:border-gray-700">
                 {item.quantity}
               </td>
-              <td className="py-3 px-4 border-b dark:border-gray-700">
+              <td className="py-3 px-4 dark:border-gray-700">
                 $
                 {isNaN(item.unitPrice)
                   ? '0.00'
                   : parseFloat(item.unitPrice).toFixed(2)}
               </td>
-              <td className="py-3 px-4 border-b dark:border-gray-700 flex gap-2">
+              <td className="py-3 px-4 dark:border-gray-700 flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -76,6 +89,42 @@ export default function InventoryTable({ items }) {
           ))}
         </tbody>
       </table>
+      <Pagination className="mt-4">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                if (currentPage > 1) setCurrentPage(currentPage - 1);
+              }}
+            />
+          </PaginationItem>
+          {Array.from({ length: totalPages }, (_, index) => (
+            <PaginationItem key={index}>
+              <PaginationLink
+                href="#"
+                isActive={currentPage === index + 1}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(index + 1);
+                }}
+              >
+                {index + 1}
+              </PaginationLink>
+            </PaginationItem>
+          ))}
+          <PaginationItem>
+            <PaginationNext
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+              }}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
       <UnifiedItemModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -85,4 +134,10 @@ export default function InventoryTable({ items }) {
       />
     </div>
   );
+}
+
+function paginate(items, currentPage, pageSize) {
+  if (!items || items.length === 0) return [];
+  const startIndex = (currentPage - 1) * pageSize;
+  return items.slice(startIndex, startIndex + pageSize);
 }
