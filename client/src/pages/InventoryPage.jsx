@@ -1,19 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import InventorySearch from '@/components/features/inventory/InventorySearch';
+import { Button } from '@/components/ui/button';
 import InventoryTable from '@/components/features/inventory/InventoryTable';
-import AddItemButton from '@/components/features/inventory/AddItemButton';
+import InventoryFilters from '@/components/features/inventory/InventoryFilters';
+import AddItemModal from '@/components/features/inventory/AddItemModal';
 import {
-  filteredItems,
+  filterItems,
   searchItems,
   sortItem,
 } from '@/redux/slices/inventorySlice';
-import InventoryFilters from '@/components/features/inventory/InventoryFilters';
 
 export default function InventoryPage() {
-  const { items } = useSelector((state) => state.inventory);
   const dispatch = useDispatch();
-  const filteredItems = useSelector((state) => state.inventory.filteredItems);
+  const allItems = useSelector((state) => state.inventory.items);
+  const visibleItems = useSelector((state) => state.inventory.filteredItems);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleFilter = (filter) => {
     dispatch(filterItems(filter));
@@ -33,7 +34,9 @@ export default function InventoryPage() {
         <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
           Inventory Management
         </h1>
-        <AddItemButton />
+        <Button variant="outline" onClick={() => setIsModalOpen(true)}>
+          Add New Item
+        </Button>
       </div>
       <div className="flex justify-end">
         <InventoryFilters
@@ -42,7 +45,11 @@ export default function InventoryPage() {
           onSort={handleSort}
         />
       </div>
-      <InventoryTable items={filteredItems} />
+      <InventoryTable items={visibleItems} />
+      <AddItemModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 }

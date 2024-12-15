@@ -12,6 +12,7 @@ const inventorySlice = createSlice({
     reducers: {
         addItem(state, action) {
             state.items.push(action.payload);
+            state.filteredItems.push(action.payload)
         },
         deleteItem(state, action) {
             state.items = state.items.filter((item) => item.id !== action.payload);
@@ -28,7 +29,7 @@ const inventorySlice = createSlice({
             }
         },
 
-        filteredItems(state, action) {
+        filterItems(state, action) {
             const { category, supplier, priceRange } = action.payload;
             let filtered = [...state.items];
 
@@ -59,5 +60,5 @@ const inventorySlice = createSlice({
     },
 });
 
-export const { addItem, deleteItem, updateItem, filteredItems, searchItems, sortItem } = inventorySlice.actions;
+export const { addItem, deleteItem, updateItem, filterItems, searchItems, sortItem } = inventorySlice.actions;
 export default inventorySlice.reducer;
