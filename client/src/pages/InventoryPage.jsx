@@ -12,7 +12,7 @@ export default function InventoryPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const handleAddItem = (newItem) => {
-    dispatch(addItem({ ...newItem, id: Date.now() })); // מוסיף פריט חדש עם ID ייחודי
+    dispatch(addItem({ ...newItem, id: Date.now() }));
   };
 
   return (
