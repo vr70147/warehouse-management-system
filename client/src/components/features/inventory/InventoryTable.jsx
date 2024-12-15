@@ -25,7 +25,7 @@ export default function InventoryTable({ items }) {
           {items.map((item) => (
             <tr
               key={item.id}
-              className="even:bg-gray-50 odd:bg-white dark:even:bg-gray-700 dark:odd:bg-gray-800 hover:scale-100 hover:shadow-sm transition-transform duration-400"
+              className="even:bg-gray-50 odd:bg-white dark:even:bg-gray-700 dark:odd:bg-gray-800 hover:scale-102 hover:shadow transition-transform duration-300 ease-out"
             >
               <td className="py-3 px-4 border-b dark:border-gray-700">
                 {item.name}
@@ -40,12 +40,17 @@ export default function InventoryTable({ items }) {
                 {item.unitPrice.toFixed(2)}
               </td>
               <td className="py-3 px-4 border-b dark:border-gray-700 flex gap-2">
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="hover:scale-105 transition-transform duration-200"
+                >
                   Edit
                 </Button>
                 <Button
                   variant="destructive"
                   size="sm"
+                  className="hover:scale-105 transition-transform duration-200"
                   onClick={() => handleDelete(item.id)}
                 >
                   Delete

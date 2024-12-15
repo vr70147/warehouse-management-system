@@ -19,6 +19,9 @@ export default {
 					foreground: '#FFFFFF',
 				},
 			},
+			scale: {
+				102: '1.02',
+			}
 		},
 	},
 	plugins: [tailwindcssAnimate],
