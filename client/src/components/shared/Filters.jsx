@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
+import { Button } from '../ui/button';
+import { useDispatch } from 'react-redux';
+import { sortItem } from '@/redux/slices/inventorySlice';
 
 export default function Filters({ fields, onFilter }) {
   const [filters, setFilters] = useState({});
+  const dispatch = useDispatch();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -10,6 +14,17 @@ export default function Filters({ fields, onFilter }) {
 
   const handleApplyFilters = () => {
     onFilter(filters);
+  };
+  const [sortOrders, setSortOrders] = useState({
+    quantity: 'asc',
+    price: 'asc',
+  });
+
+  const handleSortToggle = (field) => {
+    const currentOIrder = sortOrders[field];
+    const newOrder = currentOIrder === 'asc' ? 'desc' : 'asc';
+    setSortOrders((prev) => ({ ...prev, [field]: newOrder }));
+    dispatch(sortItem({ field, order: newOrder }));
   };
 
   return (
@@ -58,12 +73,17 @@ export default function Filters({ fields, onFilter }) {
         }
         return null;
       })}
-      <button
-        onClick={handleApplyFilters}
-        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-      >
+      <Button variant="blue" onClick={handleApplyFilters}>
         Apply Filters
-      </button>
+      </Button>
+      <Button onClick={() => handleSortToggle('quantity')}>
+        Sort by Quantity (
+        {sortOrders.quantity === 'asc' ? 'Low to High' : 'High to Low'})
+      </Button>
+      <Button onClick={() => handleSortToggle('unitPrice')}>
+        Sort by Price (
+        {sortOrders.price === 'asc' ? 'Low to High' : 'High to Low'})
+      </Button>
     </div>
   );
 }

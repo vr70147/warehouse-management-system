@@ -6,7 +6,7 @@ const inventorySlice = createSlice({
     name: 'inventory',
     initialState: {
         items: dummyInventory,
-        filteredItems: dummyInventory,
+        filteredItems: dummyInventory.sort((a, b) => a.quantity - b.quantity),
         loading: false,
         error: null,
     },
@@ -27,13 +27,14 @@ const inventorySlice = createSlice({
             const index = state.items.findIndex((item) => item.id === action.payload.id);
             if (index !== -1) {
                 state.items[index] = action.payload;
-                toast.success("Item updated successfully!")
             }
 
             const filteredIndex = state.filteredItems.findIndex((item) => item.id === action.payload.id);
             if (filteredIndex !== -1) {
                 state.filteredItems[filteredIndex] = action.payload;
             }
+            state.filteredItems.sort((a, b) => a.quantity - b.quantity);
+            toast.success("Item updated successfully!")
         },
 
         filterItems(state, action) {
@@ -61,8 +62,8 @@ const inventorySlice = createSlice({
             state.filteredItems = state.items.filter((item) => item.name.toLocaleLowerCase().includes(searchTerm));
         },
         sortItem(state, action) {
-            const order = action.payload;
-            state.filteredItems = [...state.filteredItems].sort((a, b) => order === 'asc' ? a.quantity - b.quantity : b.quantity - a.quantity);
+            const { field, order } = action.payload;
+            state.filteredItems = [...state.filteredItems].sort((a, b) => order === 'asc' ? a[field] - b[field] : b[field] - a[field]);
         },
     },
 });

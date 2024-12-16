@@ -16,9 +16,16 @@ export default function InventoryPage() {
   const filteredItems = useSelector((state) => state.inventory.filteredItems);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [sortOrder, setSortOrder] = useState('asc');
 
   const handleAddItem = (newItem) => {
     dispatch(addItem({ ...newItem, id: Date.now() }));
+  };
+
+  const handleSortToggle = () => {
+    const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    setSortOrder(newOrder);
+    dispatch(sortItem(newOrder));
   };
 
   const handleFilter = (filters) => {
@@ -59,9 +66,7 @@ export default function InventoryPage() {
           Add New Item
         </Button>
       </div>
-      <div className="w-full justify-start flex flex-row flex-grow">
-        <Filter onFilter={handleFilter} fields={filterFields} />
-      </div>
+      <Filter onFilter={handleFilter} fields={filterFields} />
       <InventoryTable items={filteredItems} />
       <UnifiedItemModal
         isOpen={isAddModalOpen}

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { deleteItem, updateItem } from '@/redux/slices/inventorySlice';
 import UnifiedItemModal from '@/components/features/inventory/UnifiedItemModal';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Pagination,
   PaginationContent,
@@ -67,7 +68,7 @@ export default function InventoryTable({ items, onDelete }) {
               key={item.id}
               className={` hover:scale-102 hover:shadow transition-transform duration-300 ease-out ${
                 item.quantity <= 20
-                  ? 'bg-red-100'
+                  ? 'even:bg-red-200 dark:even:bg-red-950 odd:bg-red-100 dark:odd:bg-red-900'
                   : 'even:bg-gray-50 odd:bg-white dark:even:bg-gray-700 dark:odd:bg-gray-800'
               }`}
             >
