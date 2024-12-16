@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Provider } from 'react-redux';
 import { store } from './redux/store';
 import InventoryPage from './pages/InventoryPage';
+import { Toaster } from 'sonner';
 
 function App() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -25,7 +26,7 @@ function App() {
               isCollapsed={isCollapsed}
               setIsCollapsed={setIsCollapsed}
             />
-
+            <Toaster position="bottom-right" expand />
             {/* Main Content */}
             <main
               className={`flex-grow overflow-y-auto transition-all duration-300 `}

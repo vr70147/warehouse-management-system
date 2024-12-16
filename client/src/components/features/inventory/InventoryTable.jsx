@@ -10,10 +10,20 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-  PaginationEllipsis,
 } from '@/components/ui/pagination';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
-export default function InventoryTable({ items }) {
+export default function InventoryTable({ items, onDelete }) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
@@ -37,6 +47,7 @@ export default function InventoryTable({ items }) {
   const handleDelete = (id) => {
     dispatch(deleteItem(id));
   };
+
   return (
     <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4">
       <table className="w-full text-left text-sm text-gray-600 dark:text-gray-400">
@@ -76,19 +87,32 @@ export default function InventoryTable({ items }) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="hover:scale-105 transition-transform duration-200"
                   onClick={() => handleEdit(item)}
                 >
                   Edit
                 </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="hover:scale-105 transition-transform duration-200"
-                  onClick={() => handleDelete(item.id)}
-                >
-                  Delete
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm">
+                      Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. It will permanently delete
+                        <strong> {item.name}</strong>
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDelete(item.id)}>
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </td>
             </tr>
           ))}

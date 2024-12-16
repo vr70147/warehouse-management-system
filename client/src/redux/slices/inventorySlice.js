@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import dummyInventory from '@/data/dummyInventory';
+import { toast } from 'sonner';
 
 const inventorySlice = createSlice({
     name: 'inventory',
@@ -12,15 +13,21 @@ const inventorySlice = createSlice({
     reducers: {
         addItem(state, action) {
             state.items.push(action.payload);
-            state.filteredItems.push(action.payload)
+            state.filteredItems.push(action.payload);
+            toast.success("Item added successfully!");
         },
         deleteItem(state, action) {
             state.items = state.items.filter((item) => item.id !== action.payload);
+            state.filteredItems = state.filteredItems.filter((item) => item.id !== action.payload);
+
+            toast.error("Item deleted successfully!");
         },
+
         updateItem(state, action) {
             const index = state.items.findIndex((item) => item.id === action.payload.id);
             if (index !== -1) {
                 state.items[index] = action.payload;
+                toast.success("Item updated successfully!")
             }
 
             const filteredIndex = state.filteredItems.findIndex((item) => item.id === action.payload.id);
