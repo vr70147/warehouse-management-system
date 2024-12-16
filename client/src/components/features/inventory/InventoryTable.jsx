@@ -65,7 +65,11 @@ export default function InventoryTable({ items, onDelete }) {
           {PaginatedItems.map((item) => (
             <tr
               key={item.id}
-              className="even:bg-gray-50 odd:bg-white dark:even:bg-gray-700 dark:odd:bg-gray-800 hover:scale-102 hover:shadow transition-transform duration-300 ease-out"
+              className={` hover:scale-102 hover:shadow transition-transform duration-300 ease-out ${
+                item.quantity <= 20
+                  ? 'bg-red-100'
+                  : 'even:bg-gray-50 odd:bg-white dark:even:bg-gray-700 dark:odd:bg-gray-800'
+              }`}
             >
               <td className="py-3 px-4 dark:border-gray-700">{item.name}</td>
               <td className="py-3 px-4 dark:border-gray-700">
@@ -74,7 +78,11 @@ export default function InventoryTable({ items, onDelete }) {
               <td className="py-3 px-4 dark:border-gray-700">
                 {item.supplier}
               </td>
-              <td className="py-3 px-4 dark:border-gray-700">
+              <td
+                className={`py-3 px-4 dark:border-gray-700 ${
+                  item.quantity <= 20 ? 'text-red-600 font-bold' : ''
+                }`}
+              >
                 {item.quantity}
               </td>
               <td className="py-3 px-4 dark:border-gray-700">
