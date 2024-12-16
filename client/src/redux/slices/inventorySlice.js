@@ -30,20 +30,20 @@ const inventorySlice = createSlice({
         },
 
         filterItems(state, action) {
-            const { category, supplier, priceRange } = action.payload;
+            const { category, supplier, priceMin, priceMax } = action.payload;
             let filtered = [...state.items];
 
             if (category) {
                 filtered = filtered.filter((item) => item.category === category);
             }
             if (supplier) {
-                filtered = filtered.filter((item) => item.supplier === supplier);
+                filtered = filtered.filter((item) => item.supplier.toLowerCase().includes(supplier.toLowerCase()));
             }
-            if (priceRange.min) {
-                filtered = filtered.filter((item) => item.unitPrice >= parseFloat(priceRange.min));
+            if (priceMin) {
+                filtered = filtered.filter((item) => item.unitPrice >= priceMin);
             }
-            if (priceRange.max) {
-                filtered = filtered.filter((item) => item.unitPrice <= parseFloat(priceRange.max));
+            if (priceMax) {
+                filtered = filtered.filter((item) => item.unitPrice <= priceMax);
             }
 
             state.filteredItems = filtered;

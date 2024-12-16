@@ -15,12 +15,13 @@ import {
 
 export default function InventoryTable({ items }) {
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 20;
+  const pageSize = 10;
 
   const totalPages = Math.ceil(items.length / pageSize);
   const PaginatedItems = paginate(items, currentPage, pageSize);
 
   const dispatch = useDispatch();
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
 
@@ -43,6 +44,7 @@ export default function InventoryTable({ items }) {
           <tr>
             <th className="py-2 px-4">Name</th>
             <th className="py-2 px-4">Category</th>
+            <th className="py-2 px-4">Supplier</th>
             <th className="py-2 px-4">Quantity</th>
             <th className="py-2 px-4">Unit Price</th>
             <th className="py-2 px-4">Actions</th>
@@ -57,6 +59,9 @@ export default function InventoryTable({ items }) {
               <td className="py-3 px-4 dark:border-gray-700">{item.name}</td>
               <td className="py-3 px-4 dark:border-gray-700">
                 {item.category}
+              </td>
+              <td className="py-3 px-4 dark:border-gray-700">
+                {item.supplier}
               </td>
               <td className="py-3 px-4 dark:border-gray-700">
                 {item.quantity}

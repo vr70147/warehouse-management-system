@@ -3,7 +3,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import InventoryTable from '@/components/features/inventory/InventoryTable';
 import UnifiedItemModal from '@/components/features/inventory/UnifiedItemModal';
-import { addItem } from '@/redux/slices/inventorySlice';
+import {
+  addItem,
+  filterItems,
+  searchItems,
+  sortItem,
+} from '@/redux/slices/inventorySlice';
+import Filter from '@/components/shared/Filters';
 
 export default function InventoryPage() {
   const dispatch = useDispatch();
@@ -15,6 +21,34 @@ export default function InventoryPage() {
     dispatch(addItem({ ...newItem, id: Date.now() }));
   };
 
+  const handleFilter = (filters) => {
+    dispatch(filterItems(filters));
+  };
+
+  const filterFields = [
+    {
+      name: 'category',
+      type: 'select',
+      placeholder: 'Select Category',
+      options: ['Electronics', 'Furniture', 'Clothing', 'Accessories'],
+    },
+    {
+      name: 'supplier',
+      type: 'text',
+      placeholder: 'Search by Supplier',
+    },
+    {
+      name: 'priceMin',
+      type: 'number',
+      placeholder: 'Min Price',
+    },
+    {
+      name: 'priceMax',
+      type: 'number',
+      placeholder: 'Max Price',
+    },
+  ];
+
   return (
     <div className="p-6 bg-gray-100 dark:bg-gray-900 min-h-screen">
       <div className="mb-6 flex justify-between items-center">
@@ -24,6 +58,9 @@ export default function InventoryPage() {
         <Button variant="blue" onClick={() => setIsAddModalOpen(true)}>
           Add New Item
         </Button>
+      </div>
+      <div className="w-full justify-start flex flex-row flex-grow">
+        <Filter onFilter={handleFilter} fields={filterFields} />
       </div>
       <InventoryTable items={filteredItems} />
       <UnifiedItemModal
