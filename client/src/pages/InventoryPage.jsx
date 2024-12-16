@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import InventoryTable from '@/components/features/inventory/InventoryTable';
@@ -16,17 +16,20 @@ export default function InventoryPage() {
   const filteredItems = useSelector((state) => state.inventory.filteredItems);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [sortOrder, setSortOrder] = useState('asc');
 
   const handleAddItem = (newItem) => {
     dispatch(addItem({ ...newItem, id: Date.now() }));
   };
 
-  const handleSortToggle = () => {
-    const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    setSortOrder(newOrder);
-    dispatch(sortItem(newOrder));
-  };
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false); // לאחר 2 שניות מפסיקים את מצב הטעינה
+    }, 2000);
+
+    return () => clearTimeout(timer); // מנקה את הטיימר כדי למנוע דליפת זיכרון
+  }, []);
 
   const handleFilter = (filters) => {
     dispatch(filterItems(filters));
@@ -67,7 +70,7 @@ export default function InventoryPage() {
         </Button>
       </div>
       <Filter onFilter={handleFilter} fields={filterFields} />
-      <InventoryTable items={filteredItems} />
+      <InventoryTable items={filteredItems} loading={loading} />
       <UnifiedItemModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

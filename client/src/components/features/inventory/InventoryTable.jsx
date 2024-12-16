@@ -1,8 +1,7 @@
-import { Button } from '@/components/ui/button';
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { useDispatch } from 'react-redux';
 import { deleteItem, updateItem } from '@/redux/slices/inventorySlice';
-import UnifiedItemModal from '@/components/features/inventory/UnifiedItemModal';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Pagination,
@@ -23,8 +22,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import UnifiedItemModal from '@/components/features/inventory/UnifiedItemModal';
 
-export default function InventoryTable({ items, onDelete }) {
+export default function InventoryTable({ items, loading }) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
@@ -48,6 +48,49 @@ export default function InventoryTable({ items, onDelete }) {
   const handleDelete = (id) => {
     dispatch(deleteItem(id));
   };
+
+  if (loading) {
+    return (
+      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4">
+        <table className="w-full text-left text-sm text-gray-600 dark:text-gray-400">
+          <thead>
+            <tr>
+              <th className="py-2 px-4">Name</th>
+              <th className="py-2 px-4">Category</th>
+              <th className="py-2 px-4">Supplier</th>
+              <th className="py-2 px-4">Quantity</th>
+              <th className="py-2 px-4">Unit Price</th>
+              <th className="py-2 px-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 5 }).map((_, index) => (
+              <tr key={index}>
+                <td className="py-3 px-4">
+                  <Skeleton className="h-4 w-24" />
+                </td>
+                <td className="py-3 px-4">
+                  <Skeleton className="h-4 w-32" />
+                </td>
+                <td className="py-3 px-4">
+                  <Skeleton className="h-4 w-28" />
+                </td>
+                <td className="py-3 px-4">
+                  <Skeleton className="h-4 w-16" />
+                </td>
+                <td className="py-3 px-4">
+                  <Skeleton className="h-4 w-20" />
+                </td>
+                <td className="py-3 px-4">
+                  <Skeleton className="h-8 w-16" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4">
