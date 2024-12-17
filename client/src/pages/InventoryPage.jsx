@@ -1,46 +1,100 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
-import InventoryTable from '@/components/features/inventory/InventoryTable';
-import UnifiedItemModal from '@/components/features/inventory/UnifiedItemModal';
+import UnifiedItemModal from '@/components/shared/UnifiedItemModal';
 import {
   addItem,
+  updateItem,
+  deleteItem,
   filterItems,
-  searchItems,
-  sortItem,
+  setLoading,
 } from '@/redux/slices/inventorySlice';
 import Filter from '@/components/shared/Filters';
+import Table from '@/components/shared/Table';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function InventoryPage() {
   const dispatch = useDispatch();
   const filteredItems = useSelector((state) => state.inventory.filteredItems);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const loading = useSelector((state) => state.inventory.loading);
+  const [currentItem, setCurrentItem] = useState(null);
+  const [modalMode, setModalMode] = useState('add');
 
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
-  const handleAddItem = (newItem) => {
-    dispatch(addItem({ ...newItem, id: Date.now() }));
-  };
-
-  const [loading, setLoading] = useState(true);
+  const DEFAULT_PAGE_SIZE = 10;
 
   useEffect(() => {
+    dispatch(setLoading(true));
     const timer = setTimeout(() => {
-      setLoading(false); // לאחר 2 שניות מפסיקים את מצב הטעינה
-    }, 2000);
+      dispatch(setLoading(false));
+    }, 1000);
 
-    return () => clearTimeout(timer); // מנקה את הטיימר כדי למנוע דליפת זיכרון
-  }, []);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [dispatch]);
+
+  const handleAddItem = (newItem) => {
+    dispatch(addItem({ ...newItem, id: uuidv4() }));
+    setIsModalOpen(false);
+  };
 
   const handleFilter = (filters) => {
     dispatch(filterItems(filters));
   };
+
+  const handleEditItem = (item) => {
+    setModalMode('edit');
+    setCurrentItem(item);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenAddModal = () => {
+    setModalMode('add');
+    setCurrentItem(null);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setCurrentItem(null);
+  };
+
+  const handleUpdateItem = (updatedItem) => {
+    dispatch(updateItem(updatedItem));
+    setIsModalOpen(false);
+  };
+
+  const handleDeleteItem = (id) => {
+    dispatch(deleteItem(id));
+  };
+
+  const renderActions = (row) => (
+    <>
+      <Button variant="outline" size="sm" onClick={() => handleEditItem(row)}>
+        Edit
+      </Button>
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={() => handleDeleteItem(row.id)}
+      >
+        Delete
+      </Button>
+    </>
+  );
 
   const filterFields = [
     {
       name: 'category',
       type: 'select',
       placeholder: 'Select Category',
-      options: ['Electronics', 'Furniture', 'Clothing', 'Accessories'],
+      options: Array.from(new Set(filteredItems.map((item) => item.category))),
+    },
+    {
+      name: 'name',
+      type: 'text',
+      placeholder: 'Search by Name',
     },
     {
       name: 'supplier',
@@ -59,23 +113,39 @@ export default function InventoryPage() {
     },
   ];
 
+  const columns = [
+    { title: 'Name', key: 'name' },
+    { title: 'Category', key: 'category' },
+    { title: 'Supplier', key: 'supplier' },
+    { title: 'Quantity', key: 'quantity' },
+    { title: 'Unit Price', key: 'unitPrice' },
+    { title: 'Last Updated', key: 'lastUpdated' },
+  ];
+
   return (
     <div className="p-6 bg-gray-100 dark:bg-gray-900 min-h-screen">
       <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
           Inventory Management
         </h1>
-        <Button variant="blue" onClick={() => setIsAddModalOpen(true)}>
+        <Button variant="blue" onClick={handleOpenAddModal}>
           Add New Item
         </Button>
       </div>
       <Filter onFilter={handleFilter} fields={filterFields} />
-      <InventoryTable items={filteredItems} loading={loading} />
+      <Table
+        columns={columns}
+        actions={renderActions}
+        data={filteredItems}
+        loading={loading}
+        pageSize={DEFAULT_PAGE_SIZE}
+      />
       <UnifiedItemModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        mode="add"
-        onSubmit={handleAddItem}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        mode={currentItem ? 'edit' : 'add'}
+        item={currentItem}
+        onSubmit={modalMode === 'add' ? handleAddItem : handleUpdateItem}
       />
     </div>
   );

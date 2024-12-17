@@ -52,7 +52,7 @@ export default function InventoryTable({ items, loading }) {
   if (loading) {
     return (
       <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4">
-        <table className="w-full text-left text-sm text-gray-600 dark:text-gray-400">
+        <table className="w-full text-left text-md text-gray-600 dark:text-gray-400">
           <thead>
             <tr>
               <th className="py-2 px-4">Name</th>
@@ -94,7 +94,7 @@ export default function InventoryTable({ items, loading }) {
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4">
-      <table className="w-full text-left text-sm text-gray-600 dark:text-gray-400">
+      <table className="w-full text-left text-md text-gray-600 dark:text-gray-400">
         <thead>
           <tr>
             <th className="py-2 px-4">Name</th>

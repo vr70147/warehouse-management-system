@@ -1,9 +1,6 @@
 import React from 'react';
 
 export default function Pagination({ currentPage, totalPages, onPageChange }) {
-  console.log('currentPage:', currentPage);
-  console.log('totalPages:', totalPages);
-  console.log('onPageChange:', onPageChange);
   const handleNext = () => {
     if (currentPage < totalPages) {
       onPageChange(currentPage + 1);
