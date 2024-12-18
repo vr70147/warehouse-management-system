@@ -8,6 +8,7 @@ import { Provider } from 'react-redux';
 import { store } from './redux/store';
 import InventoryPage from './pages/InventoryPage';
 import { Toaster } from 'sonner';
+import OrdersPage from './pages/OrdersPage';
 
 function App() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -21,19 +22,18 @@ function App() {
           </header>
 
           <div className="flex flex-grow pt-16">
-            {/* Sidebar */}
             <SideBar
               isCollapsed={isCollapsed}
               setIsCollapsed={setIsCollapsed}
             />
             <Toaster position="bottom-right" expand />
-            {/* Main Content */}
             <main
               className={`flex-grow overflow-y-auto transition-all duration-300 `}
             >
               <Routes>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/inventory" element={<InventoryPage />} />
+                <Route path="/order" element={<OrdersPage />} />
               </Routes>
             </main>
           </div>

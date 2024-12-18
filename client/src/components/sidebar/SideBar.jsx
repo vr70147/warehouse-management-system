@@ -8,6 +8,8 @@ import analytics from '../../assets/analytics.svg';
 import support from '../../assets/support.svg';
 import setting from '../../assets/setting.svg';
 import arrowLeft from '../../assets/arrowLeft.svg';
+import { Button } from '../ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function SideBar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -30,20 +32,24 @@ export default function SideBar() {
     >
       {/* Toggle Button */}
       <div className="flex justify-end p-2">
-        <button
-          className="text-gray-600 dark:text-gray-300"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-        >
-          <img
-            src={arrowLeft}
-            alt="Toggle Arrow"
-            className={`h-6 w-6 transform transition-transform duration-300 dark:invert ${
-              isCollapsed ? 'rotate-180' : ''
-            }`}
-          />
-        </button>
+        {!isCollapsed ? (
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+          >
+            <ChevronRight />
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+          >
+            <ChevronLeft />
+          </Button>
+        )}
       </div>
-
       {/* Navigation Links */}
       <nav className="flex flex-col space-y-2 p-2">
         {sections.map((section) => (
@@ -56,7 +62,6 @@ export default function SideBar() {
               }`
             }
           >
-            {/* Icon */}
             <div className="flex items-center justify-center h-10 w-10 flex-shrink-0">
               <img
                 src={section.icon}
@@ -64,9 +69,6 @@ export default function SideBar() {
                 className="h-6 w-6 dark:invert group-hover:scale-125 transition-transform duration-300"
               />
             </div>
-
-            {/* Text */}
-
             <span
               className={`text-sm font-medium transition-all duration-300 ease-in-out group-hover:scale-125 ${
                 isCollapsed ? 'opacity-0 scale-90' : 'opacity-100 scale-100'

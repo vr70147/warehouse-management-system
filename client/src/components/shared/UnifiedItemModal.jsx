@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { Button } from '@/components/ui/button';
 
 export default function UnifiedItemModal({
   isOpen,
   onClose,
   mode,
-  item = {},
+  item,
   onSubmit,
 }) {
   const [formData, setFormData] = useState({
@@ -15,22 +14,30 @@ export default function UnifiedItemModal({
     quantity: 0,
     unitPrice: 0.0,
     supplier: '',
-    lastUpdated: new Date().toISOString(),
+    lastUpdated: new Date().toISOString().split('T')[0],
   });
 
   useEffect(() => {
     if (mode === 'edit' && item) {
-      setFormData(item);
-    } else if (mode === 'add') {
+      setFormData({
+        name: item.name || '',
+        category: item.category || '',
+        supplier: item.supplier || '',
+        quantity: item.quantity || 0,
+        unitPrice: item.unitPrice || 0.0,
+        lastUpdated: item.lastUpdated || new Date().toISOString().split('T')[0],
+      });
+    } else {
       setFormData({
         name: '',
         category: '',
+        supplier: '',
         quantity: 0,
         unitPrice: 0.0,
-        supplier: '',
+        lastUpdated: new Date().toISOString().split('T')[0],
       });
     }
-  }, [mode, item?.id]);
+  }, [mode, item]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,7 +46,11 @@ export default function UnifiedItemModal({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    const payload = {
+      id: item?.id,
+      ...formData,
+    };
+    onSubmit(payload);
     onClose();
   };
 
