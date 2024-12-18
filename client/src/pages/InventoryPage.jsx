@@ -114,12 +114,12 @@ export default function InventoryPage() {
   ];
 
   const columns = [
-    { title: 'Name', key: 'name' },
-    { title: 'Category', key: 'category' },
-    { title: 'Supplier', key: 'supplier' },
-    { title: 'Quantity', key: 'quantity' },
-    { title: 'Unit Price', key: 'unitPrice' },
-    { title: 'Last Updated', key: 'lastUpdated' },
+    { title: 'Name', key: 'name', sortable: true },
+    { title: 'Category', key: 'category', sortable: true },
+    { title: 'Supplier', key: 'supplier', sortable: true },
+    { title: 'Quantity', key: 'quantity', sortable: true },
+    { title: 'Unit Price', key: 'unitPrice', sortable: true },
+    { title: 'Last Updated', key: 'lastUpdated', sortable: true },
   ];
 
   return (
@@ -139,6 +139,11 @@ export default function InventoryPage() {
         data={filteredItems}
         loading={loading}
         pageSize={DEFAULT_PAGE_SIZE}
+        rowHighlightCondition={(row) => row.quantity <= 20}
+        rowHighlightClasses={{
+          even: 'even:bg-gray-50 dark:even:bg-gray-700',
+          odd: 'odd:bg-white dark:odd:bg-gray-800',
+        }}
       />
       <UnifiedItemModal
         isOpen={isModalOpen}

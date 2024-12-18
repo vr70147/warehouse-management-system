@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Pagination,
@@ -17,22 +17,32 @@ export default function Table({
   actions,
   loading,
   pageSize = 10,
+  rowHighlightCondition = () => false,
+  rowHighlightClasses = {
+    even: 'even:bg-gray-50 dark:even:bg-gray-700',
+    odd: 'odd:bg-white dark:odd:bg-gray-800',
+  },
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
-  const sortedData = React.useMemo(() => {
+  const sortedData = useMemo(() => {
     if (!sortConfig.key) return data;
+
     return [...data].sort((a, b) => {
       const valueA = a[sortConfig.key] ?? '';
       const valueB = b[sortConfig.key] ?? '';
-      return sortConfig.direction === 'asc'
-        ? valueA > valueB
-          ? 1
-          : -1
-        : valueA < valueB
-        ? 1
-        : -1;
+
+      const numA = parseFloat(valueA);
+      const numB = parseFloat(valueB);
+
+      const isNumber = !isNaN(numA) && !isNaN(numB);
+
+      if (sortConfig.direction === 'asc') {
+        return isNumber ? numA - numB : valueA > valueB ? 1 : -1;
+      } else {
+        return isNumber ? numB - numA : valueA < valueB ? 1 : -1;
+      }
     });
   }, [data, sortConfig]);
 
@@ -54,12 +64,15 @@ export default function Table({
             {columns.map((column) => (
               <th
                 key={column.key}
-                onClick={() => handleSort(column.key)}
-                className="py-2 px-4 cursor-pointer select-none hover:text-blue-500"
+                onClick={() => column.sortable && handleSort(column.key)}
+                className={`py-2 px-4 ${
+                  column.sortable ? 'cursor-pointer hover:text-blue-500' : ''
+                }`}
               >
                 <div className="flex items-center justify-between">
                   {column.title}
-                  {sortConfig.key === column.key &&
+                  {column.sortable &&
+                    sortConfig.key === column.key &&
                     (sortConfig.direction === 'asc' ? (
                       <ChevronUp className="w-4 h-4 inline-block" />
                     ) : (
@@ -87,25 +100,30 @@ export default function Table({
                   )}
                 </tr>
               ))
-            : paginatedData.map((row, rowIndex) => (
-                <tr
-                  key={rowIndex}
-                  className={`hover:scale-102 hover:shadow transition-transform duration-300 ease-out ${
-                    row.quantity <= 20
-                      ? 'even:bg-red-200 dark:even:bg-red-950 odd:bg-red-100 dark:odd:bg-red-900'
-                      : 'even:bg-gray-50 odd:bg-white dark:even:bg-gray-700 dark:odd:bg-gray-800'
-                  }`}
-                >
-                  {columns.map((column) => (
-                    <td key={column.key} className="py-3 px-4">
-                      {row[column.key] || '-'}
-                    </td>
-                  ))}
-                  {actions && (
-                    <td className="py-3 px-4 flex gap-2">{actions(row)}</td>
-                  )}
-                </tr>
-              ))}
+            : paginatedData.map((row, rowIndex) => {
+                const isHighlighted = rowHighlightCondition(row);
+                const rowClass = isHighlighted
+                  ? 'even:bg-red-200 dark:even:bg-red-950 odd:bg-red-100 dark:odd:bg-red-900'
+                  : `${rowHighlightClasses.even} ${rowHighlightClasses.odd}`;
+
+                return (
+                  <tr
+                    key={rowIndex}
+                    className={`hover:scale-102 hover:shadow transition-transform duration-300 ease-out ${rowClass}`}
+                  >
+                    {columns.map((column) => (
+                      <td key={column.key} className="py-3 px-4">
+                        {column.render
+                          ? column.render(row[column.key])
+                          : row[column.key] || '-'}
+                      </td>
+                    ))}
+                    {actions && (
+                      <td className="py-3 px-4 flex gap-2">{actions(row)}</td>
+                    )}
+                  </tr>
+                );
+              })}
         </tbody>
       </table>
       {totalPages > 1 && (
