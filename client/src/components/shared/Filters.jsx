@@ -1,11 +1,24 @@
 import React, { useState } from 'react';
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function Filters({ fields, onFilter }) {
   const [filters, setFilters] = useState({});
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    setFilters((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name, value) => {
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -18,48 +31,46 @@ export default function Filters({ fields, onFilter }) {
       {fields.map((field) => {
         if (field.type === 'text') {
           return (
-            <input
+            <Input
               key={field.name}
               type="text"
               name={field.name}
               placeholder={field.placeholder}
               onChange={handleInputChange}
-              className="rounded bg-gray-200 dark:bg-gray-700 p-2"
+              className="w-44"
             />
           );
         }
         if (field.type === 'select') {
           return (
-            <select
+            <Select
               key={field.name}
-              name={field.name}
-              onChange={handleInputChange}
-              className="block w-44 px-4 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 transition duration-200"
+              onValueChange={(value) => handleSelectChange(field.name, value)}
             >
-              <option value="" disabled>
-                {field.placeholder}
-              </option>
-              {field.options.map((option) => (
-                <option
-                  key={option}
-                  value={option}
-                  className="text-gray-700 dark:text-gray-300"
-                >
-                  {option}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-44 border border-gray-300 bg-white dark:bg-gray-800 dark:border-gray-700">
+                <SelectValue placeholder={field.placeholder} />
+              </SelectTrigger>
+              <SelectContent className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+                <SelectGroup>
+                  {field.options.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           );
         }
         if (field.type === 'number') {
           return (
-            <input
+            <Input
               key={field.name}
               type="number"
               name={field.name}
               placeholder={field.placeholder}
               onChange={handleInputChange}
-              className="rounded bg-gray-200 dark:bg-gray-700 p-2 w-28"
+              className="w-36"
             />
           );
         }

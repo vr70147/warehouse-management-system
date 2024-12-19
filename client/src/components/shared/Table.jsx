@@ -33,15 +33,28 @@ export default function Table({
       const valueA = a[sortConfig.key] ?? '';
       const valueB = b[sortConfig.key] ?? '';
 
+      const dateA = new Date(valueA);
+      const dateB = new Date(valueB);
+      const isDate = !isNaN(dateA) && !isNaN(dateB);
+
+      const stringA = valueA.toString().toLowerCase();
+      const stringB = valueB.toString().toLowerCase();
+      const isString = typeof valueA === 'string' && typeof valueB === 'string';
+
       const numA = parseFloat(valueA);
       const numB = parseFloat(valueB);
-
       const isNumber = !isNaN(numA) && !isNaN(numB);
 
       if (sortConfig.direction === 'asc') {
-        return isNumber ? numA - numB : valueA > valueB ? 1 : -1;
+        if (isDate) return dateA - dateB;
+        if (isNumber) return numA - numB;
+        if (isString) return stringA > stringB ? 1 : -1;
+        return valueA > valueB ? 1 : -1;
       } else {
-        return isNumber ? numB - numA : valueA < valueB ? 1 : -1;
+        if (isDate) return dateB - dateA;
+        if (isNumber) return numB - numA;
+        if (isString) return stringA < stringB ? 1 : -1;
+        return valueA < valueB ? 1 : -1;
       }
     });
   }, [data, sortConfig]);

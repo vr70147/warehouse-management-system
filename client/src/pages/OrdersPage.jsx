@@ -111,8 +111,9 @@ export default function OrderPage() {
     {
       name: 'status',
       type: 'select',
+      placeholder: 'Select Status',
       options: [
-        'Choose Status',
+        'Select Status',
         ...new Set(dummyOrders.map((order) => order.status)),
       ],
     },
@@ -152,7 +153,7 @@ export default function OrderPage() {
       key: 'items',
       render: (items) =>
         Array.isArray(items) && items.length > 0 ? (
-          <Button variant="primary" onClick={() => openItemSheet(items)}>
+          <Button variant="outline" onClick={() => openItemSheet(items)}>
             View Items
           </Button>
         ) : (
