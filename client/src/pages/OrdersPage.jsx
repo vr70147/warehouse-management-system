@@ -4,6 +4,17 @@ import { Button } from '@/components/ui/button';
 import UnifiedOrderModal from '@/components/shared/UnifiedOrderModal';
 import dummyOrders from '@/data/dummyOrders';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
   addOrder,
   deleteOrder,
   updateOrder,
@@ -97,13 +108,32 @@ export default function OrderPage() {
       <Button variant="outline" size="sm" onClick={() => handleEditOrder(row)}>
         Edit
       </Button>
-      <Button
-        variant="destructive"
-        size="sm"
-        onClick={() => handleDeleteOrder(row.id)}
-      >
-        Delete
-      </Button>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="destructive" size="sm">
+            Delete
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confir`m Deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this order? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                handleDeleteOrder(row.id);
+              }}
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 
