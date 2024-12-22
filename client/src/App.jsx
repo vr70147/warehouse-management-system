@@ -9,6 +9,7 @@ import { store } from './redux/store';
 import InventoryPage from './pages/InventoryPage';
 import { Toaster } from 'sonner';
 import OrdersPage from './pages/OrdersPage';
+import ReportsAnalyticsPage from './pages/ReportsAnalyticsPage';
 
 function App() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -34,6 +35,7 @@ function App() {
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/inventory" element={<InventoryPage />} />
                 <Route path="/order" element={<OrdersPage />} />
+                <Route path="/analytics" element={<ReportsAnalyticsPage />} />
               </Routes>
             </main>
           </div>

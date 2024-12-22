@@ -26,6 +26,11 @@ export default function Filters({ fields, onFilter }) {
     onFilter(filters);
   };
 
+  const handleResetFilters = () => {
+    setFilters({});
+    onFilter({});
+  };
+
   return (
     <div className="flex flex-row w-fit sm:flex-row gap-4 mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
       {fields.map((field) => {
@@ -36,6 +41,7 @@ export default function Filters({ fields, onFilter }) {
               type="text"
               name={field.name}
               placeholder={field.placeholder}
+              value={filters[field.name] || ''}
               onChange={handleInputChange}
               className="w-44"
             />
@@ -46,6 +52,7 @@ export default function Filters({ fields, onFilter }) {
             <Select
               key={field.name}
               onValueChange={(value) => handleSelectChange(field.name, value)}
+              value={filters[field.name] || ''}
             >
               <SelectTrigger className="w-44 border border-gray-300 bg-white dark:bg-gray-800 dark:border-gray-700">
                 <SelectValue placeholder={field.placeholder} />
@@ -69,6 +76,7 @@ export default function Filters({ fields, onFilter }) {
               type="number"
               name={field.name}
               placeholder={field.placeholder}
+              value={filters[field.name] || ''}
               onChange={handleInputChange}
               className="w-36"
             />
@@ -78,6 +86,9 @@ export default function Filters({ fields, onFilter }) {
       })}
       <Button variant="blue" onClick={handleApplyFilters}>
         Apply Filters
+      </Button>
+      <Button variant="destructive" onClick={handleResetFilters}>
+        Reset Filters
       </Button>
     </div>
   );
